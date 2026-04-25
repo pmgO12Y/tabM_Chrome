@@ -25,7 +25,7 @@ jobs:
         run: npm run build
 
       - name: Zip dist folder
-        run: cd dist && zip -r ../chrome-tab-manager.zip .
+        run: cd release/v*/dist && zip -r ../../../chrome-tab-manager.zip .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
