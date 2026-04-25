@@ -45,6 +45,15 @@ jobs:
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
           echo "version=${VERSION}-${TIMESTAMP}" >> $GITHUB_OUTPUT
 
+      - name: Delete old releases
+        run: |
+          gh release list --json tagName -q '.[].tagName' | while read tag; do
+            gh release delete "$tag" --yes || true
+            git push origin --delete "$tag" || true
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
