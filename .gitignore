@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# Release builds
+release/
+
+# Test reports
+playwright-report/
+test-results/
+
+# System files
+.DS_Store
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
+
+# Claude
+.claude/

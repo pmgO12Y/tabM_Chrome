@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 左侧边栏（上下居中：高度112，y=8，上下边距各8） -->
+  <rect x="16" y="8" width="32" height="112" rx="8" fill="none" stroke="#1E293B" stroke-width="4" />
+
+  <!-- 侧边栏装饰点（跟随垂直居中） -->
+  <circle cx="32" cy="28" r="5" fill="#1E293B" />
+  <circle cx="32" cy="52" r="5" fill="#1E293B" />
+  <circle cx="32" cy="76" r="5" fill="#1E293B" />
+  <circle cx="32" cy="100" r="5" fill="#1E293B" />
+
+  <!-- 右侧标签页列表（垂直居中：总高度94，从y=17开始，上下边距各17） -->
+  <!-- 普通标签页 -->
+  <rect x="62" y="17" width="64" height="14" rx="4" fill="none" stroke="#1E293B" stroke-width="4" />
+  <rect x="62" y="43" width="64" height="14" rx="4" fill="none" stroke="#1E293B" stroke-width="4" />
+  <rect x="62" y="69" width="64" height="14" rx="4" fill="none" stroke="#1E293B" stroke-width="4" />
+
+  <!-- 高亮搜索结果标签页 -->
+  <rect x="62" y="95" width="64" height="16" rx="4" fill="#3B82F6" stroke="#1E293B" stroke-width="4" />
+
+  <!-- 高亮标签页内的内容指示线 -->
+  <line x1="72" y1="101" x2="108" y2="101" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" />
+  <line x1="72" y1="107" x2="92" y2="107" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" />
+</svg>
