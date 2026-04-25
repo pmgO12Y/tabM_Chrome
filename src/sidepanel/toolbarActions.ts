@@ -1,3 +1,5 @@
+import { translate, type SupportedLocale } from "../shared/i18n";
+
 export interface BulkToggleToolbarActionParams {
   hasCollapsedWindows: boolean;
   hasCollapsedGroups: boolean;
@@ -5,23 +7,24 @@ export interface BulkToggleToolbarActionParams {
 
 export interface BulkToggleToolbarAction {
   mode: "expand" | "collapse";
-  label: "全部展开" | "全部收起";
+  label: string;
 }
 
 export function resolveBulkToggleToolbarAction(
-  params: BulkToggleToolbarActionParams
+  params: BulkToggleToolbarActionParams,
+  locale: SupportedLocale
 ): BulkToggleToolbarAction {
   const shouldShowExpandAction = params.hasCollapsedWindows || params.hasCollapsedGroups;
 
   if (shouldShowExpandAction) {
     return {
       mode: "expand",
-      label: "全部展开"
+      label: translate(locale, "sidepanel.toolbar.expandAll")
     };
   }
 
   return {
     mode: "collapse",
-    label: "全部收起"
+    label: translate(locale, "sidepanel.toolbar.collapseAll")
   };
 }

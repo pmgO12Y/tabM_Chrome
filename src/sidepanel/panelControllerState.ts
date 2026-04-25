@@ -59,6 +59,7 @@ export type PanelControllerEvent =
     }
   | {
       type: "connection/failed";
+      message: string;
     }
   | {
       type: "connection/reconnect-requested";
@@ -141,7 +142,7 @@ export function reducePanelControllerState(
       return {
         ...state,
         isInteractive: false,
-        errorMessage: "连接后台脚本失败，正在重试。"
+        errorMessage: event.message
       };
     case "connection/reconnect-requested":
       return {

@@ -1,6 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { SearchFilterMode, TabCommand } from "../shared/types";
+import {
+  applyDocumentLocale,
+  getUiLanguage,
+  resolveLocale
+} from "../shared/i18n";
 import { filterPanelRowsBySearch, flattenWindowSections, selectCurrentActiveTabId, selectWindowSections } from "../shared/domain/selectors";
+import {
+  DEFAULT_EXTENSION_SETTINGS,
+  EXTENSION_SETTINGS_STORAGE_KEY,
+  loadExtensionSettings
+} from "../shared/settings";
+import type { ExtensionSettingsRecord, SearchFilterMode, SupportedLocale, TabCommand } from "../shared/types";
 import { VirtualizedWindowList } from "./components/VirtualizedWindowList";
 import { createPanelCommandActions } from "./panelCommands";
 import { SearchBar, focusSearchInput } from "./SearchBar";
@@ -13,7 +23,12 @@ import { usePanelController } from "./usePanelController";
 import { useTabSelection } from "./useTabSelection";
 
 export default function App() {
-  const panelController = usePanelController();
+  const [settings, setSettings] = useState<ExtensionSettingsRecord>(DEFAULT_EXTENSION_SETTINGS);
+  const locale: SupportedLocale = useMemo(
+    () => resolveLocale({ settings, uiLanguage: getUiLanguage() }),
+    [settings]
+  );
+  const panelController = usePanelController(locale);
   const dispatchCommand = useCallback(
     (command: TabCommand) => panelController.dispatchCommand(command),
     [panelController]
@@ -36,9 +51,55 @@ export default function App() {
     postTraceEvent
   } = panelController;
   const [copyTraceState, setCopyTraceState] = useState<"idle" | "success" | "error">("idle");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterMode, setFilterMode] = useState<SearchFilterMode>("filter");
   const appShellRef = useRef<HTMLDivElement | null>(null);
   const panelScrollRef = useRef<HTMLDivElement | null>(null);
   const commandActions = useMemo(() => createPanelCommandActions(dispatchCommand), [dispatchCommand]);
+
+  useEffect(() => {
+    applyDocumentLocale({
+      locale,
+      titleKey: "app.sidepanelTitle"
+    });
+  }, [locale]);
+
+  useEffect(() => {
+    let disposed = false;
+
+    const initializeSettings = async () => {
+      const nextSettings = await loadExtensionSettings();
+      if (!disposed) {
+        setSettings(nextSettings);
+      }
+    };
+
+    const handleStorageChange = (
+      changes: Record<string, chrome.storage.StorageChange>,
+      areaName: string
+    ) => {
+      if (areaName !== "local") {
+        return;
+      }
+
+      const settingsChange = changes[EXTENSION_SETTINGS_STORAGE_KEY];
+      if (!settingsChange) {
+        return;
+      }
+
+      setSettings(
+        (settingsChange.newValue as ExtensionSettingsRecord | undefined) ?? DEFAULT_EXTENSION_SETTINGS
+      );
+    };
+
+    void initializeSettings();
+    chrome.storage.onChanged.addListener(handleStorageChange);
+
+    return () => {
+      disposed = true;
+      chrome.storage.onChanged.removeListener(handleStorageChange);
+    };
+  }, []);
 
   const {
     collapsedWindowIds,
@@ -50,11 +111,9 @@ export default function App() {
   } = useCollapsedWindows(snapshot, commandActions.setGroupCollapsed);
 
   const sections = useMemo(
-    () => selectWindowSections(snapshot, collapsedWindowIds),
-    [collapsedWindowIds, snapshot]
+    () => selectWindowSections(snapshot, collapsedWindowIds, locale),
+    [collapsedWindowIds, locale, snapshot]
   );
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterMode, setFilterMode] = useState<SearchFilterMode>("filter");
   const searchActive = searchTerm.trim().length > 0;
   const rows = useMemo(
     () => flattenWindowSections(sections, searchActive ? { includeCollapsedChildren: true } : undefined),
@@ -67,14 +126,16 @@ export default function App() {
   );
 
   const matchCount = useMemo(() => {
-    if (!searchTerm.trim()) return 0;
-    if (filterMode === "filter") {
-      // In filter mode, filteredRows already only contains matching tabs
-      return filteredRows.filter((r) => r.kind === "tab").length;
+    if (!searchTerm.trim()) {
+      return 0;
     }
-    // In highlight mode, count only tabs that match
-    return filteredRows.filter((r) => r.kind === "tab" && r.matchesSearch).length;
-  }, [filteredRows, searchTerm, filterMode]);
+
+    if (filterMode === "filter") {
+      return filteredRows.filter((row) => row.kind === "tab").length;
+    }
+
+    return filteredRows.filter((row) => row.kind === "tab" && row.matchesSearch).length;
+  }, [filteredRows, filterMode, searchTerm]);
 
   const currentActiveTabId = useMemo(() => selectCurrentActiveTabId(snapshot), [snapshot]);
 
@@ -114,15 +175,17 @@ export default function App() {
       waitForInteractive: async () => {
         const timeoutAt = Date.now() + 10_000;
         while (Date.now() < timeoutAt) {
-          if (snapshot.version > 0 && panelController.isInteractive) return;
-          await new Promise((r) => setTimeout(r, 50));
+          if (snapshot.version > 0 && panelController.isInteractive) {
+            return;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 50));
         }
         throw new Error("Sidepanel did not become interactive within 10 seconds");
       },
       closeSidepanel: () => window.close()
     };
     window.__playwrightApi = api;
-  }, [snapshot, panelController.isInteractive, dispatchCommand]);
+  }, [dispatchCommand, panelController.isInteractive, snapshot]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -237,17 +300,25 @@ export default function App() {
   }
 
   function handleMoveToNewWindow(): void {
-    if (matchCount === 0) return;
+    if (matchCount === 0) {
+      return;
+    }
 
-    const matchingTabIds = filteredRows
-      .filter((r) => {
-        if (r.kind !== "tab") return false;
-        if (filterMode === "filter") return true;
-        return r.matchesSearch;
-      })
-      .map((r) => (r as { kind: "tab"; tab: { id: number } }).tab.id);
+    const matchingTabIds = filteredRows.reduce<number[]>((tabIds, row) => {
+      if (row.kind !== "tab") {
+        return tabIds;
+      }
 
-    if (matchingTabIds.length === 0) return;
+      if (filterMode === "highlight" && !row.matchesSearch) {
+        return tabIds;
+      }
+
+      return [...tabIds, row.tab.id];
+    }, []);
+
+    if (matchingTabIds.length === 0) {
+      return;
+    }
 
     postTraceEvent({
       event: "panel/search-move-to-new-window-dispatched",
@@ -261,7 +332,6 @@ export default function App() {
     });
 
     commandActions.moveTabsToNewWindow(matchingTabIds);
-
     setSearchTerm("");
   }
 
@@ -285,6 +355,7 @@ export default function App() {
   return (
     <div ref={appShellRef} className="app-shell">
       <SidepanelToolbar
+        locale={locale}
         appShellRef={appShellRef}
         selectedCount={selectedTabIds.length}
         hasCollapsedWindows={hasCollapsedWindows}
@@ -336,6 +407,7 @@ export default function App() {
       />
       <div ref={panelScrollRef} className="panel-scroll">
         <SidepanelStatus
+          locale={locale}
           errorMessage={errorMessage}
           isInteractive={isInteractive}
           isLoading={isLoading}
@@ -343,13 +415,18 @@ export default function App() {
           traceEnabled={traceSettings.verboseLoggingEnabled}
           traceEntryCount={traceEntryCount}
           traceUpdatedAt={traceUpdatedAt}
-          onCopyDebugTrace={errorMessage ? () => {
-            void handleCopyDebugTrace();
-          } : undefined}
+          onCopyDebugTrace={
+            errorMessage
+              ? () => {
+                  void handleCopyDebugTrace();
+                }
+              : undefined
+          }
           copyTraceState={copyTraceState}
         />
         {!isLoading ? (
           <VirtualizedWindowList
+            locale={locale}
             rows={filteredRows}
             currentActiveTabId={currentActiveTabId}
             closingTabIds={closingTabIdSet}
@@ -377,6 +454,7 @@ export default function App() {
         ) : null}
       </div>
       <SearchBar
+        locale={locale}
         searchTerm={searchTerm}
         filterMode={filterMode}
         matchCount={matchCount}

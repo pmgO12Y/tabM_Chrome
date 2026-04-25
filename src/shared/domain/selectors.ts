@@ -1,5 +1,6 @@
 import { NO_TAB_GROUP_ID } from "../defaults";
-import type { PanelRow, TabGroupRecord, TabRecord, TabStoreState, WindowSection, WindowSectionItem } from "../types";
+import { formatWindowTitle } from "../i18n";
+import type { PanelRow, SupportedLocale, TabGroupRecord, TabRecord, TabStoreState, WindowSection, WindowSectionItem } from "../types";
 
 type TabRow = Extract<PanelRow, { kind: "tab" }>;
 type GroupRow = Extract<PanelRow, { kind: "group" }>;
@@ -33,7 +34,8 @@ type WindowRowBlock = {
 
 export function selectWindowSections(
   state: TabStoreState,
-  collapsedWindowIds: readonly number[]
+  collapsedWindowIds: readonly number[],
+  locale: SupportedLocale = "en"
 ): WindowSection[] {
   const collapsedWindowSet = new Set(collapsedWindowIds);
   const visibleWindows = state.windowOrder
@@ -45,7 +47,7 @@ export function selectWindowSections(
 
   return visibleWindows.map(({ windowId, tabs }, visibleIndex) => ({
     windowId,
-    title: buildWindowTitle(tabs, visibleIndex + 1),
+    title: buildWindowTitle(tabs, visibleIndex + 1, locale),
     isFocused: state.focusedWindowId === windowId,
     collapsed: collapsedWindowSet.has(windowId),
     totalCount: tabs.length,
@@ -181,9 +183,17 @@ function selectTabsForWindow(state: TabStoreState, windowId: number): TabRecord[
     .filter((tab): tab is TabRecord => Boolean(tab));
 }
 
-function buildWindowTitle(tabs: readonly TabRecord[], visibleWindowIndex: number): string {
+function buildWindowTitle(
+  tabs: readonly TabRecord[],
+  visibleWindowIndex: number,
+  locale: SupportedLocale
+): string {
   const activeTabTitle = tabs.find((tab) => tab.active)?.title?.trim() ?? "";
-  return activeTabTitle ? `窗口 ${visibleWindowIndex} - ${activeTabTitle}` : `窗口 ${visibleWindowIndex}`;
+  return formatWindowTitle({
+    locale,
+    visibleWindowIndex,
+    activeTabTitle
+  });
 }
 
 function buildWindowSectionItems(tabs: readonly TabRecord[], state: TabStoreState): WindowSectionItem[] {

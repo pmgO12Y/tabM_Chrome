@@ -1,0 +1,11 @@
+{
+  "app_extension_name": {
+    "message": "Tab Sidebar Manager"
+  },
+  "app_extension_description": {
+    "message": "A minimal Chrome side panel tab finder that only keeps display and jump actions."
+  },
+  "app_action_title": {
+    "message": "Open Tab Sidebar Manager"
+  }
+}

@@ -1,4 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  applyDocumentLocale,
+  getUiLanguage,
+  resolveLocale,
+  translate,
+  type TranslationKey
+} from "../shared/i18n";
 import {
   DEFAULT_EXTENSION_SETTINGS,
   EXTENSION_SETTINGS_STORAGE_KEY,
@@ -6,14 +13,23 @@ import {
   resetExtensionSettings,
   saveExtensionSettings
 } from "../shared/settings";
-import type { ExtensionSettingsRecord } from "../shared/types";
+import type { ExtensionSettingsRecord, LocaleMode } from "../shared/types";
+
+const LANGUAGE_OPTIONS: LocaleMode[] = ["system", "zh-CN", "en"];
 
 export default function App() {
   const [settings, setSettings] = useState<ExtensionSettingsRecord>(DEFAULT_EXTENSION_SETTINGS);
   const [loading, setLoading] = useState(true);
+  const locale = useMemo(
+    () => resolveLocale({ settings, uiLanguage: getUiLanguage() }),
+    [settings]
+  );
 
   useEffect(() => {
-    document.title = "设置";
+    applyDocumentLocale({
+      locale,
+      titleKey: "app.settingsTitle"
+    });
 
     let disposed = false;
 
@@ -53,7 +69,7 @@ export default function App() {
       disposed = true;
       chrome.storage.onChanged.removeListener(handleStorageChange);
     };
-  }, []);
+  }, [locale]);
 
   async function handleBadgeEnabledChange(enabled: boolean): Promise<void> {
     const nextSettings = await saveExtensionSettings({
@@ -66,32 +82,75 @@ export default function App() {
     setSettings(nextSettings);
   }
 
+  async function handleLocaleModeChange(mode: LocaleMode): Promise<void> {
+    const nextSettings = await saveExtensionSettings({
+      ...settings,
+      locale: {
+        mode
+      }
+    });
+    setSettings(nextSettings);
+  }
+
   async function handleResetSettings(): Promise<void> {
     const nextSettings = await resetExtensionSettings();
     setSettings(nextSettings);
   }
 
+  const t = (key: TranslationKey, values?: Record<string, string | number>) =>
+    translate(locale, key, values);
+
   return (
     <main className="settings-page">
       <header className="settings-page__header">
         <div>
-          <p className="settings-page__eyebrow">Chrome 扩展</p>
-          <h1 className="settings-page__title">设置</h1>
-          <p className="settings-page__description">修改后立即生效。</p>
+          <p className="settings-page__eyebrow">{t("options.eyebrow")}</p>
+          <h1 className="settings-page__title">{t("options.title")}</h1>
+          <p className="settings-page__description">{t("options.description")}</p>
         </div>
       </header>
+
+      <section className="settings-card" aria-labelledby="settings-language-title">
+        <div className="settings-card__header">
+          <div>
+            <h2 id="settings-language-title" className="settings-card__title">{t("options.section.language.title")}</h2>
+            <p className="settings-card__description">{t("options.section.language.description")}</p>
+          </div>
+        </div>
+        <label className="settings-select" htmlFor="locale-mode">
+          <div className="settings-select__copy">
+            <span className="settings-toggle__label">{t("options.language.label")}</span>
+            <span className="settings-toggle__hint">{t("options.language.hint")}</span>
+          </div>
+          <select
+            id="locale-mode"
+            className="settings-select__input"
+            value={settings.locale.mode}
+            onChange={(event) => {
+              void handleLocaleModeChange(event.target.value as LocaleMode);
+            }}
+            disabled={loading}
+          >
+            {LANGUAGE_OPTIONS.map((mode) => (
+              <option key={mode} value={mode}>
+                {t(`options.language.option.${mode}` as TranslationKey)}
+              </option>
+            ))}
+          </select>
+        </label>
+      </section>
 
       <section className="settings-card" aria-labelledby="settings-badge-title">
         <div className="settings-card__header">
           <div>
-            <h2 id="settings-badge-title" className="settings-card__title">徽标显示</h2>
-            <p className="settings-card__description">控制工具栏图标上的数字徽标是否显示。</p>
+            <h2 id="settings-badge-title" className="settings-card__title">{t("options.section.badge.title")}</h2>
+            <p className="settings-card__description">{t("options.section.badge.description")}</p>
           </div>
         </div>
         <label className="settings-toggle" htmlFor="badge-enabled">
           <div className="settings-toggle__copy">
-            <span className="settings-toggle__label">显示工具栏数字徽标</span>
-            <span className="settings-toggle__hint">关闭后不再显示当前标签总数。</span>
+            <span className="settings-toggle__label">{t("options.badge.label")}</span>
+            <span className="settings-toggle__hint">{t("options.badge.hint")}</span>
           </div>
           <input
             id="badge-enabled"
@@ -109,8 +168,8 @@ export default function App() {
       <section className="settings-card" aria-labelledby="settings-ui-title">
         <div className="settings-card__header">
           <div>
-            <h2 id="settings-ui-title" className="settings-card__title">界面显示</h2>
-            <p className="settings-card__description">即将支持</p>
+            <h2 id="settings-ui-title" className="settings-card__title">{t("options.section.ui.title")}</h2>
+            <p className="settings-card__description">{t("options.comingSoon")}</p>
           </div>
         </div>
       </section>
@@ -118,8 +177,8 @@ export default function App() {
       <section className="settings-card" aria-labelledby="settings-search-title">
         <div className="settings-card__header">
           <div>
-            <h2 id="settings-search-title" className="settings-card__title">搜索交互</h2>
-            <p className="settings-card__description">即将支持</p>
+            <h2 id="settings-search-title" className="settings-card__title">{t("options.section.search.title")}</h2>
+            <p className="settings-card__description">{t("options.comingSoon")}</p>
           </div>
         </div>
       </section>
@@ -127,8 +186,8 @@ export default function App() {
       <section className="settings-card" aria-labelledby="settings-debug-title">
         <div className="settings-card__header">
           <div>
-            <h2 id="settings-debug-title" className="settings-card__title">调试选项</h2>
-            <p className="settings-card__description">即将支持</p>
+            <h2 id="settings-debug-title" className="settings-card__title">{t("options.section.debug.title")}</h2>
+            <p className="settings-card__description">{t("options.comingSoon")}</p>
           </div>
         </div>
       </section>
@@ -142,7 +201,7 @@ export default function App() {
           }}
           disabled={loading}
         >
-          恢复默认设置
+          {t("options.reset")}
         </button>
       </footer>
     </main>

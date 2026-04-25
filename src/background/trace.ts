@@ -1,3 +1,4 @@
+import { getRuntimeLocale, translate } from "../shared/i18n";
 import type {
   PanelTraceEventPayload,
   TabStoreSnapshot,
@@ -159,16 +160,31 @@ export function formatTraceTimeline(
   summary: TraceSummaryRecord = summarizeTraceEntries(entries),
   exportedUpdatedAt: string | null = updatedAt
 ): string {
+  const locale = getRuntimeLocale();
   const header = [
-    "Chrome Sidepanel Debug Timeline",
-    `Updated At: ${exportedUpdatedAt ?? "unknown"}`,
-    `Verbose Logging: ${settings.verboseLoggingEnabled ? "enabled" : "disabled"}`,
-    `Entry Count: ${summary.entryCount}`,
-    `By Source: ${JSON.stringify(summary.bySource)}`,
-    `By Level: ${JSON.stringify(summary.byLevel)}`,
-    `By Category: ${JSON.stringify(summary.byCategory)}`,
+    translate(locale, "trace.timeline.header"),
+    translate(locale, "trace.timeline.updatedAt", {
+      value: exportedUpdatedAt ?? "unknown"
+    }),
+    translate(locale, "trace.timeline.verbose", {
+      value: settings.verboseLoggingEnabled
+        ? translate(locale, "trace.timeline.verbose.enabled")
+        : translate(locale, "trace.timeline.verbose.disabled")
+    }),
+    translate(locale, "trace.timeline.entryCount", {
+      count: summary.entryCount
+    }),
+    translate(locale, "trace.timeline.bySource", {
+      value: JSON.stringify(summary.bySource)
+    }),
+    translate(locale, "trace.timeline.byLevel", {
+      value: JSON.stringify(summary.byLevel)
+    }),
+    translate(locale, "trace.timeline.byCategory", {
+      value: JSON.stringify(summary.byCategory)
+    }),
     "",
-    "Timeline:"
+    translate(locale, "trace.timeline.label")
   ];
 
   return [...header, ...entries.map(formatTraceTimelineEntry)].join("\n");

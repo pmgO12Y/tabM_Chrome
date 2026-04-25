@@ -2,8 +2,26 @@ export interface BadgeSettingsRecord {
   enabled: boolean;
 }
 
+export type LocaleMode = "system" | "zh-CN" | "en";
+
+export type SupportedLocale = "zh-CN" | "en";
+
+export interface LocaleSettingsRecord {
+  mode: LocaleMode;
+}
+
+export type LocalizedTextRecord =
+  | {
+      key: string;
+      values?: Record<string, string | number>;
+    }
+  | {
+      message: string;
+    };
+
 export interface ExtensionSettingsRecord {
   badge: BadgeSettingsRecord;
+  locale: LocaleSettingsRecord;
   updatedAt: string;
 }
 

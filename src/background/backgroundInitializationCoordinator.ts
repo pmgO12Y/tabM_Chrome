@@ -69,5 +69,5 @@ export function createBackgroundInitializationCoordinator(
 }
 
 function normalizeTabs(tabs: readonly chrome.tabs.Tab[]): TabRecord[] {
-  return tabs.map(normalizeChromeTab).filter((tab): tab is TabRecord => Boolean(tab));
+  return tabs.map((tab) => normalizeChromeTab(tab)).filter((tab): tab is TabRecord => Boolean(tab));
 }

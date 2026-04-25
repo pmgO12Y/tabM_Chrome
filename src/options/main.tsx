@@ -1,12 +1,13 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { getRuntimeLocale, translate } from "../shared/i18n";
 import App from "./App";
 import "./styles.css";
 
 const container = document.getElementById("root");
 
 if (!container) {
-  throw new Error("未找到设置页挂载节点。");
+  throw new Error(translate(getRuntimeLocale(), "error.options.mountMissing"));
 }
 
 createRoot(container).render(

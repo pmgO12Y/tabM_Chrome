@@ -1,4 +1,5 @@
 export * from "./defaults";
+export * from "./i18n";
 export * from "./domain/favicon";
 export * from "./domain/normalizeGroup";
 export * from "./domain/normalizeTab";

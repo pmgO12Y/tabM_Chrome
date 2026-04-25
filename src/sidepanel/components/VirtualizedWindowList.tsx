@@ -1,10 +1,12 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { translate, type SupportedLocale } from "../../shared/i18n";
 import type { PanelRow } from "../../shared/types";
 import type { DragSource, DropTarget } from "./listDrag";
 import { buildDragCommand, createDragSource, createSelectedTabsDragSource, resolveDropTarget } from "./listDrag";
 import { RowShell } from "./listRows";
 
 interface VirtualizedWindowListProps {
+  locale: SupportedLocale;
   rows: PanelRow[];
   currentActiveTabId: number | null;
   closingTabIds: ReadonlySet<number>;
@@ -310,6 +312,7 @@ export function calculateActiveRowScrollAdjustment(params: {
 }
 
 export function VirtualizedWindowList({
+  locale,
   rows,
   currentActiveTabId,
   closingTabIds,
@@ -653,10 +656,14 @@ export function VirtualizedWindowList({
     return (
       <div className="empty-state">
         <p className="empty-state__title">
-          {searchActive ? "没有匹配的标签页" : "没有可显示的标签页"}
+          {searchActive
+            ? translate(locale, "sidepanel.list.emptySearchTitle")
+            : translate(locale, "sidepanel.list.emptyTitle")}
         </p>
         <p className="empty-state__body">
-          {searchActive ? "试试其他关键词，或按 Esc 清空搜索" : "打开网页后，这里会自动出现对应标签。"}
+          {searchActive
+            ? translate(locale, "sidepanel.list.emptySearchBody")
+            : translate(locale, "sidepanel.list.emptyBody")}
         </p>
       </div>
     );
@@ -666,7 +673,7 @@ export function VirtualizedWindowList({
     <div
       className="virtual-list"
       role="tree"
-      aria-label="标签列表"
+      aria-label={translate(locale, "sidepanel.list.aria")}
       style={getStickyScrollStyle(windowStickyOffset)}
       onPointerDown={(event) => {
         if (event.target instanceof Element && event.target.closest(".stack-list__item")) {
@@ -688,6 +695,7 @@ export function VirtualizedWindowList({
             className="window-section"
           >
             <RowShell
+              locale={locale}
               row={section.windowRow}
               rowRefs={rowRefs}
               currentActiveTabId={currentActiveTabId}
@@ -717,6 +725,7 @@ export function VirtualizedWindowList({
                 {section.items.map((item) =>
                   item.kind === "single" ? (
                     <RowShell
+                      locale={locale}
                       key={item.row.key}
                       row={item.row}
                       rowRefs={rowRefs}
@@ -749,6 +758,7 @@ export function VirtualizedWindowList({
                       }`}
                     >
                       <RowShell
+                        locale={locale}
                         row={item.groupRow}
                         rowRefs={rowRefs}
                         currentActiveTabId={currentActiveTabId}
@@ -774,6 +784,7 @@ export function VirtualizedWindowList({
                         <div className="group-block__body">
                           {item.childRows.map((row, index) => (
                             <RowShell
+                              locale={locale}
                               key={row.key}
                               row={row}
                               rowRefs={rowRefs}

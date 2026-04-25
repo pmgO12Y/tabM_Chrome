@@ -1,3 +1,4 @@
+import { createLocalizedText, getRuntimeLocale, translateText } from "../shared/i18n";
 import type { TabCommand } from "../shared/types";
 
 export interface CommandExecutorChromeApi {
@@ -350,7 +351,9 @@ function uniqueWindowIds(windowIds: readonly number[]): number[] {
 
 function assertMovableTabs(tabs: readonly ExistingTab[]): void {
   if (tabs.some((tab) => tab.pinned)) {
-    throw new Error("暂不支持拖动置顶标签");
+    throw new Error(
+      translateText(getRuntimeLocale(), createLocalizedText("error.commandPinnedMoveUnsupported"))
+    );
   }
 }
 

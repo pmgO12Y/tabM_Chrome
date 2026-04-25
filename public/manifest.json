@@ -1,8 +1,8 @@
 {
-  "manifest_version": 3,
-  "name": "侧边栏标签管家",
+  "default_locale": "en",
+  "name": "__MSG_app_extension_name__",
   "version": "2.6.1",
-  "description": "极简的 Chrome 侧边栏网页定位插件，只保留显示和跳转能力。",
+  "description": "__MSG_app_extension_description__",
   "permissions": [
     "tabs",
     "tabGroups",
@@ -25,6 +25,6 @@
     "128": "icons/icon128.png"
   },
   "action": {
-    "default_title": "打开侧边栏标签管家"
+    "default_title": "__MSG_app_action_title__"
   }
 }

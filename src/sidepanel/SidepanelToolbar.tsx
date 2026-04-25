@@ -1,5 +1,6 @@
 import { CloseSmall, Download, Refresh, SettingTwo, SwitchButton, ExpandDownOne, FoldUpOne } from "@icon-park/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { translate, type SupportedLocale } from "../shared/i18n";
 import { resolveBulkToggleToolbarAction } from "./toolbarActions";
 import { calculateToolbarTooltipPlacement, type ToolbarTooltipPlacement } from "./toolbarTooltip";
 
@@ -19,6 +20,7 @@ interface ToolbarAction {
 }
 
 export function SidepanelToolbar({
+  locale,
   appShellRef,
   selectedCount,
   hasCollapsedWindows,
@@ -34,6 +36,7 @@ export function SidepanelToolbar({
   onExportTrace,
   onClearTrace
 }: {
+  locale: SupportedLocale;
   appShellRef: React.RefObject<HTMLDivElement | null>;
   selectedCount: number;
   hasCollapsedWindows: boolean;
@@ -53,21 +56,24 @@ export function SidepanelToolbar({
   const [toolbarTooltipPlacement, setToolbarTooltipPlacement] = useState<ToolbarTooltipPlacement | null>(null);
   const toolbarTooltipRef = useRef<HTMLDivElement | null>(null);
 
-  const bulkToggleAction = resolveBulkToggleToolbarAction({
-    hasCollapsedWindows,
-    hasCollapsedGroups
-  });
+  const bulkToggleAction = resolveBulkToggleToolbarAction(
+    {
+      hasCollapsedWindows,
+      hasCollapsedGroups
+    },
+    locale
+  );
 
   const toolbarActions: ToolbarAction[] = [
     {
       key: "resync",
-      label: "重新同步",
+      label: translate(locale, "sidepanel.toolbar.resync"),
       icon: Refresh,
       onClick: onResync
     },
     {
       key: "settings",
-      label: "设置",
+      label: translate(locale, "sidepanel.toolbar.settings"),
       icon: SettingTwo,
       onClick: onOpenSettings
     },
@@ -79,20 +85,22 @@ export function SidepanelToolbar({
     },
     {
       key: "trace-toggle",
-      label: traceSettings.verboseLoggingEnabled ? "详细日志：开" : "详细日志：关",
+      label: traceSettings.verboseLoggingEnabled
+        ? translate(locale, "sidepanel.toolbar.traceOn")
+        : translate(locale, "sidepanel.toolbar.traceOff"),
       icon: SwitchButton,
       onClick: onToggleVerboseTrace,
       active: traceSettings.verboseLoggingEnabled
     },
     {
       key: "trace-export",
-      label: "导出日志",
+      label: translate(locale, "sidepanel.toolbar.exportTrace"),
       icon: Download,
       onClick: onExportTrace
     },
     {
       key: "trace-clear",
-      label: "清空日志",
+      label: translate(locale, "sidepanel.toolbar.clearTrace"),
       icon: CloseSmall,
       onClick: onClearTrace
     },
@@ -100,7 +108,9 @@ export function SidepanelToolbar({
       ? [
           {
             key: "close-selected",
-            label: `关闭已选（${selectedCount}）`,
+            label: translate(locale, "sidepanel.toolbar.closeSelected", {
+              count: selectedCount
+            }),
             icon: CloseSmall,
             onClick: onCloseSelected
           }
@@ -166,10 +176,12 @@ export function SidepanelToolbar({
       <div className="panel-toolbar">
         {selectedCount > 0 ? (
           <div className="panel-toolbar__selection" aria-live="polite">
-            已选 {selectedCount} 项
+            {translate(locale, "sidepanel.toolbar.selectedCount", {
+              count: selectedCount
+            })}
           </div>
         ) : null}
-        <div className="panel-toolbar__actions" role="toolbar" aria-label="侧边栏操作">
+        <div className="panel-toolbar__actions" role="toolbar" aria-label={translate(locale, "sidepanel.toolbar.aria")}>
           {toolbarActions.map(({ key, label, icon: Icon, onClick, active = false }) => (
             <button
               key={key}

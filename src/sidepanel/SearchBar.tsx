@@ -1,5 +1,6 @@
 import { CloseSmall, Filter, MonitorOne, Star } from "@icon-park/react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { translate, type SupportedLocale } from "../shared/i18n";
 import type { ToolbarTooltipPlacement } from "./toolbarTooltip";
 import type { SearchFilterMode } from "../shared/types";
 
@@ -23,6 +24,7 @@ interface SearchTooltipState {
 }
 
 export function SearchBar({
+  locale,
   searchTerm,
   filterMode,
   matchCount,
@@ -32,7 +34,9 @@ export function SearchBar({
   onMoveToNewWindow,
   onClearSearch,
   onTraceEvent
-}: SearchBarProps) {
+}: SearchBarProps & {
+  locale: SupportedLocale;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const searchBarRef = useRef<HTMLDivElement>(null);
   const [searchTooltip, setSearchTooltip] = useState<SearchTooltipState | null>(null);
@@ -149,14 +153,17 @@ export function SearchBar({
     };
   }, [filterMode, matchCount, onTraceEvent, searchTerm]);
 
-  const modeToggleLabel = filterMode === "filter" ? "过滤模式" : "高亮模式";
+  const modeToggleLabel =
+    filterMode === "filter"
+      ? translate(locale, "sidepanel.search.filter")
+      : translate(locale, "sidepanel.search.highlight");
 
   const searchTooltipLabel = searchTooltip
     ? searchTooltip.type === "clear"
-      ? "清除搜索"
+      ? translate(locale, "sidepanel.search.clear")
       : searchTooltip.type === "mode"
         ? modeToggleLabel
-        : "移动到新窗口"
+        : translate(locale, "sidepanel.search.moveToNewWindow")
     : null;
 
   return (
@@ -167,11 +174,11 @@ export function SearchBar({
             ref={inputRef}
             type="text"
             className="search-bar__input"
-            placeholder="搜索标签..."
+            placeholder={translate(locale, "sidepanel.search.placeholder")}
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             disabled={disabled}
-            aria-label="搜索标签"
+            aria-label={translate(locale, "sidepanel.search.input")}
           />
           {showSearch && (
             <button
@@ -184,7 +191,7 @@ export function SearchBar({
               onFocus={(event) => showSearchTooltip("clear", event.currentTarget)}
               onBlur={hideSearchTooltip}
               disabled={disabled}
-              aria-label="清除搜索"
+              aria-label={translate(locale, "sidepanel.search.clear")}
             >
               <CloseSmall theme="outline" size="14" />
             </button>
@@ -194,7 +201,9 @@ export function SearchBar({
         {showSearch && (
           <>
             <span className="search-bar__count">
-              {matchCount} 个匹配
+              {translate(locale, "sidepanel.search.matchCount", {
+                count: matchCount
+              })}
             </span>
 
             <button
@@ -207,7 +216,7 @@ export function SearchBar({
               onFocus={(event) => showSearchTooltip("mode", event.currentTarget)}
               onBlur={hideSearchTooltip}
               disabled={disabled}
-              aria-label={filterMode === "filter" ? "过滤模式" : "高亮模式"}
+              aria-label={modeToggleLabel}
             >
               {filterMode === "filter" ? (
                 <Filter theme="outline" size="14" />
@@ -226,7 +235,7 @@ export function SearchBar({
               onFocus={(event) => showSearchTooltip("move", event.currentTarget)}
               onBlur={hideSearchTooltip}
               disabled={disabled || matchCount === 0}
-              aria-label="将匹配的标签移动到新窗口"
+              aria-label={translate(locale, "sidepanel.search.moveToNewWindow")}
             >
               <MonitorOne theme="outline" size="14" />
             </button>

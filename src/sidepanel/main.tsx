@@ -1,6 +1,7 @@
 import { Component, StrictMode, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import "@icon-park/react/styles/index.css";
+import { getRuntimeLocale, translate } from "../shared/i18n";
 import App from "./App";
 import "./styles.css";
 
@@ -8,7 +9,7 @@ const container = document.getElementById("root");
 const bootBridge = getBootBridge();
 
 if (!container) {
-  throw new Error("未找到侧边栏挂载节点。");
+  throw new Error(translate(getRuntimeLocale(), "error.sidepanel.mountMissing"));
 }
 
 class SidepanelErrorBoundary extends Component<
@@ -21,12 +22,18 @@ class SidepanelErrorBoundary extends Component<
 
   static getDerivedStateFromError(error: unknown) {
     return {
-      errorMessage: error instanceof Error ? error.message : "侧边栏启动失败。"
+      errorMessage:
+        error instanceof Error
+          ? error.message
+          : translate(getRuntimeLocale(), "error.sidepanel.renderFailed")
     };
   }
 
   override componentDidCatch(error: unknown) {
-    const message = error instanceof Error ? error.message : "侧边栏启动失败。";
+    const message =
+      error instanceof Error
+        ? error.message
+        : translate(getRuntimeLocale(), "error.sidepanel.renderFailed");
     bootBridge?.fatal(message);
     console.error("Side panel render error:", error);
   }
@@ -35,9 +42,9 @@ class SidepanelErrorBoundary extends Component<
     if (this.state.errorMessage) {
       return (
         <div className="fatal-error" role="alert">
-          <p className="fatal-error__title">侧边栏启动失败</p>
+          <p className="fatal-error__title">{translate(getRuntimeLocale(), "boot.fatalTitle")}</p>
           <p className="fatal-error__body">{this.state.errorMessage}</p>
-          <p className="fatal-error__hint">请到 chrome://extensions 里重新加载扩展后再试。</p>
+          <p className="fatal-error__hint">{translate(getRuntimeLocale(), "error.sidepanel.retryHint")}</p>
         </div>
       );
     }

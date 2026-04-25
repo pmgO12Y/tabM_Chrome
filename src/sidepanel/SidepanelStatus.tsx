@@ -1,4 +1,7 @@
+import { translate, type SupportedLocale } from "../shared/i18n";
+
 export function SidepanelStatus({
+  locale,
   errorMessage,
   isInteractive,
   isLoading,
@@ -9,6 +12,7 @@ export function SidepanelStatus({
   onCopyDebugTrace,
   copyTraceState
 }: {
+  locale: SupportedLocale;
   errorMessage: string | null;
   isInteractive: boolean;
   isLoading: boolean;
@@ -22,9 +26,11 @@ export function SidepanelStatus({
   if (isLoading) {
     return (
       <div className="loading-state" aria-live="polite">
-        <p className="loading-state__title">正在同步标签</p>
+        <p className="loading-state__title">{translate(locale, "sidepanel.loading.title")}</p>
         <p className="loading-state__body">
-          {isResyncing ? "正在重新连接后台并刷新列表。" : "正在连接后台并读取最新标签状态。"}
+          {isResyncing
+            ? translate(locale, "sidepanel.loading.bodyResync")
+            : translate(locale, "sidepanel.loading.body")}
         </p>
       </div>
     );
@@ -38,27 +44,37 @@ export function SidepanelStatus({
     <>
       {traceEnabled ? (
         <div className="debug-state" role="status" aria-live="polite">
-          <p className="debug-state__title">详细日志记录中</p>
+          <p className="debug-state__title">{translate(locale, "sidepanel.debug.title")}</p>
           <p className="debug-state__body">
-            已记录 {traceEntryCount ?? 0} 条，保留完整标题与 URL，可在顶部导出或清空。
+            {translate(locale, "sidepanel.debug.body", {
+              count: traceEntryCount ?? 0
+            })}
           </p>
-          {traceUpdatedAt ? <p className="debug-state__hint">最近更新：{new Date(traceUpdatedAt).toLocaleString()}</p> : null}
+          {traceUpdatedAt ? (
+            <p className="debug-state__hint">
+              {translate(locale, "sidepanel.debug.updatedAt", {
+                value: new Date(traceUpdatedAt).toLocaleString(locale)
+              })}
+            </p>
+          ) : null}
         </div>
       ) : null}
       {errorMessage ? (
         <div className="error-state" role="alert">
-          <p className="error-state__title">同步异常</p>
+          <p className="error-state__title">{translate(locale, "sidepanel.error.title")}</p>
           <p className="error-state__body">{errorMessage}</p>
           <p className="error-state__hint">
-            {isInteractive ? "插件正在自动恢复，同步回来后会继续可用。" : "插件正在尝试重连，恢复后可以继续点击。"}
+            {isInteractive
+              ? translate(locale, "sidepanel.error.hintInteractive")
+              : translate(locale, "sidepanel.error.hintReconnecting")}
           </p>
           {onCopyDebugTrace ? (
             <>
               <button type="button" className="panel-toolbar__button" onClick={onCopyDebugTrace}>
-                复制调试日志
+                {translate(locale, "sidepanel.error.copyTrace")}
               </button>
-              {copyTraceState === "success" ? <p className="error-state__hint">调试日志已复制。</p> : null}
-              {copyTraceState === "error" ? <p className="error-state__hint">复制日志失败，请稍后重试。</p> : null}
+              {copyTraceState === "success" ? <p className="error-state__hint">{translate(locale, "sidepanel.error.copyTraceSuccess")}</p> : null}
+              {copyTraceState === "error" ? <p className="error-state__hint">{translate(locale, "sidepanel.error.copyTraceFailed")}</p> : null}
             </>
           ) : null}
         </div>

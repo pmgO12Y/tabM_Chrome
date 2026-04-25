@@ -1,7 +1,11 @@
 import { NO_TAB_GROUP_ID } from "../defaults";
-import type { TabRecord } from "../types";
+import { getDisplayTabTitle } from "../i18n";
+import type { SupportedLocale, TabRecord } from "../types";
 
-export function normalizeChromeTab(tab: chrome.tabs.Tab): TabRecord | null {
+export function normalizeChromeTab(
+  tab: chrome.tabs.Tab,
+  locale?: SupportedLocale
+): TabRecord | null {
   if (tab.id == null || tab.windowId == null || tab.index == null) {
     return null;
   }
@@ -13,7 +17,7 @@ export function normalizeChromeTab(tab: chrome.tabs.Tab): TabRecord | null {
     windowId: tab.windowId,
     index: tab.index,
     groupId: tab.groupId ?? NO_TAB_GROUP_ID,
-    title: tab.title?.trim() || "未命名标签页",
+    title: getDisplayTabTitle(tab.title ?? "", locale),
     url: pageUrl,
     pinned: Boolean(tab.pinned),
     active: Boolean(tab.active),

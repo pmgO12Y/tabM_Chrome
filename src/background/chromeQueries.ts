@@ -98,7 +98,7 @@ async function queryNormalizedTabs(
 }
 
 function normalizeQueriedTabs(tabs: readonly chrome.tabs.Tab[]): TabRecord[] {
-  return tabs.map(normalizeChromeTab).filter(isPresent);
+  return tabs.map((tab) => normalizeChromeTab(tab)).filter(isPresent);
 }
 
 function isPresent<T>(value: T | null | undefined): value is T {

@@ -1,3 +1,4 @@
+import { translate, type SupportedLocale } from "../shared/i18n";
 import { getLastFocusedWindowId, queryAllTabGroupsForTabs } from "../background/chromeQueries";
 import { normalizeChromeTab } from "../shared/domain/normalizeTab";
 import { createSnapshot, createStateFromTabs } from "../shared/domain/tabState";
@@ -15,7 +16,7 @@ export interface PanelBootstrapAdapter {
   }): Promise<void>;
 }
 
-export function createPanelBootstrapAdapter(): PanelBootstrapAdapter {
+export function createPanelBootstrapAdapter(locale: SupportedLocale): PanelBootstrapAdapter {
   return {
     async bootstrap(params): Promise<void> {
       const { onStart, onProgress, onSnapshot, onError, shouldStop } = params;
@@ -35,6 +36,7 @@ export function createPanelBootstrapAdapter(): PanelBootstrapAdapter {
 
         const normalizedTabs = await hydrateLocalTabs({
           tabs,
+          locale,
           onProgress,
           shouldStop
         });
@@ -49,7 +51,7 @@ export function createPanelBootstrapAdapter(): PanelBootstrapAdapter {
           return;
         }
 
-        onError("首屏数据加载失败，正在等待后台同步。");
+        onError(translate(locale, "error.panel.bootstrapFailed"));
       }
     }
   };
@@ -57,16 +59,17 @@ export function createPanelBootstrapAdapter(): PanelBootstrapAdapter {
 
 async function hydrateLocalTabs(params: {
   tabs: readonly chrome.tabs.Tab[];
+  locale: SupportedLocale;
   onProgress: (loaded: number, total: number) => void;
   shouldStop: () => boolean;
 }): Promise<TabRecord[] | null> {
-  const { tabs, onProgress, shouldStop } = params;
+  const { tabs, locale, onProgress, shouldStop } = params;
   const normalizedTabs: TabRecord[] = [];
   onProgress(0, tabs.length);
 
   for (let index = 0; index < tabs.length; index += BOOTSTRAP_CHUNK_SIZE) {
     const chunk = tabs.slice(index, index + BOOTSTRAP_CHUNK_SIZE);
-    normalizedTabs.push(...normalizeTabChunk(chunk));
+    normalizedTabs.push(...normalizeTabChunk(chunk, locale));
 
     if (shouldStop()) {
       return null;
@@ -82,8 +85,11 @@ async function hydrateLocalTabs(params: {
   return normalizedTabs;
 }
 
-function normalizeTabChunk(tabs: readonly chrome.tabs.Tab[]): TabRecord[] {
-  return tabs.map(normalizeChromeTab).filter((tab): tab is TabRecord => Boolean(tab));
+function normalizeTabChunk(
+  tabs: readonly chrome.tabs.Tab[],
+  locale: SupportedLocale
+): TabRecord[] {
+  return tabs.map((tab) => normalizeChromeTab(tab, locale)).filter((tab): tab is TabRecord => Boolean(tab));
 }
 
 function nextPaint(): Promise<void> {

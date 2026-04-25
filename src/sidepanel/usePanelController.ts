@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useRef } from "react";
+import { translate, type SupportedLocale } from "../shared/i18n";
 import type { PanelToBackgroundMessage } from "../shared/messages";
 import type {
   PanelTraceEventPayload,
@@ -9,7 +10,7 @@ import { createPanelBootstrapAdapter } from "./panelBootstrapAdapter";
 import { createPanelPortAdapter, type PanelPortAdapter, type TraceBundlePayload } from "./panelPortAdapter";
 import { createInitialPanelControllerState, reducePanelControllerState } from "./panelControllerState";
 
-export function usePanelController() {
+export function usePanelController(locale: SupportedLocale) {
   const [state, dispatchState] = useReducer(
     reducePanelControllerState,
     undefined,
@@ -20,7 +21,7 @@ export function usePanelController() {
 
   useEffect(() => {
     let disposed = false;
-    const bootstrapAdapter = createPanelBootstrapAdapter();
+    const bootstrapAdapter = createPanelBootstrapAdapter(locale);
 
     const portAdapter = createPanelPortAdapter({
       onMessage: (message) => {
@@ -35,7 +36,8 @@ export function usePanelController() {
       },
       onConnectionFailed: () => {
         dispatchState({
-          type: "connection/failed"
+          type: "connection/failed",
+          message: translate(locale, "error.panel.connectionFailed")
         });
       },
       onDisconnected: () => {
@@ -86,7 +88,7 @@ export function usePanelController() {
         portAdapterRef.current = null;
       }
     };
-  }, [state.connectionEpoch]);
+  }, [locale, state.connectionEpoch]);
 
   function dispatchCommand(command: TabCommand): void {
     portAdapterRef.current?.postMessage({
@@ -153,7 +155,7 @@ export function usePanelController() {
   async function requestTraceBundle() {
     const portAdapter = portAdapterRef.current;
     if (!portAdapter) {
-      throw new Error("后台连接不可用");
+      throw new Error(translate(locale, "error.panel.connectionUnavailable"));
     }
 
     return await portAdapter.requestTraceBundle();

@@ -1,6 +1,7 @@
 import { CloseSmall, Pin } from "@icon-park/react";
 import { useEffect, useState } from "react";
 import { buildTabFaviconCandidates } from "../../shared/domain/favicon";
+import { translate, type SupportedLocale } from "../../shared/i18n";
 import type { PanelRow } from "../../shared/types";
 import type { DragSource, DropTarget } from "./listDrag";
 import {
@@ -11,6 +12,7 @@ import {
 } from "./VirtualizedWindowList";
 
 export function RowShell({
+  locale,
   row,
   rowRefs,
   currentActiveTabId,
@@ -34,6 +36,7 @@ export function RowShell({
   visuallyExpanded = false,
   onElementRefChange
 }: {
+  locale: SupportedLocale;
   row: PanelRow;
   rowRefs: React.MutableRefObject<Map<string, HTMLDivElement>>;
   currentActiveTabId: number | null;
@@ -84,6 +87,7 @@ export function RowShell({
       }}
     >
       <PanelListRow
+        locale={locale}
         row={row}
         currentActiveTabId={currentActiveTabId}
         closingTabIds={closingTabIds}
@@ -107,6 +111,7 @@ export function RowShell({
 }
 
 function PanelListRow({
+  locale,
   row,
   currentActiveTabId,
   closingTabIds,
@@ -125,6 +130,7 @@ function PanelListRow({
   groupedTabColor,
   visuallyExpanded = false
 }: {
+  locale: SupportedLocale;
   row: PanelRow;
   currentActiveTabId: number | null;
   closingTabIds: ReadonlySet<number>;
@@ -172,7 +178,7 @@ function PanelListRow({
         </span>
         <span className="window-row__title">{row.title}</span>
         <span className="window-row__meta">
-          {row.isFocused ? <span className="window-row__current">当前</span> : null}
+          {row.isFocused ? <span className="window-row__current">{translate(locale, "sidepanel.window.current")}</span> : null}
           <span className="window-row__count">{row.totalCount}</span>
         </span>
       </button>
@@ -237,7 +243,9 @@ function PanelListRow({
         className="tab-row__main"
         role="treeitem"
         aria-level={groupedTabColor != null ? 3 : 2}
-        aria-label={`切换到标签页 ${row.tab.title}`}
+        aria-label={translate(locale, "sidepanel.tab.activate", {
+          title: row.tab.title
+        })}
         aria-current={isCurrentActive ? "page" : undefined}
         aria-selected={isSelected}
         onClick={(event) =>
@@ -264,7 +272,7 @@ function PanelListRow({
             event.stopPropagation();
             onTogglePinned(row.tab.id, !row.tab.pinned);
           }}
-          aria-label={row.tab.pinned ? "取消固定标签" : "固定标签"}
+          aria-label={row.tab.pinned ? translate(locale, "sidepanel.tab.unpin") : translate(locale, "sidepanel.tab.pin")}
           aria-pressed={row.tab.pinned}
           disabled={tabDisabled}
         >
@@ -277,7 +285,7 @@ function PanelListRow({
             event.stopPropagation();
             onCloseTab(row.tab.id);
           }}
-          aria-label="关闭标签"
+          aria-label={translate(locale, "sidepanel.tab.close")}
           disabled={tabDisabled}
         >
           <CloseSmall theme="outline" size="16" />

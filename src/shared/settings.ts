@@ -1,3 +1,4 @@
+import { DEFAULT_LOCALE_MODE } from "./i18n";
 import type { ExtensionSettingsRecord } from "./types";
 
 interface ExtensionSettingsReader {
@@ -14,6 +15,9 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettingsRecord = {
   badge: {
     enabled: true
   },
+  locale: {
+    mode: DEFAULT_LOCALE_MODE
+  },
   updatedAt: new Date(0).toISOString()
 };
 
@@ -23,6 +27,9 @@ export function mergeExtensionSettings(
   return {
     badge: {
       enabled: value?.badge?.enabled ?? DEFAULT_EXTENSION_SETTINGS.badge.enabled
+    },
+    locale: {
+      mode: value?.locale?.mode ?? DEFAULT_EXTENSION_SETTINGS.locale.mode
     },
     updatedAt: value?.updatedAt ?? DEFAULT_EXTENSION_SETTINGS.updatedAt
   };
@@ -44,6 +51,9 @@ export async function saveExtensionSettings(
   const normalizedSettings: ExtensionSettingsRecord = {
     badge: {
       enabled: settings.badge.enabled
+    },
+    locale: {
+      mode: settings.locale.mode
     },
     updatedAt: new Date().toISOString()
   };

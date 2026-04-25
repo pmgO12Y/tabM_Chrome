@@ -1,3 +1,4 @@
+import { createLocalizedText, getRuntimeLocale, resolveLocale, setRuntimeLocale, translateText } from "../shared/i18n";
 import { NO_TAB_GROUP_ID, PANEL_PORT_NAME } from "../shared/defaults";
 import { normalizeChromeTab } from "../shared/domain/normalizeTab";
 import type { BackgroundToPanelMessage, PanelToBackgroundMessage } from "../shared/messages";
@@ -103,6 +104,12 @@ function scheduleActionBadgeUpdate(): void {
 
 async function initializeExtensionSettings(): Promise<void> {
   extensionSettings = await loadExtensionSettings();
+  setRuntimeLocale(
+    resolveLocale({
+      settings: extensionSettings,
+      uiLanguage: chrome.i18n?.getUILanguage?.()
+    })
+  );
 }
 
 function handleSettingsStorageChange(
@@ -120,6 +127,12 @@ function handleSettingsStorageChange(
 
   extensionSettings = mergeExtensionSettings(
     settingsChange.newValue as Partial<ExtensionSettingsRecord> | undefined
+  );
+  setRuntimeLocale(
+    resolveLocale({
+      settings: extensionSettings,
+      uiLanguage: chrome.i18n?.getUILanguage?.()
+    })
   );
   scheduleActionBadgeUpdate();
 }
@@ -449,5 +462,5 @@ function toErrorMessage(error: unknown): string {
     return error.message;
   }
 
-  return "扩展后台发生未知错误。";
+  return translateText(getRuntimeLocale(), createLocalizedText("error.backgroundUnknown"));
 }
