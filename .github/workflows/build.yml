@@ -42,7 +42,7 @@ jobs:
         id: get_version
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          TIMESTAMP=$(date +%Y%m%d-%H%M)
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
           echo "version=${VERSION}-${TIMESTAMP}" >> $GITHUB_OUTPUT
 
       - name: Create Release
