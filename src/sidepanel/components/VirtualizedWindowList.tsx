@@ -15,6 +15,7 @@ interface VirtualizedWindowListProps {
   disabled?: boolean;
   searchActive?: boolean;
   onTraceEvent?: (event: string, details: Record<string, unknown>) => void;
+  selectionMode: boolean;
   onClearSelection: () => void;
   onToggleWindow: (windowId: number) => void;
   onToggleGroup: (groupId: number, collapsed: boolean) => void;
@@ -321,6 +322,7 @@ export function VirtualizedWindowList({
   disabled = false,
   searchActive = false,
   onTraceEvent,
+  selectionMode,
   onClearSelection,
   onToggleWindow,
   onToggleGroup,
@@ -680,6 +682,10 @@ export function VirtualizedWindowList({
           return;
         }
 
+        if (selectionMode) {
+          return;
+        }
+
         onClearSelection();
       }}
       onDragEnd={clearDragState}
@@ -709,6 +715,7 @@ export function VirtualizedWindowList({
               onActivateTab={onActivateTab}
               onTogglePinned={onTogglePinned}
               onCloseTab={onCloseTab}
+              selectionMode={selectionMode}
               dragSource={dragSource}
               dropTarget={dropTarget}
               onDragStart={handleDragStart}
@@ -740,6 +747,7 @@ export function VirtualizedWindowList({
                       onActivateTab={onActivateTab}
                       onTogglePinned={onTogglePinned}
                       onCloseTab={onCloseTab}
+                      selectionMode={selectionMode}
                       dragSource={dragSource}
                       dropTarget={dropTarget}
                       onDragStart={handleDragStart}
@@ -772,6 +780,7 @@ export function VirtualizedWindowList({
                         onActivateTab={onActivateTab}
                         onTogglePinned={onTogglePinned}
                         onCloseTab={onCloseTab}
+                        selectionMode={selectionMode}
                         extraClassName="group-block__header"
                         visuallyExpanded={searchActive && item.groupRow.collapsed}
                         dragSource={dragSource}
@@ -799,6 +808,7 @@ export function VirtualizedWindowList({
                               onActivateTab={onActivateTab}
                               onTogglePinned={onTogglePinned}
                               onCloseTab={onCloseTab}
+                              selectionMode={selectionMode}
                               extraClassName={`group-block__item${
                                 index === item.childRows.length - 1 ? " group-block__item--last" : ""
                               }`}

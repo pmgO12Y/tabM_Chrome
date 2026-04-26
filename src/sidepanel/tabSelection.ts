@@ -14,6 +14,15 @@ export interface ResolveTabSelectionParams {
   toggleKey: boolean;
 }
 
+export interface ResolveTabPrimaryActionParams extends ResolveTabSelectionParams {
+  selectionMode: boolean;
+}
+
+export interface ResolvedTabPrimaryAction extends ResolvedTabSelection {
+  selectionMode: boolean;
+  shouldActivateTab: boolean;
+}
+
 export function getVisibleTabIds(rows: readonly PanelRow[]): number[] {
   return rows.flatMap((row) => (row.kind === "tab" ? [row.tab.id] : []));
 }
@@ -82,6 +91,31 @@ export function resolveTabSelection(params: ResolveTabSelectionParams): Resolved
   return {
     selectedTabIds: nextSelectedTabIds,
     anchorTabId: nextSelectedTabIds.length > 0 ? tabId : null
+  };
+}
+
+export function resolveTabPrimaryAction(params: ResolveTabPrimaryActionParams): ResolvedTabPrimaryAction {
+  const { selectionMode, shiftKey, toggleKey, ...selectionParams } = params;
+
+  if (!selectionMode && !shiftKey && !toggleKey) {
+    return {
+      selectedTabIds: [],
+      anchorTabId: null,
+      selectionMode: false,
+      shouldActivateTab: true
+    };
+  }
+
+  const nextSelection = resolveTabSelection({
+    ...selectionParams,
+    shiftKey,
+    toggleKey: selectionMode ? !shiftKey || toggleKey : toggleKey || !shiftKey
+  });
+
+  return {
+    ...nextSelection,
+    selectionMode: true,
+    shouldActivateTab: false
   };
 }
 

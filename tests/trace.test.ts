@@ -87,7 +87,7 @@ describe("trace", () => {
     });
 
     const timeline = await formatPersistedTraceTimeline();
-    expect(timeline).toContain("Chrome Sidepanel Debug Timeline");
+    expect(timeline).toContain("Side panel debug timeline");
     expect(timeline).toContain("bg/test-event");
     expect(timeline).toContain("panel/search-updated");
     expect(timeline).toContain("[background]");

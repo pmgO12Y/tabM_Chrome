@@ -26,6 +26,7 @@ export function RowShell({
   onActivateTab,
   onTogglePinned,
   onCloseTab,
+  selectionMode,
   dragSource,
   dropTarget,
   onDragStart,
@@ -54,6 +55,7 @@ export function RowShell({
   }) => void;
   onTogglePinned: (tabId: number, pinned: boolean) => void;
   onCloseTab: (tabId: number) => void;
+  selectionMode: boolean;
   dragSource: DragSource | null;
   dropTarget: DropTarget | null;
   onDragStart: (row: PanelRow, event: React.DragEvent<HTMLElement>) => void;
@@ -100,6 +102,7 @@ export function RowShell({
         onActivateTab={onActivateTab}
         onTogglePinned={onTogglePinned}
         onCloseTab={onCloseTab}
+        selectionMode={selectionMode}
         onDragStart={onDragStart}
         onDragOver={onDragOver}
         onDrop={onDrop}
@@ -124,6 +127,7 @@ function PanelListRow({
   onActivateTab,
   onTogglePinned,
   onCloseTab,
+  selectionMode,
   onDragStart,
   onDragOver,
   onDrop,
@@ -147,6 +151,7 @@ function PanelListRow({
   }) => void;
   onTogglePinned: (tabId: number, pinned: boolean) => void;
   onCloseTab: (tabId: number) => void;
+  selectionMode: boolean;
   onDragStart: (row: PanelRow, event: React.DragEvent<HTMLElement>) => void;
   onDragOver: (row: PanelRow, event: React.DragEvent<HTMLElement>) => void;
   onDrop: (row: PanelRow, event: React.DragEvent<HTMLElement>) => void;
@@ -243,9 +248,13 @@ function PanelListRow({
         className="tab-row__main"
         role="treeitem"
         aria-level={groupedTabColor != null ? 3 : 2}
-        aria-label={translate(locale, "sidepanel.tab.activate", {
-          title: row.tab.title
-        })}
+        aria-label={
+          selectionMode
+            ? row.tab.title
+            : translate(locale, "sidepanel.tab.activate", {
+                title: row.tab.title
+              })
+        }
         aria-current={isCurrentActive ? "page" : undefined}
         aria-selected={isSelected}
         onClick={(event) =>

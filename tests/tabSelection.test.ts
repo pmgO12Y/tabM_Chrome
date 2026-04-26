@@ -3,6 +3,7 @@ import type { PanelRow } from "../src/shared/types";
 import {
   getVisibleTabIds,
   reconcileVisibleTabSelection,
+  resolveTabPrimaryAction,
   resolveTabSelection
 } from "../src/sidepanel/tabSelection";
 
@@ -117,6 +118,120 @@ describe("tabSelection", () => {
     ).toEqual({
       selectedTabIds: [1, 2, 3, 4],
       anchorTabId: 1
+    });
+  });
+
+  it("activates the tab on plain click outside selection mode", () => {
+    expect(
+      resolveTabPrimaryAction({
+        visibleTabIds: [1, 2, 3],
+        selectedTabIds: [2],
+        anchorTabId: 2,
+        tabId: 3,
+        shiftKey: false,
+        toggleKey: false,
+        selectionMode: false
+      })
+    ).toEqual({
+      selectedTabIds: [],
+      anchorTabId: null,
+      selectionMode: false,
+      shouldActivateTab: true
+    });
+  });
+
+  it("enters selection mode on cmd or ctrl click and toggles one tab", () => {
+    expect(
+      resolveTabPrimaryAction({
+        visibleTabIds: [1, 2, 3, 4],
+        selectedTabIds: [],
+        anchorTabId: null,
+        tabId: 4,
+        shiftKey: false,
+        toggleKey: true,
+        selectionMode: false
+      })
+    ).toEqual({
+      selectedTabIds: [4],
+      anchorTabId: 4,
+      selectionMode: true,
+      shouldActivateTab: false
+    });
+  });
+
+  it("enters selection mode on shift click and selects a range from the clicked tab", () => {
+    expect(
+      resolveTabPrimaryAction({
+        visibleTabIds: [1, 2, 3, 4],
+        selectedTabIds: [],
+        anchorTabId: null,
+        tabId: 3,
+        shiftKey: true,
+        toggleKey: false,
+        selectionMode: false
+      })
+    ).toEqual({
+      selectedTabIds: [3],
+      anchorTabId: 3,
+      selectionMode: true,
+      shouldActivateTab: false
+    });
+  });
+
+  it("keeps selection mode and toggles on plain click inside selection mode", () => {
+    expect(
+      resolveTabPrimaryAction({
+        visibleTabIds: [1, 2, 3, 4],
+        selectedTabIds: [2],
+        anchorTabId: 2,
+        tabId: 4,
+        shiftKey: false,
+        toggleKey: false,
+        selectionMode: true
+      })
+    ).toEqual({
+      selectedTabIds: [2, 4],
+      anchorTabId: 4,
+      selectionMode: true,
+      shouldActivateTab: false
+    });
+  });
+
+  it("keeps selection mode after clearing the last selected tab", () => {
+    expect(
+      resolveTabPrimaryAction({
+        visibleTabIds: [1, 2, 3],
+        selectedTabIds: [2],
+        anchorTabId: 2,
+        tabId: 2,
+        shiftKey: false,
+        toggleKey: false,
+        selectionMode: true
+      })
+    ).toEqual({
+      selectedTabIds: [],
+      anchorTabId: null,
+      selectionMode: true,
+      shouldActivateTab: false
+    });
+  });
+
+  it("extends the current range on shift click inside selection mode", () => {
+    expect(
+      resolveTabPrimaryAction({
+        visibleTabIds: [1, 2, 3, 4, 5],
+        selectedTabIds: [2],
+        anchorTabId: 2,
+        tabId: 5,
+        shiftKey: true,
+        toggleKey: false,
+        selectionMode: true
+      })
+    ).toEqual({
+      selectedTabIds: [2, 3, 4, 5],
+      anchorTabId: 2,
+      selectionMode: true,
+      shouldActivateTab: false
     });
   });
 

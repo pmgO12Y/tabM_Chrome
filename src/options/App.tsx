@@ -39,6 +39,7 @@ export default function App() {
   const [traceState, setTraceState] = useState<DebugTraceState | null>(null);
   const [traceUnavailable, setTraceUnavailable] = useState(false);
   const tracePortAdapterRef = useRef<PanelPortAdapter | null>(null);
+  const manifest = chrome.runtime.getManifest();
   const locale = useMemo(
     () => resolveLocale({ settings, uiLanguage: getUiLanguage() }),
     [settings]
@@ -361,6 +362,23 @@ export default function App() {
           >
             {t("sidepanel.toolbar.clearTrace")}
           </button>
+        </div>
+      </section>
+
+      <section className="settings-card" aria-labelledby="settings-about-title">
+        <div className="settings-card__header">
+          <div>
+            <h2 id="settings-about-title" className="settings-card__title">{t("options.section.about.title")}</h2>
+            <p className="settings-card__description">{t("options.section.about.description")}</p>
+          </div>
+        </div>
+        <div className="settings-debug__meta" aria-live="polite">
+          <p className="settings-debug__metaItem">
+            {t("options.about.name")}: {t("app.extensionName")}
+          </p>
+          <p className="settings-debug__metaItem">
+            {t("options.about.version")}: {manifest.version}
+          </p>
         </div>
       </section>
 
