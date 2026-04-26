@@ -30,7 +30,7 @@ jobs:
       - name: Zip dist folder
         run: |
           PKG_NAME=$(node -p "require('./package.json').name")
-          cd release/v*/dist && zip -r ../../../${PKG_NAME}.zip .
+          cd dist && zip -r ../${PKG_NAME}.zip .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

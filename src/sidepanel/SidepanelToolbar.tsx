@@ -1,10 +1,9 @@
-import { CloseSmall, Download, Refresh, SettingTwo, SwitchButton, ExpandDownOne, FoldUpOne } from "@icon-park/react";
+import { CloseSmall, Refresh, SettingTwo, ExpandDownOne, FoldUpOne } from "@icon-park/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { translate, type SupportedLocale } from "../shared/i18n";
 import { resolveBulkToggleToolbarAction } from "./toolbarActions";
 import { calculateToolbarTooltipPlacement, type ToolbarTooltipPlacement } from "./toolbarTooltip";
 
-import type { TraceSettingsRecord } from "../shared/types";
 
 interface ToolbarTooltipState {
   actionKey: string;
@@ -26,15 +25,11 @@ export function SidepanelToolbar({
   hasCollapsedWindows,
   hasCollapsedGroups,
   disabled,
-  traceSettings,
   onResync,
   onOpenSettings,
   onExpandAll,
   onCollapseAll,
-  onCloseSelected,
-  onToggleVerboseTrace,
-  onExportTrace,
-  onClearTrace
+  onCloseSelected
 }: {
   locale: SupportedLocale;
   appShellRef: React.RefObject<HTMLDivElement | null>;
@@ -42,15 +37,11 @@ export function SidepanelToolbar({
   hasCollapsedWindows: boolean;
   hasCollapsedGroups: boolean;
   disabled: boolean;
-  traceSettings: TraceSettingsRecord;
   onResync: () => void;
   onOpenSettings: () => void;
   onExpandAll: () => void;
   onCollapseAll: () => void;
   onCloseSelected: () => void;
-  onToggleVerboseTrace: () => void;
-  onExportTrace: () => void;
-  onClearTrace: () => void;
 }) {
   const [toolbarTooltip, setToolbarTooltip] = useState<ToolbarTooltipState | null>(null);
   const [toolbarTooltipPlacement, setToolbarTooltipPlacement] = useState<ToolbarTooltipPlacement | null>(null);
@@ -82,27 +73,6 @@ export function SidepanelToolbar({
       label: bulkToggleAction.label,
       icon: bulkToggleAction.mode === "expand" ? ExpandDownOne : FoldUpOne,
       onClick: bulkToggleAction.mode === "expand" ? onExpandAll : onCollapseAll
-    },
-    {
-      key: "trace-toggle",
-      label: traceSettings.verboseLoggingEnabled
-        ? translate(locale, "sidepanel.toolbar.traceOn")
-        : translate(locale, "sidepanel.toolbar.traceOff"),
-      icon: SwitchButton,
-      onClick: onToggleVerboseTrace,
-      active: traceSettings.verboseLoggingEnabled
-    },
-    {
-      key: "trace-export",
-      label: translate(locale, "sidepanel.toolbar.exportTrace"),
-      icon: Download,
-      onClick: onExportTrace
-    },
-    {
-      key: "trace-clear",
-      label: translate(locale, "sidepanel.toolbar.clearTrace"),
-      icon: CloseSmall,
-      onClick: onClearTrace
     },
     ...(selectedCount > 0
       ? [

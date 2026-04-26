@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { chromium, test as base, type BrowserContext, type Page } from "@playwright/test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -11,12 +10,7 @@ import {
 } from "./helpers/sidepanel";
 
 const rootDir = fileURLToPath(new URL(".", import.meta.url));
-const packageJson = JSON.parse(
-  readFileSync(resolve(rootDir, "..", "..", "package.json"), "utf8")
-) as {
-  version: string;
-};
-const distDir = resolve(rootDir, "..", "..", `release/v${packageJson.version}/dist`);
+const distDir = resolve(rootDir, "..", "..", "dist");
 
 export type E2eFixture = {
   extensionContext: BrowserContext;

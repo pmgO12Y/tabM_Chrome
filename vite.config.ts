@@ -1,20 +1,15 @@
-import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 
 const rootDir = fileURLToPath(new URL(".", import.meta.url));
-const packageJson = JSON.parse(readFileSync(resolve(rootDir, "package.json"), "utf8")) as {
-  version: string;
-};
-const releaseVersionDir = `release/v${packageJson.version}`;
 
 export default defineConfig({
   plugins: [react()],
   build: {
     target: "chrome114",
-    outDir: `${releaseVersionDir}/dist`,
+    outDir: "dist",
     emptyOutDir: true,
     rollupOptions: {
       input: {

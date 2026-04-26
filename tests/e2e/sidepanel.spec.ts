@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 import type { TabRecord } from "../../src/shared";
-import type { SidepanelApi } from "./helpers/sidepanel";
+import { openSidepanelPage, type SidepanelApi } from "./helpers/sidepanel";
 import { test } from "./fixtures";
 
 type Snapshot = Awaited<ReturnType<SidepanelApi["getSnapshot"]>>;
@@ -332,6 +332,12 @@ test("折叠窗口后搜索仍会显示匹配标签，清空后恢复折叠视�
 });
 
 test("开启详细日志后点击激活标签不会产生 move 事件", async ({ extensionContext, sidepanelApi, sidepanelPage }) => {
+  const { extensionId } = await openSidepanelPage(extensionContext, "dist");
+  const optionsPage = await extensionContext.newPage();
+  await optionsPage.goto(`chrome-extension://${extensionId}/options.html`, {
+    waitUntil: "domcontentloaded",
+    timeout: 10_000
+  });
   const tab1 = await extensionContext.newPage();
   const tab2 = await extensionContext.newPage();
   await tab1.goto(createLocalPageUrl("log-a"));
@@ -344,7 +350,7 @@ test("开启详细日志后点击激活标签不会产生 move 事件", async ({
     (snapshot) => Object.values(snapshot.tabsById).some((t) => t.url?.includes("page-log-a"))
   );
 
-  await sidepanelPage.getByRole("button", { name: "详细日志：关" }).click();
+  await optionsPage.getByLabel("开启详细日志").check();
   await expect(sidepanelPage.getByText("详细日志记录中")).toBeVisible();
 
   const beforeSnapshot = await sidepanelApi.getSnapshot();
@@ -387,6 +393,7 @@ test("开启详细日志后点击激活标签不会产生 move 事件", async ({
     )
   ).toBe(false);
   expect(relevant.some((entry) => entry.event === "tabs/onMoved")).toBe(false);
+  await optionsPage.close();
 });
 
 test("侧边栏加载时无 JS 错误", async ({ sidepanelPage }) => {

@@ -165,6 +165,44 @@ input:focus-visible {
 }
 
 
+.settings-button-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.settings-button {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: rgba(23, 32, 51, 0.08);
+  color: #24324a;
+}
+
+.settings-button:hover:not(:disabled) {
+  background: rgba(23, 32, 51, 0.12);
+}
+
+.settings-debug__meta {
+  display: grid;
+  gap: 6px;
+}
+
+.settings-debug__metaItem {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.settings-status {
+  margin: 0;
+  font-size: 13px;
+}
+
+.settings-status--warning {
+  color: #b54708;
+}
+
 .settings-page__reset {
   border: 0;
   border-radius: 10px;

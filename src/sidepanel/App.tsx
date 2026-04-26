@@ -45,9 +45,6 @@ export default function App() {
     traceUpdatedAt,
     resyncPanel,
     copyDebugTrace,
-    exportDebugTrace,
-    setVerboseLoggingEnabled,
-    clearDebugTrace,
     postTraceEvent
   } = panelController;
   const [copyTraceState, setCopyTraceState] = useState<"idle" | "success" | "error">("idle");
@@ -361,7 +358,6 @@ export default function App() {
         hasCollapsedWindows={hasCollapsedWindows}
         hasCollapsedGroups={hasCollapsedGroups}
         disabled={toolbarDisabled}
-        traceSettings={traceSettings}
         onResync={resyncPanel}
         onOpenSettings={() => {
           postTraceEvent({
@@ -374,36 +370,6 @@ export default function App() {
         onExpandAll={expandAll}
         onCollapseAll={collapseAll}
         onCloseSelected={closeSelectedTabs}
-        onToggleVerboseTrace={() => {
-          postTraceEvent({
-            event: "panel/trace-toggle-clicked",
-            details: {
-              nextVerboseLoggingEnabled: !traceSettings.verboseLoggingEnabled
-            },
-            category: "trace"
-          });
-          setVerboseLoggingEnabled(!traceSettings.verboseLoggingEnabled);
-        }}
-        onExportTrace={() => {
-          postTraceEvent({
-            event: "panel/trace-export-clicked",
-            details: {
-              traceEntryCount
-            },
-            category: "trace"
-          });
-          void exportDebugTrace();
-        }}
-        onClearTrace={() => {
-          postTraceEvent({
-            event: "panel/trace-clear-clicked",
-            details: {
-              traceEntryCount
-            },
-            category: "trace"
-          });
-          clearDebugTrace();
-        }}
       />
       <div ref={panelScrollRef} className="panel-scroll">
         <SidepanelStatus

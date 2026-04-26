@@ -1,4 +1,5 @@
 {
+  "manifest_version": 3,
   "default_locale": "en",
   "name": "__MSG_app_extension_name__",
   "version": "2.6.1",

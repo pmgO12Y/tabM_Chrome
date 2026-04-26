@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   applyDocumentLocale,
   getUiLanguage,
@@ -6,6 +6,7 @@ import {
   translate,
   type TranslationKey
 } from "../shared/i18n";
+import type { PanelToBackgroundMessage } from "../shared/messages";
 import {
   DEFAULT_EXTENSION_SETTINGS,
   EXTENSION_SETTINGS_STORAGE_KEY,
@@ -13,13 +14,31 @@ import {
   resetExtensionSettings,
   saveExtensionSettings
 } from "../shared/settings";
-import type { ExtensionSettingsRecord, LocaleMode } from "../shared/types";
+import type {
+  ExtensionSettingsRecord,
+  LocaleMode,
+  TraceSettingsRecord
+} from "../shared/types";
+import {
+  createPanelPortAdapter,
+  type PanelPortAdapter,
+  type TraceBundlePayload
+} from "../sidepanel/panelPortAdapter";
 
 const LANGUAGE_OPTIONS: LocaleMode[] = ["system", "zh-CN", "en"];
+
+interface DebugTraceState {
+  settings: TraceSettingsRecord;
+  entryCount: number;
+  updatedAt: string | null;
+}
 
 export default function App() {
   const [settings, setSettings] = useState<ExtensionSettingsRecord>(DEFAULT_EXTENSION_SETTINGS);
   const [loading, setLoading] = useState(true);
+  const [traceState, setTraceState] = useState<DebugTraceState | null>(null);
+  const [traceUnavailable, setTraceUnavailable] = useState(false);
+  const tracePortAdapterRef = useRef<PanelPortAdapter | null>(null);
   const locale = useMemo(
     () => resolveLocale({ settings, uiLanguage: getUiLanguage() }),
     [settings]
@@ -71,6 +90,46 @@ export default function App() {
     };
   }, [locale]);
 
+  useEffect(() => {
+    let disposed = false;
+
+    const portAdapter = createPanelPortAdapter({
+      onMessage: (message) => {
+        if (message.type !== "debug/trace-state") {
+          return;
+        }
+
+        if (disposed) {
+          return;
+        }
+
+        setTraceState(message.payload);
+        setTraceUnavailable(false);
+      },
+      onConnectionFailed: () => {
+        if (!disposed) {
+          setTraceUnavailable(true);
+        }
+      },
+      onDisconnected: () => {
+        if (!disposed) {
+          setTraceUnavailable(true);
+        }
+      }
+    });
+
+    tracePortAdapterRef.current = portAdapter;
+    portAdapter.connect();
+
+    return () => {
+      disposed = true;
+      portAdapter.disconnect();
+      if (tracePortAdapterRef.current === portAdapter) {
+        tracePortAdapterRef.current = null;
+      }
+    };
+  }, []);
+
   async function handleBadgeEnabledChange(enabled: boolean): Promise<void> {
     const nextSettings = await saveExtensionSettings({
       ...settings,
@@ -97,8 +156,63 @@ export default function App() {
     setSettings(nextSettings);
   }
 
+  function handleVerboseLoggingEnabledChange(enabled: boolean): void {
+    const didPost =
+      tracePortAdapterRef.current?.postMessage({
+        type: "debug/set-trace-settings",
+        payload: {
+          verboseLoggingEnabled: enabled
+        }
+      } satisfies PanelToBackgroundMessage) ?? false;
+
+    if (!didPost) {
+      setTraceUnavailable(true);
+    }
+  }
+
+  async function handleExportTrace(): Promise<void> {
+    try {
+      const portAdapter = tracePortAdapterRef.current;
+      if (!portAdapter) {
+        setTraceUnavailable(true);
+        return;
+      }
+
+      const bundle = await portAdapter.requestTraceBundle();
+      const timestamp = createExportTimestamp();
+      downloadTextFile(
+        `sidepanel-trace-${timestamp}.json`,
+        buildTraceExportJson(bundle),
+        "application/json"
+      );
+      downloadTextFile(
+        `sidepanel-trace-${timestamp}.timeline.txt`,
+        bundle.timelineText,
+        "text/plain;charset=utf-8"
+      );
+      setTraceUnavailable(false);
+    } catch {
+      setTraceUnavailable(true);
+    }
+  }
+
+  function handleClearTrace(): void {
+    const didPost =
+      tracePortAdapterRef.current?.postMessage({
+        type: "debug/clear-trace"
+      } satisfies PanelToBackgroundMessage) ?? false;
+
+    if (!didPost) {
+      setTraceUnavailable(true);
+    }
+  }
+
   const t = (key: TranslationKey, values?: Record<string, string | number>) =>
     translate(locale, key, values);
+  const traceControlsDisabled = loading || traceState == null || traceUnavailable;
+  const verboseStateKey: TranslationKey = traceState?.settings.verboseLoggingEnabled
+    ? "trace.timeline.verbose.enabled"
+    : "trace.timeline.verbose.disabled";
 
   return (
     <main className="settings-page">
@@ -187,8 +301,66 @@ export default function App() {
         <div className="settings-card__header">
           <div>
             <h2 id="settings-debug-title" className="settings-card__title">{t("options.section.debug.title")}</h2>
-            <p className="settings-card__description">{t("options.comingSoon")}</p>
+            <p className="settings-card__description">{t("options.section.debug.description")}</p>
           </div>
+        </div>
+        <label className="settings-toggle" htmlFor="debug-verbose-logging">
+          <div className="settings-toggle__copy">
+            <span className="settings-toggle__label">{t("options.debug.logging.label")}</span>
+            <span className="settings-toggle__hint">{t("options.debug.logging.hint")}</span>
+          </div>
+          <input
+            id="debug-verbose-logging"
+            className="settings-toggle__input"
+            type="checkbox"
+            checked={traceState?.settings.verboseLoggingEnabled ?? false}
+            onChange={(event) => {
+              handleVerboseLoggingEnabledChange(event.target.checked);
+            }}
+            disabled={traceControlsDisabled}
+          />
+        </label>
+        <div className="settings-debug__meta" aria-live="polite">
+          <p className="settings-debug__metaItem">
+            {t("trace.timeline.verbose", {
+              value: t(verboseStateKey)
+            })}
+          </p>
+          <p className="settings-debug__metaItem">
+            {t("options.debug.entryCount", {
+              count: traceState?.entryCount ?? 0
+            })}
+          </p>
+          <p className="settings-debug__metaItem">
+            {traceState?.updatedAt
+              ? t("options.debug.updatedAt", {
+                  value: new Date(traceState.updatedAt).toLocaleString(locale)
+                })
+              : t("options.debug.updatedAt.empty")}
+          </p>
+          {traceUnavailable ? (
+            <p className="settings-status settings-status--warning">{t("options.debug.connectionUnavailable")}</p>
+          ) : null}
+        </div>
+        <div className="settings-button-row">
+          <button
+            type="button"
+            className="settings-button"
+            onClick={() => {
+              void handleExportTrace();
+            }}
+            disabled={traceControlsDisabled}
+          >
+            {t("sidepanel.toolbar.exportTrace")}
+          </button>
+          <button
+            type="button"
+            className="settings-button"
+            onClick={handleClearTrace}
+            disabled={traceControlsDisabled}
+          >
+            {t("sidepanel.toolbar.clearTrace")}
+          </button>
         </div>
       </section>
 
@@ -205,5 +377,33 @@ export default function App() {
         </button>
       </footer>
     </main>
+  );
+}
+
+function createExportTimestamp(): string {
+  const now = new Date();
+  return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}${String(now.getSeconds()).padStart(2, "0")}`;
+}
+
+function downloadTextFile(fileName: string, content: string, mimeType: string): void {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function buildTraceExportJson(bundle: TraceBundlePayload): string {
+  return JSON.stringify(
+    {
+      exportedAt: new Date().toISOString(),
+      settings: bundle.settings,
+      updatedAt: bundle.updatedAt,
+      entries: bundle.entries
+    },
+    null,
+    2
   );
 }
