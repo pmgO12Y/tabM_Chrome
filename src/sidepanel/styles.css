@@ -180,6 +180,11 @@ button:focus-visible {
   background: rgba(23, 32, 51, 0.08);
 }
 
+.panel-toolbar__button[data-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .panel-toolbar__button--active {
   background: rgba(31, 87, 255, 0.14);
   color: var(--accent);
@@ -742,6 +747,10 @@ button:focus-visible {
   background: rgba(31, 87, 255, 0.18);
 }
 
+.tab-row--locate-pulsing {
+  animation: tab-row-locate-pulse 1200ms ease-out;
+}
+
 @keyframes group-body-expand {
   from {
     opacity: 0.4;
@@ -754,8 +763,22 @@ button:focus-visible {
   }
 }
 
+@keyframes tab-row-locate-pulse {
+  0% {
+    background: rgba(31, 87, 255, 0.28);
+  }
+
+  100% {
+    background: inherit;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .group-block__body {
+    animation: none;
+  }
+
+  .tab-row--locate-pulsing {
     animation: none;
   }
 }
@@ -803,6 +826,10 @@ button:focus-visible {
 
 .tab-row--current-active:hover {
   background: rgba(31, 87, 255, 0.18);
+}
+
+.tab-row--locate-pulsing {
+  animation: tab-row-locate-pulse 1200ms ease-out;
 }
 
 .tab-row--window-active {

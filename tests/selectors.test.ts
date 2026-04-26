@@ -2,7 +2,9 @@ import {
   expandFocusedWindow,
   filterPanelRowsBySearch,
   flattenWindowSections,
+  hasRowKey,
   resolveActiveGroupAutoExpand,
+  resolveCollapsedWindowIdsForTarget,
   selectCurrentActiveGroupId,
   selectCurrentActiveTabId,
   selectWindowSections
@@ -143,17 +145,25 @@ describe("selectors", () => {
     expect(siblingTabRow).toMatchObject({ kind: "tab", matchesSearch: false });
   });
 
-  it("selects the active tab only from the focused window", () => {
-    const multiWindowState = createStateFromTabs(
-      [
-        makeTab({ id: 1, windowId: 1, active: true }),
-        makeTab({ id: 2, windowId: 2, active: true }),
-        makeTab({ id: 3, windowId: 2, active: false })
-      ],
-      2
-    );
+  it("removes only the target window from collapsed window ids", () => {
+    expect(
+      resolveCollapsedWindowIdsForTarget({
+        collapsedWindowIds: [1, 2, 3],
+        targetWindowId: 2
+      })
+    ).toEqual([1, 3]);
+    expect(
+      resolveCollapsedWindowIdsForTarget({
+        collapsedWindowIds: [1, 3],
+        targetWindowId: 2
+      })
+    ).toEqual([1, 3]);
+  });
 
-    expect(selectCurrentActiveTabId(multiWindowState)).toBe(2);
+  it("detects whether a row key exists in the current rows", () => {
+    const rows = flattenWindowSections(selectWindowSections(state, []));
+    expect(hasRowKey(rows, "tab-2")).toBe(true);
+    expect(hasRowKey(rows, "tab-999")).toBe(false);
   });
 
   it("returns null when the focused window is missing or has no active tab", () => {

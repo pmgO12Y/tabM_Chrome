@@ -9,6 +9,10 @@ interface VirtualizedWindowListProps {
   locale: SupportedLocale;
   rows: PanelRow[];
   currentActiveTabId: number | null;
+  locateRequest: {
+    rowKey: string;
+    requestId: number;
+  } | null;
   closingTabIds: ReadonlySet<number>;
   selectedTabIds: ReadonlySet<number>;
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
@@ -114,6 +118,7 @@ export function getTabRowClassName(params: {
   isClosing?: boolean;
   groupedTabColor?: chrome.tabGroups.ColorEnum;
   matchesSearch?: boolean;
+  isLocatePulsing?: boolean;
 }): string {
   const {
     isCurrentActive,
@@ -122,7 +127,8 @@ export function getTabRowClassName(params: {
     isSelected = false,
     isClosing = false,
     groupedTabColor,
-    matchesSearch
+    matchesSearch,
+    isLocatePulsing = false
   } = params;
 
   return `tab-row${
@@ -131,7 +137,7 @@ export function getTabRowClassName(params: {
     isCurrentActive && isGrouped ? " tab-row--grouped-current-active" : ""
   }${isSelected ? " tab-row--selected" : ""}${isClosing ? " tab-row--closing" : ""}${
     matchesSearch === false ? " tab-row--unmatched" : ""
-  }`;
+  }${isLocatePulsing ? " tab-row--locate-pulsing" : ""}`;
 }
 
 export function buildWindowRenderSections(rows: PanelRow[]): WindowRenderSection[] {
@@ -312,10 +318,22 @@ export function calculateActiveRowScrollAdjustment(params: {
   return 0;
 }
 
+export function shouldPulseLocateRow(params: {
+  locateRequest: {
+    rowKey: string;
+    requestId: number;
+  } | null;
+  hasRenderedTargetRow: boolean;
+}): boolean {
+  const { locateRequest, hasRenderedTargetRow } = params;
+  return locateRequest != null && hasRenderedTargetRow;
+}
+
 export function VirtualizedWindowList({
   locale,
   rows,
   currentActiveTabId,
+  locateRequest,
   closingTabIds,
   selectedTabIds,
   scrollContainerRef,
@@ -346,6 +364,7 @@ export function VirtualizedWindowList({
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const [windowStickyOffset, setWindowStickyOffset] = useState(0);
   const [measuredWindowHeaderNode, setMeasuredWindowHeaderNode] = useState<HTMLDivElement | null>(null);
+  const [locatePulseRowKey, setLocatePulseRowKey] = useState<string | null>(null);
   const activeRowKey = currentActiveTabId != null ? `tab-${currentActiveTabId}` : null;
   const hasActiveRowInList = useMemo(
     () => activeRowKey != null && rows.some((row) => row.key === activeRowKey),
@@ -428,6 +447,64 @@ export function VirtualizedWindowList({
       scrollContainer.removeEventListener("scroll", handleScroll);
     };
   }, [bottomSpacerHeight, scrollContainerRef]);
+
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    const targetRow = locateRequest == null ? null : rowRefs.current.get(locateRequest.rowKey);
+    if (!locateRequest || !targetRow || !scrollContainer) {
+      return;
+    }
+
+    const rowTop = getRowTopWithinContainer(targetRow, scrollContainer);
+    const rowBottom = rowTop + targetRow.getBoundingClientRect().height;
+    const topObstruction = getActiveRowTopObstruction(targetRow);
+    const scrollAdjustment = calculateActiveRowScrollAdjustment({
+      rowTop,
+      rowBottom,
+      containerHeight: scrollContainer.clientHeight,
+      topObstruction
+    });
+
+    onTraceEvent?.("list/scroll-to-locate-target", {
+      rowKey: locateRequest.rowKey,
+      requestId: locateRequest.requestId,
+      scrollAdjustment,
+      rowTop,
+      rowBottom,
+      topObstruction
+    });
+
+    if (scrollAdjustment !== 0) {
+      const maxScrollTop = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight);
+      const nextScrollTop = Math.max(0, Math.min(scrollContainer.scrollTop + scrollAdjustment, maxScrollTop));
+      scrollContainer.scrollTo({
+        top: nextScrollTop,
+        behavior: "smooth"
+      });
+    }
+
+    setLocatePulseRowKey(locateRequest.rowKey);
+  }, [locateRequest, onTraceEvent, rows, scrollContainerRef]);
+
+  useEffect(() => {
+    if (!locatePulseRowKey) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setLocatePulseRowKey((current) => (current === locatePulseRowKey ? null : current));
+    }, 1200);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [locatePulseRowKey]);
+
+  useEffect(() => {
+    if (locatePulseRowKey && !rows.some((row) => row.key === locatePulseRowKey)) {
+      setLocatePulseRowKey(null);
+    }
+  }, [locatePulseRowKey, rows]);
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
@@ -707,6 +784,7 @@ export function VirtualizedWindowList({
               currentActiveTabId={currentActiveTabId}
               closingTabIds={closingTabIds}
               selectedTabIds={selectedTabIds}
+              locatePulseRowKey={locatePulseRowKey}
               onCaptureManualToggleAnchor={captureManualToggleAnchor}
               disabled={disabled}
               onClearSelection={onClearSelection}
@@ -739,6 +817,7 @@ export function VirtualizedWindowList({
                       currentActiveTabId={currentActiveTabId}
                       closingTabIds={closingTabIds}
                       selectedTabIds={selectedTabIds}
+                      locatePulseRowKey={locatePulseRowKey}
                       onCaptureManualToggleAnchor={captureManualToggleAnchor}
                       disabled={disabled}
                       onClearSelection={onClearSelection}
@@ -772,6 +851,7 @@ export function VirtualizedWindowList({
                         currentActiveTabId={currentActiveTabId}
                         closingTabIds={closingTabIds}
                         selectedTabIds={selectedTabIds}
+                        locatePulseRowKey={locatePulseRowKey}
                         onCaptureManualToggleAnchor={captureManualToggleAnchor}
                         disabled={disabled}
                         onClearSelection={onClearSelection}
@@ -800,6 +880,7 @@ export function VirtualizedWindowList({
                               currentActiveTabId={currentActiveTabId}
                               closingTabIds={closingTabIds}
                               selectedTabIds={selectedTabIds}
+                              locatePulseRowKey={locatePulseRowKey}
                               onCaptureManualToggleAnchor={captureManualToggleAnchor}
                               disabled={disabled}
                               onClearSelection={onClearSelection}

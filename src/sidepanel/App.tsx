@@ -4,13 +4,13 @@ import {
   getUiLanguage,
   resolveLocale
 } from "../shared/i18n";
-import { filterPanelRowsBySearch, flattenWindowSections, selectCurrentActiveTabId, selectWindowSections } from "../shared/domain/selectors";
+import { filterPanelRowsBySearch, flattenWindowSections, hasRowKey, selectCurrentActiveTabId, selectWindowSections } from "../shared/domain/selectors";
 import {
   DEFAULT_EXTENSION_SETTINGS,
   EXTENSION_SETTINGS_STORAGE_KEY,
   loadExtensionSettings
 } from "../shared/settings";
-import type { ExtensionSettingsRecord, SearchFilterMode, SupportedLocale, TabCommand } from "../shared/types";
+import type { ExtensionSettingsRecord, SearchFilterMode, SupportedLocale, TabCommand, TabRecord } from "../shared/types";
 import { VirtualizedWindowList } from "./components/VirtualizedWindowList";
 import { createPanelCommandActions } from "./panelCommands";
 import { SearchBar, focusSearchInput } from "./SearchBar";
@@ -24,6 +24,8 @@ import { useTabSelection } from "./useTabSelection";
 
 export default function App() {
   const [settings, setSettings] = useState<ExtensionSettingsRecord>(DEFAULT_EXTENSION_SETTINGS);
+  const [liveActiveTabId, setLiveActiveTabId] = useState<number | null>(null);
+  const [locateRequest, setLocateRequest] = useState<{ rowKey: string; requestId: number } | null>(null);
   const locale: SupportedLocale = useMemo(
     () => resolveLocale({ settings, uiLanguage: getUiLanguage() }),
     [settings]
@@ -103,6 +105,7 @@ export default function App() {
     hasCollapsedWindows,
     hasCollapsedGroups,
     toggleWindow,
+    expandWindowPath,
     expandAll,
     collapseAll
   } = useCollapsedWindows(snapshot, commandActions.setGroupCollapsed);
@@ -135,6 +138,8 @@ export default function App() {
   }, [filteredRows, filterMode, searchTerm]);
 
   const currentActiveTabId = useMemo(() => selectCurrentActiveTabId(snapshot), [snapshot]);
+  const toolbarDisabled = !isInteractive || isResyncing;
+  const listDisabled = !hasUsableSnapshot;
 
   const { selectionMode, selectedTabIds, selectedTabIdSet, clearSelection, enterSelectionMode, exitSelectionMode, removeFromSelection, handlePrimaryAction } =
     useTabSelection(filteredRows, (event, details) => {
@@ -163,6 +168,46 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    let disposed = false;
+
+    const updateLiveActiveTabId = async () => {
+      try {
+        const tabs = await chrome.tabs.query({
+          active: true,
+          lastFocusedWindow: true
+        });
+        if (disposed) {
+          return;
+        }
+
+        setLiveActiveTabId(tabs[0]?.id ?? null);
+      } catch {
+        if (!disposed) {
+          setLiveActiveTabId(null);
+        }
+      }
+    };
+
+    const handleActivated = () => {
+      void updateLiveActiveTabId();
+    };
+    const handleFocusChanged = () => {
+      void updateLiveActiveTabId();
+    };
+
+    void updateLiveActiveTabId();
+    chrome.tabs.onActivated.addListener(handleActivated);
+    chrome.windows.onFocusChanged.addListener(handleFocusChanged);
+
+    return () => {
+      disposed = true;
+      chrome.tabs.onActivated.removeListener(handleActivated);
+      chrome.windows.onFocusChanged.removeListener(handleFocusChanged);
+    };
+  }, []);
+
+
+  useEffect(() => {
     const api: NonNullable<typeof window.__playwrightApi> = {
       getSnapshot: () => Promise.resolve(snapshot),
       dispatchCommand: (command: TabCommand) => {
@@ -183,6 +228,40 @@ export default function App() {
     };
     window.__playwrightApi = api;
   }, [dispatchCommand, panelController.isInteractive, snapshot]);
+
+  const liveActiveTab = useMemo<TabRecord | null>(
+    () => (liveActiveTabId == null ? null : snapshot.tabsById[liveActiveTabId] ?? null),
+    [liveActiveTabId, snapshot.tabsById]
+  );
+  const liveActiveTargetRowKey = liveActiveTab ? `tab-${liveActiveTab.id}` : null;
+  const hasLiveActiveTargetInFilteredRows = useMemo(
+    () => (liveActiveTargetRowKey ? hasRowKey(filteredRows, liveActiveTargetRowKey) : false),
+    [filteredRows, liveActiveTargetRowKey]
+  );
+  const canLocateCurrentPage = !toolbarDisabled && liveActiveTab != null;
+  const locateDisabledReason = liveActiveTab == null
+    ? "sidepanel.toolbar.locateCurrentPageUnavailable"
+    : null;
+
+  useEffect(() => {
+    if (liveActiveTabId != null) {
+      return;
+    }
+
+    setLocateRequest(null);
+  }, [liveActiveTabId]);
+
+  useEffect(() => {
+    if (locateRequest == null) {
+      return;
+    }
+
+    if (filteredRows.some((row) => row.key === locateRequest.rowKey)) {
+      return;
+    }
+
+    setLocateRequest(null);
+  }, [filteredRows, locateRequest]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -219,6 +298,43 @@ export default function App() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [exitSelectionMode, searchTerm, selectionMode]);
+
+  function expandLocateTargetPath(targetTab: TabRecord): void {
+    expandWindowPath(targetTab.windowId);
+    if (targetTab.groupId >= 0) {
+      commandActions.setGroupCollapsed(targetTab.groupId, false);
+    }
+  }
+
+  function requestLocateCurrentPage(): void {
+    if (!liveActiveTab) {
+      return;
+    }
+
+    const targetRowKey = `tab-${liveActiveTab.id}`;
+    const nextSearchTerm = hasLiveActiveTargetInFilteredRows ? searchTerm : "";
+    if (nextSearchTerm !== searchTerm) {
+      setSearchTerm(nextSearchTerm);
+    }
+
+    expandLocateTargetPath(liveActiveTab);
+    setLocateRequest((current) => ({
+      rowKey: targetRowKey,
+      requestId: (current?.requestId ?? 0) + 1
+    }));
+    postTraceEvent({
+      event: "panel/locate-current-page-clicked",
+      details: {
+        targetTabId: liveActiveTab.id,
+        targetWindowId: liveActiveTab.windowId,
+        targetGroupId: liveActiveTab.groupId,
+        searchCleared: nextSearchTerm !== searchTerm,
+        hadSearchTerm: searchTerm.trim().length > 0,
+        targetVisibleInFilteredRows: hasLiveActiveTargetInFilteredRows
+      },
+      category: "panel"
+    });
+  }
 
   function closeTab(tabId: number): void {
     postTraceEvent({
@@ -352,9 +468,6 @@ export default function App() {
     };
   }, [copyTraceState]);
 
-  const toolbarDisabled = !isInteractive || isResyncing;
-  const listDisabled = !hasUsableSnapshot;
-
   return (
     <div ref={appShellRef} className="app-shell">
       <SidepanelToolbar
@@ -364,6 +477,9 @@ export default function App() {
         hasCollapsedWindows={hasCollapsedWindows}
         hasCollapsedGroups={hasCollapsedGroups}
         disabled={toolbarDisabled}
+        canLocateCurrentPage={canLocateCurrentPage}
+        locateCurrentPageDisabledReasonKey={locateDisabledReason}
+        onLocateCurrentPage={requestLocateCurrentPage}
         onResync={resyncPanel}
         onOpenSettings={() => {
           postTraceEvent({
@@ -410,6 +526,7 @@ export default function App() {
             locale={locale}
             rows={filteredRows}
             currentActiveTabId={currentActiveTabId}
+            locateRequest={locateRequest}
             closingTabIds={closingTabIdSet}
             selectedTabIds={selectedTabIdSet}
             scrollContainerRef={panelScrollRef}

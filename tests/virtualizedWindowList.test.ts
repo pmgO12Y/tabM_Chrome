@@ -14,6 +14,7 @@ import {
   getTabRowClassName,
   getWindowRowClassName,
   resolveActiveRowAutoScroll,
+  shouldPulseLocateRow,
   shouldScrollToActiveRow
 } from "../src/sidepanel/components/VirtualizedWindowList";
 import {
@@ -261,6 +262,39 @@ describe("VirtualizedWindowList helpers", () => {
     ]);
   });
 
+  it("adds a locate-pulsing class when an explicit locate pulse is active", () => {
+    expect(
+      getTabRowClassName({
+        isCurrentActive: true,
+        isWindowActive: false,
+        isGrouped: false,
+        isLocatePulsing: true
+      })
+    ).toContain("tab-row--locate-pulsing");
+  });
+
+  it("pulses a locate row only after the requested row is rendered", () => {
+    expect(
+      shouldPulseLocateRow({
+        locateRequest: {
+          rowKey: "tab-2",
+          requestId: 1
+        },
+        hasRenderedTargetRow: true
+      })
+    ).toBe(true);
+
+    expect(
+      shouldPulseLocateRow({
+        locateRequest: {
+          rowKey: "tab-2",
+          requestId: 1
+        },
+        hasRenderedTargetRow: false
+      })
+    ).toBe(false);
+  });
+
   it("marks window and group rows as visually expanded during search previews", () => {
     expect(getWindowRowClassName({ isFocused: false, visuallyExpanded: true })).toContain(
       "window-row--visually-expanded"
@@ -272,7 +306,6 @@ describe("VirtualizedWindowList helpers", () => {
       "group-row--collapsed"
     );
   });
-
 });
 
 describe("listDrag helpers", () => {

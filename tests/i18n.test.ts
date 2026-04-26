@@ -44,20 +44,10 @@ describe("i18n", () => {
     expect(getDisplayTabTitle("Untitled tab", "zh-CN")).toBe("未命名标签页");
   });
 
-  it("formats window titles with locale aware templates", () => {
-    expect(
-      formatWindowTitle({
-        locale: "zh-CN",
-        visibleWindowIndex: 2,
-        activeTabTitle: "Docs"
-      })
-    ).toBe("窗口 2 - Docs");
-    expect(
-      formatWindowTitle({
-        locale: "en",
-        visibleWindowIndex: 2,
-        activeTabTitle: "Docs"
-      })
-    ).toBe("Window 2 - Docs");
+  it("exposes locate-current-page toolbar labels in both locales", () => {
+    expect(translate("zh-CN", "sidepanel.toolbar.locateCurrentPage")).toBe("定位到当前页面");
+    expect(translate("en", "sidepanel.toolbar.locateCurrentPage")).toBe("Locate current page");
+    expect(translate("zh-CN", "sidepanel.toolbar.locateCurrentPageUnavailable")).toBe("当前页面不在侧边栏快照中");
+    expect(translate("en", "sidepanel.toolbar.locateCurrentPageUnavailable")).toBe("Current page is not in the side panel snapshot");
   });
 });

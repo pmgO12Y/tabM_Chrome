@@ -1,4 +1,4 @@
-import { CloseSmall, Refresh, SettingTwo, ExpandDownOne, FoldUpOne, ListCheckbox, CheckSmall } from "@icon-park/react";
+import { CloseSmall, Refresh, SettingTwo, ExpandDownOne, FoldUpOne, ListCheckbox, CheckSmall, Aiming } from "@icon-park/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { translate, type SupportedLocale } from "../shared/i18n";
 import { resolveBulkToggleToolbarAction } from "./toolbarActions";
@@ -16,6 +16,7 @@ interface ToolbarAction {
   icon: typeof Refresh;
   onClick: () => void;
   active?: boolean;
+  disabled?: boolean;
 }
 
 function renderToolbarButton(
@@ -26,20 +27,28 @@ function renderToolbarButton(
     showToolbarTooltip: (actionKey: string, anchor: HTMLButtonElement) => void;
   }
 ): ReactElement {
-  const { key, label, icon: Icon, onClick, active = false } = action;
+  const { key, label, icon: Icon, onClick, active = false, disabled = false } = action;
+  const buttonDisabled = params.disabled || disabled;
 
   return (
     <button
       key={key}
       type="button"
       className={`panel-toolbar__button${active ? " panel-toolbar__button--active" : ""}`}
-      onClick={onClick}
+      onClick={() => {
+        if (buttonDisabled) {
+          return;
+        }
+        onClick();
+      }}
       onPointerEnter={(event) => params.showToolbarTooltip(key, event.currentTarget)}
       onPointerLeave={params.hideToolbarTooltip}
       onFocus={(event) => params.showToolbarTooltip(key, event.currentTarget)}
       onBlur={params.hideToolbarTooltip}
-      disabled={params.disabled}
       aria-label={label}
+      aria-disabled={buttonDisabled}
+      data-disabled={buttonDisabled ? "true" : undefined}
+      tabIndex={buttonDisabled ? -1 : 0}
     >
       <Icon theme="outline" size="18" />
     </button>
@@ -54,6 +63,9 @@ export function SidepanelToolbar({
   hasCollapsedGroups,
   disabled,
   onResync,
+  onLocateCurrentPage,
+  canLocateCurrentPage,
+  locateCurrentPageDisabledReasonKey,
   onOpenSettings,
   onExpandAll,
   onCollapseAll,
@@ -68,6 +80,9 @@ export function SidepanelToolbar({
   hasCollapsedGroups: boolean;
   disabled: boolean;
   onResync: () => void;
+  onLocateCurrentPage: () => void;
+  canLocateCurrentPage: boolean;
+  locateCurrentPageDisabledReasonKey: "sidepanel.toolbar.locateCurrentPageUnavailable" | null;
   onOpenSettings: () => void;
   onExpandAll: () => void;
   onCollapseAll: () => void;
@@ -100,6 +115,15 @@ export function SidepanelToolbar({
       label: translate(locale, "sidepanel.toolbar.resync"),
       icon: Refresh,
       onClick: onResync
+    },
+    {
+      key: "locate-current-page",
+      label: locateCurrentPageDisabledReasonKey
+        ? translate(locale, locateCurrentPageDisabledReasonKey)
+        : translate(locale, "sidepanel.toolbar.locateCurrentPage"),
+      icon: Aiming,
+      onClick: onLocateCurrentPage,
+      disabled: !canLocateCurrentPage
     },
     {
       key: "toggle-all",

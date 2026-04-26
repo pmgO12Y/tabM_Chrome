@@ -18,6 +18,7 @@ export function RowShell({
   currentActiveTabId,
   closingTabIds,
   selectedTabIds,
+  locatePulseRowKey,
   onCaptureManualToggleAnchor,
   disabled,
   onClearSelection,
@@ -43,6 +44,7 @@ export function RowShell({
   currentActiveTabId: number | null;
   closingTabIds: ReadonlySet<number>;
   selectedTabIds: ReadonlySet<number>;
+  locatePulseRowKey: string | null;
   onCaptureManualToggleAnchor: (rowKey: string) => void;
   disabled: boolean;
   onClearSelection: () => void;
@@ -94,6 +96,7 @@ export function RowShell({
         currentActiveTabId={currentActiveTabId}
         closingTabIds={closingTabIds}
         selectedTabIds={selectedTabIds}
+        locatePulseRowKey={locatePulseRowKey}
         onCaptureManualToggleAnchor={onCaptureManualToggleAnchor}
         disabled={disabled}
         onClearSelection={onClearSelection}
@@ -119,6 +122,7 @@ function PanelListRow({
   currentActiveTabId,
   closingTabIds,
   selectedTabIds,
+  locatePulseRowKey,
   onCaptureManualToggleAnchor,
   disabled,
   onClearSelection,
@@ -139,6 +143,7 @@ function PanelListRow({
   currentActiveTabId: number | null;
   closingTabIds: ReadonlySet<number>;
   selectedTabIds: ReadonlySet<number>;
+  locatePulseRowKey: string | null;
   onCaptureManualToggleAnchor: (rowKey: string) => void;
   disabled: boolean;
   onClearSelection: () => void;
@@ -227,6 +232,7 @@ function PanelListRow({
   const isWindowActive = row.tab.active && !isCurrentActive;
   const isClosing = closingTabIds.has(row.tab.id);
   const isSelected = selectedTabIds.has(row.tab.id);
+  const isLocatePulsing = locatePulseRowKey === row.key;
   const tabDisabled = disabled || isClosing;
 
   return (
@@ -237,6 +243,7 @@ function PanelListRow({
         isGrouped: groupedTabColor != null,
         isSelected,
         isClosing,
+        isLocatePulsing,
         groupedTabColor,
         matchesSearch: row.matchesSearch
       }) + (tabDisabled ? " tab-row--disabled" : "")}

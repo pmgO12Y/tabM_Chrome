@@ -177,6 +177,22 @@ export function getSearchMatchingTabIds(rows: readonly PanelRow[]): number[] {
   return rows.flatMap((row) => (row.kind === "tab" && row.matchesSearch ? [row.tab.id] : []));
 }
 
+export function hasRowKey(rows: readonly PanelRow[], rowKey: string): boolean {
+  return rows.some((row) => row.key === rowKey);
+}
+
+export function resolveCollapsedWindowIdsForTarget(params: {
+  collapsedWindowIds: readonly number[];
+  targetWindowId: number | null;
+}): number[] {
+  const { collapsedWindowIds, targetWindowId } = params;
+  if (targetWindowId == null || !collapsedWindowIds.includes(targetWindowId)) {
+    return [...collapsedWindowIds];
+  }
+
+  return collapsedWindowIds.filter((windowId) => windowId !== targetWindowId);
+}
+
 function selectTabsForWindow(state: TabStoreState, windowId: number): TabRecord[] {
   return (state.windowTabIds[windowId] ?? [])
     .map((tabId) => state.tabsById[tabId])

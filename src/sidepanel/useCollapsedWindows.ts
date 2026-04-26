@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { expandFocusedWindow } from "../shared/domain/selectors";
+import { expandFocusedWindow, resolveCollapsedWindowIdsForTarget } from "../shared/domain/selectors";
 import type { TabGroupRecord, TabStoreSnapshot } from "../shared/types";
 
 export function useCollapsedWindows(snapshot: TabStoreSnapshot, onSetGroupCollapsed: (groupId: number, collapsed: boolean) => void) {
@@ -18,6 +18,15 @@ export function useCollapsedWindows(snapshot: TabStoreSnapshot, onSetGroupCollap
       current.includes(windowId)
         ? current.filter((candidateId) => candidateId !== windowId)
         : [...current, windowId]
+    );
+  }
+
+  function expandWindowPath(windowId: number | null): void {
+    setCollapsedWindowIds((current) =>
+      resolveCollapsedWindowIdsForTarget({
+        collapsedWindowIds: current,
+        targetWindowId: windowId
+      })
     );
   }
 
@@ -49,6 +58,7 @@ export function useCollapsedWindows(snapshot: TabStoreSnapshot, onSetGroupCollap
     hasCollapsedWindows: collapsedWindowIds.length > 0,
     hasCollapsedGroups: groups.some((group: TabGroupRecord) => group.collapsed),
     toggleWindow,
+    expandWindowPath,
     expandAll,
     collapseAll
   };
