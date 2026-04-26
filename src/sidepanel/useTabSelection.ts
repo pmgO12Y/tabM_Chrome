@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { getVisibleTabIds, reconcileVisibleTabSelection, resolveTabSelection } from "./tabSelection";
+import { getVisibleTabIds, reconcileVisibleTabSelection, resolveTabPrimaryAction } from "./tabSelection";
 import type { PanelRow } from "../shared/types";
 
 export function useTabSelection(
   rows: readonly PanelRow[],
   onTraceEvent?: (event: string, details: Record<string, unknown>) => void
 ) {
+  const [selectionMode, setSelectionMode] = useState(false);
   const [selectedTabIds, setSelectedTabIds] = useState<number[]>([]);
   const [selectionAnchorTabId, setSelectionAnchorTabId] = useState<number | null>(null);
 
@@ -42,6 +43,15 @@ export function useTabSelection(
     setSelectionAnchorTabId(null);
   }
 
+  function enterSelectionMode(): void {
+    setSelectionMode(true);
+  }
+
+  function exitSelectionMode(): void {
+    clearSelection();
+    setSelectionMode(false);
+  }
+
   function removeFromSelection(tabId: number): void {
     onTraceEvent?.("panel/selection-removed", {
       tabId,
@@ -64,39 +74,48 @@ export function useTabSelection(
       tabId,
       shiftKey,
       toggleKey,
+      selectionMode,
       selectedTabIds,
       selectionAnchorTabId
     });
 
-    if (!shiftKey && !toggleKey) {
-      clearSelection();
-      onActivate(tabId);
-      return;
-    }
-
-    const nextSelection = resolveTabSelection({
+    const nextAction = resolveTabPrimaryAction({
       visibleTabIds,
       selectedTabIds,
       anchorTabId: selectionAnchorTabId,
       tabId,
       shiftKey,
-      toggleKey
+      toggleKey,
+      selectionMode
     });
+
+    if (nextAction.shouldActivateTab) {
+      clearSelection();
+      onActivate(tabId);
+      return;
+    }
+
     onTraceEvent?.("panel/selection-updated", {
       tabId,
       shiftKey,
       toggleKey,
-      nextSelectedTabIds: nextSelection.selectedTabIds,
-      nextAnchorTabId: nextSelection.anchorTabId
+      selectionMode: nextAction.selectionMode,
+      nextSelectedTabIds: nextAction.selectedTabIds,
+      nextAnchorTabId: nextAction.anchorTabId
     });
-    setSelectedTabIds(nextSelection.selectedTabIds);
-    setSelectionAnchorTabId(nextSelection.anchorTabId);
+
+    setSelectionMode(nextAction.selectionMode);
+    setSelectedTabIds(nextAction.selectedTabIds);
+    setSelectionAnchorTabId(nextAction.anchorTabId);
   }
 
   return {
+    selectionMode,
     selectedTabIds,
     selectedTabIdSet,
     clearSelection,
+    enterSelectionMode,
+    exitSelectionMode,
     removeFromSelection,
     handlePrimaryAction
   };

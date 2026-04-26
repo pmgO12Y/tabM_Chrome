@@ -136,7 +136,7 @@ export default function App() {
 
   const currentActiveTabId = useMemo(() => selectCurrentActiveTabId(snapshot), [snapshot]);
 
-  const { selectedTabIds, selectedTabIdSet, clearSelection, removeFromSelection, handlePrimaryAction } =
+  const { selectionMode, selectedTabIds, selectedTabIdSet, clearSelection, enterSelectionMode, exitSelectionMode, removeFromSelection, handlePrimaryAction } =
     useTabSelection(filteredRows, (event, details) => {
       postTraceEvent({
         event,
@@ -205,6 +205,12 @@ export default function App() {
       if (event.key === "Escape" && searchTerm) {
         event.preventDefault();
         setSearchTerm("");
+        return;
+      }
+
+      if (event.key === "Escape" && selectionMode) {
+        event.preventDefault();
+        exitSelectionMode();
       }
     };
 
@@ -212,7 +218,7 @@ export default function App() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [searchTerm]);
+  }, [exitSelectionMode, searchTerm, selectionMode]);
 
   function closeTab(tabId: number): void {
     postTraceEvent({
@@ -370,6 +376,15 @@ export default function App() {
         onExpandAll={expandAll}
         onCollapseAll={collapseAll}
         onCloseSelected={closeSelectedTabs}
+        selectionMode={selectionMode}
+        onToggleSelectionMode={() => {
+          if (selectionMode) {
+            exitSelectionMode();
+            return;
+          }
+
+          enterSelectionMode();
+        }}
       />
       <div ref={panelScrollRef} className="panel-scroll">
         <SidepanelStatus
@@ -407,6 +422,7 @@ export default function App() {
                 category: event.startsWith("list/") ? "ui" : "selection"
               });
             }}
+            selectionMode={selectionMode}
             onClearSelection={clearSelection}
             onToggleWindow={toggleWindow}
             onToggleGroup={commandActions.setGroupCollapsed}

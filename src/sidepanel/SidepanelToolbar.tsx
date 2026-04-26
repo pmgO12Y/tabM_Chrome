@@ -1,5 +1,5 @@
-import { CloseSmall, Refresh, SettingTwo, ExpandDownOne, FoldUpOne } from "@icon-park/react";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { CloseSmall, Refresh, SettingTwo, ExpandDownOne, FoldUpOne, ListCheckbox, CheckSmall } from "@icon-park/react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { translate, type SupportedLocale } from "../shared/i18n";
 import { resolveBulkToggleToolbarAction } from "./toolbarActions";
 import { calculateToolbarTooltipPlacement, type ToolbarTooltipPlacement } from "./toolbarTooltip";
@@ -18,6 +18,34 @@ interface ToolbarAction {
   active?: boolean;
 }
 
+function renderToolbarButton(
+  action: ToolbarAction,
+  params: {
+    disabled: boolean;
+    hideToolbarTooltip: () => void;
+    showToolbarTooltip: (actionKey: string, anchor: HTMLButtonElement) => void;
+  }
+): ReactElement {
+  const { key, label, icon: Icon, onClick, active = false } = action;
+
+  return (
+    <button
+      key={key}
+      type="button"
+      className={`panel-toolbar__button${active ? " panel-toolbar__button--active" : ""}`}
+      onClick={onClick}
+      onPointerEnter={(event) => params.showToolbarTooltip(key, event.currentTarget)}
+      onPointerLeave={params.hideToolbarTooltip}
+      onFocus={(event) => params.showToolbarTooltip(key, event.currentTarget)}
+      onBlur={params.hideToolbarTooltip}
+      disabled={params.disabled}
+      aria-label={label}
+    >
+      <Icon theme="outline" size="18" />
+    </button>
+  );
+}
+
 export function SidepanelToolbar({
   locale,
   appShellRef,
@@ -29,7 +57,9 @@ export function SidepanelToolbar({
   onOpenSettings,
   onExpandAll,
   onCollapseAll,
-  onCloseSelected
+  onCloseSelected,
+  selectionMode,
+  onToggleSelectionMode
 }: {
   locale: SupportedLocale;
   appShellRef: React.RefObject<HTMLDivElement | null>;
@@ -42,6 +72,8 @@ export function SidepanelToolbar({
   onExpandAll: () => void;
   onCollapseAll: () => void;
   onCloseSelected: () => void;
+  selectionMode: boolean;
+  onToggleSelectionMode: () => void;
 }) {
   const [toolbarTooltip, setToolbarTooltip] = useState<ToolbarTooltipState | null>(null);
   const [toolbarTooltipPlacement, setToolbarTooltipPlacement] = useState<ToolbarTooltipPlacement | null>(null);
@@ -55,18 +87,19 @@ export function SidepanelToolbar({
     locale
   );
 
-  const toolbarActions: ToolbarAction[] = [
+  const leadingToolbarActions: ToolbarAction[] = [
+    {
+      key: selectionMode ? "selection-done" : "selection-start",
+      label: translate(locale, selectionMode ? "sidepanel.toolbar.selection.done" : "sidepanel.toolbar.selection.start"),
+      icon: selectionMode ? CheckSmall : ListCheckbox,
+      onClick: onToggleSelectionMode,
+      active: selectionMode
+    },
     {
       key: "resync",
       label: translate(locale, "sidepanel.toolbar.resync"),
       icon: Refresh,
       onClick: onResync
-    },
-    {
-      key: "settings",
-      label: translate(locale, "sidepanel.toolbar.settings"),
-      icon: SettingTwo,
-      onClick: onOpenSettings
     },
     {
       key: "toggle-all",
@@ -87,6 +120,15 @@ export function SidepanelToolbar({
         ]
       : [])
   ];
+  const trailingToolbarActions: ToolbarAction[] = [
+    {
+      key: "settings",
+      label: translate(locale, "sidepanel.toolbar.settings"),
+      icon: SettingTwo,
+      onClick: onOpenSettings
+    }
+  ];
+  const toolbarActions = [...leadingToolbarActions, ...trailingToolbarActions];
 
   const toolbarActionLabelByKey = useMemo(
     () => new Map(toolbarActions.map((action) => [action.key, action.label])),
@@ -144,30 +186,32 @@ export function SidepanelToolbar({
   return (
     <>
       <div className="panel-toolbar">
-        {selectedCount > 0 ? (
-          <div className="panel-toolbar__selection" aria-live="polite">
-            {translate(locale, "sidepanel.toolbar.selectedCount", {
-              count: selectedCount
-            })}
+        <div className="panel-toolbar__primary">
+          {selectedCount > 0 ? (
+            <div className="panel-toolbar__selection" aria-live="polite">
+              {translate(locale, "sidepanel.toolbar.selectedCount", {
+                count: selectedCount
+              })}
+            </div>
+          ) : null}
+          <div className="panel-toolbar__actions" role="toolbar" aria-label={translate(locale, "sidepanel.toolbar.aria")}>
+            {leadingToolbarActions.map((action) =>
+              renderToolbarButton(action, {
+                disabled,
+                hideToolbarTooltip,
+                showToolbarTooltip
+              })
+            )}
           </div>
-        ) : null}
-        <div className="panel-toolbar__actions" role="toolbar" aria-label={translate(locale, "sidepanel.toolbar.aria")}>
-          {toolbarActions.map(({ key, label, icon: Icon, onClick, active = false }) => (
-            <button
-              key={key}
-              type="button"
-              className={`panel-toolbar__button${active ? " panel-toolbar__button--active" : ""}`}
-              onClick={onClick}
-              onPointerEnter={(event) => showToolbarTooltip(key, event.currentTarget)}
-              onPointerLeave={hideToolbarTooltip}
-              onFocus={(event) => showToolbarTooltip(key, event.currentTarget)}
-              onBlur={hideToolbarTooltip}
-              disabled={disabled}
-              aria-label={label}
-            >
-              <Icon theme="outline" size="18" />
-            </button>
-          ))}
+        </div>
+        <div className="panel-toolbar__actions panel-toolbar__actions--end">
+          {trailingToolbarActions.map((action) =>
+            renderToolbarButton(action, {
+              disabled,
+              hideToolbarTooltip,
+              showToolbarTooltip
+            })
+          )}
         </div>
       </div>
       {toolbarTooltip && toolbarTooltipLabel ? (
