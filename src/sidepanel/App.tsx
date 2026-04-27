@@ -16,6 +16,7 @@ import { createPanelCommandActions } from "./panelCommands";
 import { SearchBar, focusSearchInput } from "./SearchBar";
 import { SidepanelStatus } from "./SidepanelStatus";
 import { SidepanelToolbar } from "./SidepanelToolbar";
+import { resolveAutoLocateFromLiveActiveTab, type LiveActiveUpdateSource } from "./locateNavigation";
 import { useActiveGroupAutoExpand } from "./useActiveGroupAutoExpand";
 import { useClosingTabs } from "./useClosingTabs";
 import { useCollapsedWindows } from "./useCollapsedWindows";
@@ -25,6 +26,8 @@ import { useTabSelection } from "./useTabSelection";
 export default function App() {
   const [settings, setSettings] = useState<ExtensionSettingsRecord>(DEFAULT_EXTENSION_SETTINGS);
   const [liveActiveTabId, setLiveActiveTabId] = useState<number | null>(null);
+  const [liveActiveUpdateSource, setLiveActiveUpdateSource] = useState<LiveActiveUpdateSource | null>(null);
+  const [suppressedAutoLocateTabId, setSuppressedAutoLocateTabId] = useState<number | null>(null);
   const [locateRequest, setLocateRequest] = useState<{ rowKey: string; requestId: number } | null>(null);
   const locale: SupportedLocale = useMemo(
     () => resolveLocale({ settings, uiLanguage: getUiLanguage() }),
@@ -170,7 +173,7 @@ export default function App() {
   useEffect(() => {
     let disposed = false;
 
-    const updateLiveActiveTabId = async () => {
+    const updateLiveActiveTabId = async (source: LiveActiveUpdateSource) => {
       try {
         const tabs = await chrome.tabs.query({
           active: true,
@@ -181,21 +184,23 @@ export default function App() {
         }
 
         setLiveActiveTabId(tabs[0]?.id ?? null);
+        setLiveActiveUpdateSource(source);
       } catch {
         if (!disposed) {
           setLiveActiveTabId(null);
+          setLiveActiveUpdateSource(source);
         }
       }
     };
 
     const handleActivated = () => {
-      void updateLiveActiveTabId();
+      void updateLiveActiveTabId("tabs.onActivated");
     };
     const handleFocusChanged = () => {
-      void updateLiveActiveTabId();
+      void updateLiveActiveTabId("windows.onFocusChanged");
     };
 
-    void updateLiveActiveTabId();
+    void updateLiveActiveTabId("bootstrap");
     chrome.tabs.onActivated.addListener(handleActivated);
     chrome.windows.onFocusChanged.addListener(handleFocusChanged);
 
@@ -233,11 +238,7 @@ export default function App() {
     () => (liveActiveTabId == null ? null : snapshot.tabsById[liveActiveTabId] ?? null),
     [liveActiveTabId, snapshot.tabsById]
   );
-  const liveActiveTargetRowKey = liveActiveTab ? `tab-${liveActiveTab.id}` : null;
-  const hasLiveActiveTargetInFilteredRows = useMemo(
-    () => (liveActiveTargetRowKey ? hasRowKey(filteredRows, liveActiveTargetRowKey) : false),
-    [filteredRows, liveActiveTargetRowKey]
-  );
+  const previousLiveActiveTabIdRef = useRef<number | null>(null);
   const canLocateCurrentPage = !toolbarDisabled && liveActiveTab != null;
   const locateDisabledReason = liveActiveTab == null
     ? "sidepanel.toolbar.locateCurrentPageUnavailable"
@@ -306,35 +307,71 @@ export default function App() {
     }
   }
 
-  function requestLocateCurrentPage(): void {
-    if (!liveActiveTab) {
-      return;
-    }
+  function requestLocateForTab(targetTab: TabRecord, params: {
+    event: "panel/locate-current-page-clicked" | "panel/locate-current-page-auto";
+    category: "panel" | "ui";
+  }): void {
+    const targetRowKey = `tab-${targetTab.id}`;
+    const targetVisibleInFilteredRows = hasRowKey(filteredRows, targetRowKey);
+    const nextSearchTerm = targetVisibleInFilteredRows ? searchTerm : "";
 
-    const targetRowKey = `tab-${liveActiveTab.id}`;
-    const nextSearchTerm = hasLiveActiveTargetInFilteredRows ? searchTerm : "";
     if (nextSearchTerm !== searchTerm) {
       setSearchTerm(nextSearchTerm);
     }
 
-    expandLocateTargetPath(liveActiveTab);
+    expandLocateTargetPath(targetTab);
     setLocateRequest((current) => ({
       rowKey: targetRowKey,
       requestId: (current?.requestId ?? 0) + 1
     }));
     postTraceEvent({
-      event: "panel/locate-current-page-clicked",
+      event: params.event,
       details: {
-        targetTabId: liveActiveTab.id,
-        targetWindowId: liveActiveTab.windowId,
-        targetGroupId: liveActiveTab.groupId,
+        targetTabId: targetTab.id,
+        targetWindowId: targetTab.windowId,
+        targetGroupId: targetTab.groupId,
         searchCleared: nextSearchTerm !== searchTerm,
         hadSearchTerm: searchTerm.trim().length > 0,
-        targetVisibleInFilteredRows: hasLiveActiveTargetInFilteredRows
+        targetVisibleInFilteredRows
       },
+      category: params.category
+    });
+  }
+
+  function requestLocateCurrentPage(): void {
+    if (!liveActiveTab) {
+      return;
+    }
+
+    requestLocateForTab(liveActiveTab, {
+      event: "panel/locate-current-page-clicked",
       category: "panel"
     });
   }
+
+  useEffect(() => {
+    const decision = resolveAutoLocateFromLiveActiveTab({
+      previousActiveTabId: previousLiveActiveTabIdRef.current,
+      nextActiveTabId: liveActiveTab?.id ?? null,
+      updateSource: liveActiveUpdateSource,
+      suppressedTabId: suppressedAutoLocateTabId,
+      isInteractive: !toolbarDisabled
+    });
+
+    previousLiveActiveTabIdRef.current = decision.nextPreviousActiveTabId;
+    setSuppressedAutoLocateTabId((current) =>
+      current === decision.nextSuppressedTabId ? current : decision.nextSuppressedTabId
+    );
+
+    if (!decision.shouldLocate || !liveActiveTab) {
+      return;
+    }
+
+    requestLocateForTab(liveActiveTab, {
+      event: "panel/locate-current-page-auto",
+      category: "ui"
+    });
+  }, [liveActiveTab, liveActiveUpdateSource, requestLocateForTab, suppressedAutoLocateTabId, toolbarDisabled]);
 
   function closeTab(tabId: number): void {
     postTraceEvent({
@@ -378,6 +415,7 @@ export default function App() {
   }
 
   function handleTabPrimaryAction(params: { tabId: number; shiftKey: boolean; toggleKey: boolean }): void {
+    setSuppressedAutoLocateTabId(params.tabId);
     postTraceEvent({
       event: "panel/tab-activate-clicked",
       details: params,

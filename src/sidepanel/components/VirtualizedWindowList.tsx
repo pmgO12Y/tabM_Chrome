@@ -299,23 +299,18 @@ export function calculateStickyHeaderObstruction(params: {
   return Math.max(0, windowHeaderHeight) + Math.max(0, (groupHeaderHeight ?? 0) - (groupHeaderOverlap ?? 0));
 }
 
-export function calculateActiveRowScrollAdjustment(params: {
+export function calculateTargetRowScrollAdjustment(params: {
   rowTop: number;
   rowBottom: number;
   containerHeight: number;
   topObstruction: number;
 }): number {
   const { rowTop, rowBottom, containerHeight, topObstruction } = params;
+  const visibleHeight = Math.max(0, containerHeight - topObstruction);
+  const desiredRowCenter = topObstruction + visibleHeight / 2;
+  const rowCenter = (rowTop + rowBottom) / 2;
 
-  if (rowTop < topObstruction) {
-    return rowTop - topObstruction;
-  }
-
-  if (rowBottom > containerHeight) {
-    return rowBottom - containerHeight;
-  }
-
-  return 0;
+  return rowCenter - desiredRowCenter;
 }
 
 export function shouldPulseLocateRow(params: {
@@ -458,7 +453,7 @@ export function VirtualizedWindowList({
     const rowTop = getRowTopWithinContainer(targetRow, scrollContainer);
     const rowBottom = rowTop + targetRow.getBoundingClientRect().height;
     const topObstruction = getActiveRowTopObstruction(targetRow);
-    const scrollAdjustment = calculateActiveRowScrollAdjustment({
+    const scrollAdjustment = calculateTargetRowScrollAdjustment({
       rowTop,
       rowBottom,
       containerHeight: scrollContainer.clientHeight,
@@ -528,7 +523,7 @@ export function VirtualizedWindowList({
     const rowTop = getRowTopWithinContainer(targetRow, scrollContainer);
     const rowBottom = rowTop + targetRow.getBoundingClientRect().height;
     const topObstruction = getActiveRowTopObstruction(targetRow);
-    const scrollAdjustment = calculateActiveRowScrollAdjustment({
+    const scrollAdjustment = calculateTargetRowScrollAdjustment({
       rowTop,
       rowBottom,
       containerHeight: scrollContainer.clientHeight,

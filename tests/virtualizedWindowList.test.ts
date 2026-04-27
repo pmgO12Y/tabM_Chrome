@@ -3,10 +3,10 @@ import { NO_TAB_GROUP_ID } from "../src/shared/defaults";
 import type { PanelRow, TabRecord } from "../src/shared/types";
 import {
   buildWindowRenderSections,
-  calculateActiveRowScrollAdjustment,
   calculateAnchorScrollAdjustment,
   calculateRequiredBottomSpacer,
   calculateStickyHeaderObstruction,
+  calculateTargetRowScrollAdjustment,
   canReleaseBottomSpacer,
   getGroupRowClassName,
   getRowShellClassName,
@@ -146,7 +146,7 @@ describe("VirtualizedWindowList helpers", () => {
     });
   });
 
-  it("calculates anchor and active-row scroll adjustments", () => {
+  it("calculates anchor and target-row scroll adjustments", () => {
     expect(
       calculateAnchorScrollAdjustment({
         previousRowTop: 140,
@@ -155,22 +155,22 @@ describe("VirtualizedWindowList helpers", () => {
     ).toBe(-48);
 
     expect(
-      calculateActiveRowScrollAdjustment({
-        rowTop: 8,
-        rowBottom: 40,
+      calculateTargetRowScrollAdjustment({
+        rowTop: 44,
+        rowBottom: 84,
         containerHeight: 200,
         topObstruction: 24
       })
-    ).toBe(-16);
+    ).toBe(-48);
 
     expect(
-      calculateActiveRowScrollAdjustment({
+      calculateTargetRowScrollAdjustment({
         rowTop: 160,
         rowBottom: 228,
         containerHeight: 200,
         topObstruction: 24
       })
-    ).toBe(28);
+    ).toBe(82);
   });
 
   it("calculates spacer and sticky obstruction helpers", () => {

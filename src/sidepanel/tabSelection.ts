@@ -57,18 +57,22 @@ export function resolveTabSelection(params: ResolveTabSelectionParams): Resolved
       : tabId;
 
   if (shiftKey) {
+    const shiftAnchorTabId =
+      resolveNearestSelectedAnchorTabId({
+        visibleTabIds,
+        selectedTabIds: currentSelection.selectedTabIds,
+        tabId
+      }) ?? effectiveAnchorTabId;
     const rangeTabIds = getSelectionRangeTabIds({
       visibleTabIds,
-      startTabId: effectiveAnchorTabId,
+      startTabId: shiftAnchorTabId,
       endTabId: tabId
     });
-    const nextSelectedTabIdSet = toggleKey
-      ? new Set([...currentSelection.selectedTabIds, ...rangeTabIds])
-      : new Set(rangeTabIds);
+    const nextSelectedTabIdSet = new Set([...currentSelection.selectedTabIds, ...rangeTabIds]);
 
     return {
       selectedTabIds: visibleTabIds.filter((candidateTabId) => nextSelectedTabIdSet.has(candidateTabId)),
-      anchorTabId: effectiveAnchorTabId
+      anchorTabId: shiftAnchorTabId
     };
   }
 
@@ -117,6 +121,37 @@ export function resolveTabPrimaryAction(params: ResolveTabPrimaryActionParams): 
     selectionMode: true,
     shouldActivateTab: false
   };
+}
+
+function resolveNearestSelectedAnchorTabId(params: {
+  visibleTabIds: readonly number[];
+  selectedTabIds: readonly number[];
+  tabId: number;
+}): number | null {
+  const { visibleTabIds, selectedTabIds, tabId } = params;
+  const targetIndex = visibleTabIds.indexOf(tabId);
+
+  if (targetIndex === -1 || selectedTabIds.length === 0) {
+    return null;
+  }
+
+  const selectedTabIdSet = new Set(selectedTabIds);
+
+  return visibleTabIds.reduce<{ tabId: number; distance: number } | null>((closest, candidateTabId, index) => {
+    if (!selectedTabIdSet.has(candidateTabId) || candidateTabId === tabId) {
+      return closest;
+    }
+
+    const distance = Math.abs(index - targetIndex);
+    if (closest == null || distance < closest.distance) {
+      return {
+        tabId: candidateTabId,
+        distance
+      };
+    }
+
+    return closest;
+  }, null)?.tabId ?? null;
 }
 
 function getSelectionRangeTabIds(params: {

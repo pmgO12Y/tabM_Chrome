@@ -105,6 +105,54 @@ describe("tabSelection", () => {
     });
   });
 
+  it("uses the nearest selected tab as the shift anchor", () => {
+    expect(
+      resolveTabSelection({
+        visibleTabIds: [1, 2, 3, 4, 5, 6],
+        selectedTabIds: [1, 4],
+        anchorTabId: 4,
+        tabId: 6,
+        shiftKey: true,
+        toggleKey: false
+      })
+    ).toEqual({
+      selectedTabIds: [1, 4, 5, 6],
+      anchorTabId: 4
+    });
+  });
+
+  it("uses the upper selected tab when two selected anchors are equally near", () => {
+    expect(
+      resolveTabSelection({
+        visibleTabIds: [1, 2, 3, 4, 5],
+        selectedTabIds: [1, 5],
+        anchorTabId: 5,
+        tabId: 3,
+        shiftKey: true,
+        toggleKey: false
+      })
+    ).toEqual({
+      selectedTabIds: [1, 2, 3, 5],
+      anchorTabId: 1
+    });
+  });
+
+  it("prefers the nearest selected tab over a stale anchor tab", () => {
+    expect(
+      resolveTabSelection({
+        visibleTabIds: [1, 2, 3, 4, 5, 6],
+        selectedTabIds: [2, 5],
+        anchorTabId: 2,
+        tabId: 6,
+        shiftKey: true,
+        toggleKey: false
+      })
+    ).toEqual({
+      selectedTabIds: [2, 5, 6],
+      anchorTabId: 5
+    });
+  });
+
   it("supports ctrl/cmd + shift by appending a visible range", () => {
     expect(
       resolveTabSelection({

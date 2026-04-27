@@ -765,7 +765,7 @@ button:focus-visible {
 
 @keyframes tab-row-locate-pulse {
   0% {
-    background: rgba(31, 87, 255, 0.28);
+    background: rgba(217, 48, 37, 0.28);
   }
 
   100% {
