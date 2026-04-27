@@ -23,17 +23,33 @@ export interface ResolvedTabPrimaryAction extends ResolvedTabSelection {
   shouldActivateTab: boolean;
 }
 
+export interface VisibleTabIndex {
+  ids: number[];
+  idSet: ReadonlySet<number>;
+  indexById: ReadonlyMap<number, number>;
+}
+
 export function getVisibleTabIds(rows: readonly PanelRow[]): number[] {
-  return rows.flatMap((row) => (row.kind === "tab" ? [row.tab.id] : []));
+  return buildVisibleTabIndex(rows).ids;
+}
+
+export function buildVisibleTabIndex(rows: readonly PanelRow[]): VisibleTabIndex {
+  const ids = rows.flatMap((row) => (row.kind === "tab" ? [row.tab.id] : []));
+  return {
+    ids,
+    idSet: new Set(ids),
+    indexById: new Map(ids.map((tabId, index) => [tabId, index]))
+  };
 }
 
 export function reconcileVisibleTabSelection(params: {
   visibleTabIds: readonly number[];
+  visibleTabIdSet?: ReadonlySet<number>;
   selectedTabIds: readonly number[];
   anchorTabId: number | null;
 }): ResolvedTabSelection {
   const { visibleTabIds, selectedTabIds, anchorTabId } = params;
-  const visibleTabIdSet = new Set(visibleTabIds);
+  const visibleTabIdSet = params.visibleTabIdSet ?? new Set(visibleTabIds);
   const selectedTabIdSet = new Set(selectedTabIds);
   const nextSelectedTabIds = visibleTabIds.filter((tabId) => selectedTabIdSet.has(tabId));
 
@@ -45,14 +61,15 @@ export function reconcileVisibleTabSelection(params: {
 
 export function resolveTabSelection(params: ResolveTabSelectionParams): ResolvedTabSelection {
   const { visibleTabIds, selectedTabIds, anchorTabId, tabId, shiftKey, toggleKey } = params;
-  const visibleTabIdSet = new Set(visibleTabIds);
+  const visibleTabIndex = buildVisibleTabIndexFromIds(visibleTabIds);
   const currentSelection = reconcileVisibleTabSelection({
     visibleTabIds,
+    visibleTabIdSet: visibleTabIndex.idSet,
     selectedTabIds,
     anchorTabId
   });
   const effectiveAnchorTabId =
-    currentSelection.anchorTabId != null && visibleTabIdSet.has(currentSelection.anchorTabId)
+    currentSelection.anchorTabId != null && visibleTabIndex.idSet.has(currentSelection.anchorTabId)
       ? currentSelection.anchorTabId
       : tabId;
 
@@ -60,11 +77,13 @@ export function resolveTabSelection(params: ResolveTabSelectionParams): Resolved
     const shiftAnchorTabId =
       resolveNearestSelectedAnchorTabId({
         visibleTabIds,
+        visibleTabIndexById: visibleTabIndex.indexById,
         selectedTabIds: currentSelection.selectedTabIds,
         tabId
       }) ?? effectiveAnchorTabId;
     const rangeTabIds = getSelectionRangeTabIds({
       visibleTabIds,
+      visibleTabIndexById: visibleTabIndex.indexById,
       startTabId: shiftAnchorTabId,
       endTabId: tabId
     });
@@ -123,13 +142,22 @@ export function resolveTabPrimaryAction(params: ResolveTabPrimaryActionParams): 
   };
 }
 
+function buildVisibleTabIndexFromIds(visibleTabIds: readonly number[]): VisibleTabIndex {
+  return {
+    ids: [...visibleTabIds],
+    idSet: new Set(visibleTabIds),
+    indexById: new Map(visibleTabIds.map((tabId, index) => [tabId, index]))
+  };
+}
+
 function resolveNearestSelectedAnchorTabId(params: {
   visibleTabIds: readonly number[];
+  visibleTabIndexById: ReadonlyMap<number, number>;
   selectedTabIds: readonly number[];
   tabId: number;
 }): number | null {
-  const { visibleTabIds, selectedTabIds, tabId } = params;
-  const targetIndex = visibleTabIds.indexOf(tabId);
+  const { visibleTabIds, visibleTabIndexById, selectedTabIds, tabId } = params;
+  const targetIndex = visibleTabIndexById.get(tabId) ?? -1;
 
   if (targetIndex === -1 || selectedTabIds.length === 0) {
     return null;
@@ -156,12 +184,13 @@ function resolveNearestSelectedAnchorTabId(params: {
 
 function getSelectionRangeTabIds(params: {
   visibleTabIds: readonly number[];
+  visibleTabIndexById: ReadonlyMap<number, number>;
   startTabId: number;
   endTabId: number;
 }): number[] {
-  const { visibleTabIds, startTabId, endTabId } = params;
-  const startIndex = visibleTabIds.indexOf(startTabId);
-  const endIndex = visibleTabIds.indexOf(endTabId);
+  const { visibleTabIds, visibleTabIndexById, startTabId, endTabId } = params;
+  const startIndex = visibleTabIndexById.get(startTabId) ?? -1;
+  const endIndex = visibleTabIndexById.get(endTabId) ?? -1;
 
   if (startIndex === -1 || endIndex === -1) {
     return [endTabId];

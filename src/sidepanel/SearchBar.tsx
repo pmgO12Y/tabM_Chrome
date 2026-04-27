@@ -208,7 +208,7 @@ export function SearchBar({
 
             <button
               type="button"
-              className="search-bar__button"
+              className={`search-bar__button${filterMode === "highlight" ? " search-bar__button--active" : ""}`}
               onPointerDown={hideSearchTooltip}
               onClick={handleToggleMode}
               onPointerEnter={(event) => showSearchTooltip("mode", event.currentTarget)}

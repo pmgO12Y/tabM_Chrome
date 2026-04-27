@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getVisibleTabIds, reconcileVisibleTabSelection, resolveTabPrimaryAction } from "./tabSelection";
+import { buildVisibleTabIndex, reconcileVisibleTabSelection, resolveTabPrimaryAction } from "./tabSelection";
 import type { PanelRow } from "../shared/types";
 
 export function useTabSelection(
@@ -10,12 +10,14 @@ export function useTabSelection(
   const [selectedTabIds, setSelectedTabIds] = useState<number[]>([]);
   const [selectionAnchorTabId, setSelectionAnchorTabId] = useState<number | null>(null);
 
-  const visibleTabIds = useMemo(() => getVisibleTabIds(rows), [rows]);
+  const visibleTabIndex = useMemo(() => buildVisibleTabIndex(rows), [rows]);
+  const visibleTabIds = visibleTabIndex.ids;
   const selectedTabIdSet = useMemo(() => new Set(selectedTabIds), [selectedTabIds]);
 
   useEffect(() => {
     const nextSelection = reconcileVisibleTabSelection({
       visibleTabIds,
+      visibleTabIdSet: visibleTabIndex.idSet,
       selectedTabIds,
       anchorTabId: selectionAnchorTabId
     });

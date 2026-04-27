@@ -29,7 +29,6 @@ import {
   initializeTracePersistence,
   setVerboseLoggingEnabled,
   summarizeError,
-  summarizeSnapshot,
   traceBackgroundEvent,
   tracePanelEvent
 } from "./trace";
@@ -199,7 +198,12 @@ function registerPanelPortListener(): void {
           cause: "panel/connect",
           task: async () => {
             const snapshot = store.getSnapshot();
-            traceBackgroundEvent("panel/send-snapshot", summarizeSnapshot(snapshot), {
+            traceBackgroundEvent("panel/send-snapshot", {
+              version: snapshot.version,
+              focusedWindowId: snapshot.focusedWindowId,
+              totalTabs: Object.keys(snapshot.tabsById).length,
+              windowCount: snapshot.windowOrder.length
+            }, {
               category: "panel"
             });
             panelPortHub.sendSnapshot(port, snapshot);
@@ -233,7 +237,11 @@ function registerTabListeners(): void {
     windowSyncCoordinator,
     detachedTabWindowIds,
     enqueueStoreTask,
-    handleActivated
+    handleActivated,
+    ensureInitialized,
+    store,
+    handlePatch,
+    syncGroupFromChrome
   });
 
   chrome.tabs.onCreated.addListener(handlers.onCreated);
@@ -252,7 +260,8 @@ function registerTabGroupListeners(): void {
     ensureInitialized,
     store,
     handlePatch,
-    syncWindowFromChrome
+    syncWindowFromChrome,
+    traceBackgroundEvent
   });
 
   chrome.tabGroups.onCreated.addListener(handlers.onCreated);
@@ -387,9 +396,9 @@ async function syncWindowFromChrome(
     traceBackgroundEvent("syncWindow/end", {
       windowId,
       nextCount: normalizedTabs.length,
-      nextTabIds: normalizedTabs.map((tab) => tab.id),
       groupCount: groups.length,
-      snapshot: summarizeSnapshot(store.getSnapshot()),
+      staleTabCount: staleTabIds.length,
+      nextTabIdsPreview: normalizedTabs.slice(0, 8).map((tab) => tab.id),
       ...traceContext
     });
   } catch (error) {

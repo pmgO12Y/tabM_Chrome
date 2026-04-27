@@ -207,28 +207,29 @@ describe("backgroundSyncCoordinator", () => {
     expect(syncWindow).toHaveBeenNthCalledWith(2, 5, expect.objectContaining({ cause: "command/tabs/move" }));
   });
 
-  it("flushes buffered event syncs for uncovered windows after command phase", async () => {
+  it("debounces auto-correct window syncs for the same window", async () => {
+    vi.useFakeTimers();
+
     const syncWindow = vi.fn(async () => undefined);
     const coordinator = createWindowSyncCoordinator({
       runExclusive: async (task) => task(),
       syncWindow
     });
 
-    await coordinator.runCommandPhase({
-      cause: "command/tab/set-pinned",
-      task: async () => {
-        void coordinator.scheduleWindowSync({
-          windowId: 5,
-          cause: "tabs/onUpdated"
-        });
-
-        return {
-          affectedWindowIds: []
-        };
-      }
+    const first = coordinator.scheduleWindowSync({
+      windowId: 5,
+      cause: "autocorrect/tabs/onUpdated"
+    });
+    const second = coordinator.scheduleWindowSync({
+      windowId: 5,
+      cause: "autocorrect/tabs/onRemoved"
     });
 
+    await vi.advanceTimersByTimeAsync(40);
+    await Promise.all([first, second]);
+
     expect(syncWindow).toHaveBeenCalledTimes(1);
-    expect(syncWindow).toHaveBeenCalledWith(5, expect.objectContaining({ cause: "tabs/onUpdated" }));
+    expect(syncWindow).toHaveBeenCalledWith(5, expect.objectContaining({ cause: "autocorrect/tabs/onRemoved" }));
   });
+
 });

@@ -1,9 +1,10 @@
 import { CloseSmall, Pin } from "@icon-park/react";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
+import type { SupportedLocale } from "../../shared/i18n";
 import { buildTabFaviconCandidates } from "../../shared/domain/favicon";
-import { translate, type SupportedLocale } from "../../shared/i18n";
+import { translate } from "../../shared/i18n";
 import type { PanelRow } from "../../shared/types";
-import type { DragSource, DropTarget } from "./listDrag";
+import type { DropTarget } from "./listDrag";
 import {
   getGroupRowClassName,
   getRowShellClassName,
@@ -11,40 +12,15 @@ import {
   getWindowRowClassName
 } from "./VirtualizedWindowList";
 
-export function RowShell({
-  locale,
-  row,
-  rowRefs,
-  currentActiveTabId,
-  closingTabIds,
-  selectedTabIds,
-  locatePulseRowKey,
-  onCaptureManualToggleAnchor,
-  disabled,
-  onClearSelection,
-  onToggleWindow,
-  onToggleGroup,
-  onActivateTab,
-  onTogglePinned,
-  onCloseTab,
-  selectionMode,
-  dragSource,
-  dropTarget,
-  onDragStart,
-  onDragOver,
-  onDrop,
-  extraClassName = "",
-  groupedTabColor,
-  visuallyExpanded = false,
-  onElementRefChange
-}: {
+export interface RowShellProps {
   locale: SupportedLocale;
   row: PanelRow;
   rowRefs: React.MutableRefObject<Map<string, HTMLDivElement>>;
-  currentActiveTabId: number | null;
-  closingTabIds: ReadonlySet<number>;
-  selectedTabIds: ReadonlySet<number>;
-  locatePulseRowKey: string | null;
+  isCurrentActive?: boolean;
+  isWindowActive?: boolean;
+  isClosing?: boolean;
+  isSelected?: boolean;
+  isLocatePulsing?: boolean;
   onCaptureManualToggleAnchor: (rowKey: string) => void;
   disabled: boolean;
   onClearSelection: () => void;
@@ -58,20 +34,49 @@ export function RowShell({
   onTogglePinned: (tabId: number, pinned: boolean) => void;
   onCloseTab: (tabId: number) => void;
   selectionMode: boolean;
-  dragSource: DragSource | null;
-  dropTarget: DropTarget | null;
   onDragStart: (row: PanelRow, event: React.DragEvent<HTMLElement>) => void;
   onDragOver: (row: PanelRow, event: React.DragEvent<HTMLElement>) => void;
   onDrop: (row: PanelRow, event: React.DragEvent<HTMLElement>) => void;
   extraClassName?: string;
   groupedTabColor?: chrome.tabGroups.ColorEnum;
   visuallyExpanded?: boolean;
+  isDragging?: boolean;
+  dropIndicator?: DropTarget["indicator"] | null;
   onElementRefChange?: (node: HTMLDivElement | null) => void;
-}) {
+}
+
+function RowShellInner({
+  locale,
+  row,
+  rowRefs,
+  isCurrentActive = false,
+  isWindowActive = false,
+  isClosing = false,
+  isSelected = false,
+  isLocatePulsing = false,
+  onCaptureManualToggleAnchor,
+  disabled,
+  onClearSelection,
+  onToggleWindow,
+  onToggleGroup,
+  onActivateTab,
+  onTogglePinned,
+  onCloseTab,
+  selectionMode,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  extraClassName = "",
+  groupedTabColor,
+  visuallyExpanded = false,
+  isDragging = false,
+  dropIndicator = null,
+  onElementRefChange
+}: RowShellProps) {
   const shellExtraClassName = [
     extraClassName,
-    dragSource?.rowKey === row.key ? "stack-list__item--dragging" : "",
-    dropTarget?.rowKey === row.key ? `stack-list__item--drop-${dropTarget.indicator}` : ""
+    isDragging ? "stack-list__item--dragging" : "",
+    dropIndicator ? `stack-list__item--drop-${dropIndicator}` : ""
   ]
     .filter(Boolean)
     .join(" ");
@@ -91,12 +96,13 @@ export function RowShell({
       }}
     >
       <PanelListRow
-        locale={locale}
         row={row}
-        currentActiveTabId={currentActiveTabId}
-        closingTabIds={closingTabIds}
-        selectedTabIds={selectedTabIds}
-        locatePulseRowKey={locatePulseRowKey}
+        isCurrentActive={isCurrentActive}
+        isWindowActive={isWindowActive}
+        isClosing={isClosing}
+        isSelected={isSelected}
+        isLocatePulsing={isLocatePulsing}
+        locale={locale}
         onCaptureManualToggleAnchor={onCaptureManualToggleAnchor}
         disabled={disabled}
         onClearSelection={onClearSelection}
@@ -116,13 +122,47 @@ export function RowShell({
   );
 }
 
+export function areRowShellPropsEqual(previous: RowShellProps, next: RowShellProps): boolean {
+  return (
+    previous.row === next.row
+    && previous.locale === next.locale
+    && previous.rowRefs === next.rowRefs
+    && previous.isCurrentActive === next.isCurrentActive
+    && previous.isWindowActive === next.isWindowActive
+    && previous.isClosing === next.isClosing
+    && previous.isSelected === next.isSelected
+    && previous.isLocatePulsing === next.isLocatePulsing
+    && previous.disabled === next.disabled
+    && previous.selectionMode === next.selectionMode
+    && previous.extraClassName === next.extraClassName
+    && previous.groupedTabColor === next.groupedTabColor
+    && previous.visuallyExpanded === next.visuallyExpanded
+    && previous.isDragging === next.isDragging
+    && previous.dropIndicator === next.dropIndicator
+    && previous.onCaptureManualToggleAnchor === next.onCaptureManualToggleAnchor
+    && previous.onClearSelection === next.onClearSelection
+    && previous.onToggleWindow === next.onToggleWindow
+    && previous.onToggleGroup === next.onToggleGroup
+    && previous.onActivateTab === next.onActivateTab
+    && previous.onTogglePinned === next.onTogglePinned
+    && previous.onCloseTab === next.onCloseTab
+    && previous.onDragStart === next.onDragStart
+    && previous.onDragOver === next.onDragOver
+    && previous.onDrop === next.onDrop
+    && previous.onElementRefChange === next.onElementRefChange
+  );
+}
+
+export const RowShell = memo(RowShellInner, areRowShellPropsEqual);
+
 function PanelListRow({
   locale,
   row,
-  currentActiveTabId,
-  closingTabIds,
-  selectedTabIds,
-  locatePulseRowKey,
+  isCurrentActive = false,
+  isWindowActive = false,
+  isClosing = false,
+  isSelected = false,
+  isLocatePulsing = false,
   onCaptureManualToggleAnchor,
   disabled,
   onClearSelection,
@@ -140,10 +180,11 @@ function PanelListRow({
 }: {
   locale: SupportedLocale;
   row: PanelRow;
-  currentActiveTabId: number | null;
-  closingTabIds: ReadonlySet<number>;
-  selectedTabIds: ReadonlySet<number>;
-  locatePulseRowKey: string | null;
+  isCurrentActive?: boolean;
+  isWindowActive?: boolean;
+  isClosing?: boolean;
+  isSelected?: boolean;
+  isLocatePulsing?: boolean;
   onCaptureManualToggleAnchor: (rowKey: string) => void;
   disabled: boolean;
   onClearSelection: () => void;
@@ -228,11 +269,6 @@ function PanelListRow({
     );
   }
 
-  const isCurrentActive = row.tab.id === currentActiveTabId;
-  const isWindowActive = row.tab.active && !isCurrentActive;
-  const isClosing = closingTabIds.has(row.tab.id);
-  const isSelected = selectedTabIds.has(row.tab.id);
-  const isLocatePulsing = locatePulseRowKey === row.key;
   const tabDisabled = disabled || isClosing;
 
   return (

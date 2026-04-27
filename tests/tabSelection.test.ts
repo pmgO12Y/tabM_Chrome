@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PanelRow } from "../src/shared/types";
 import {
+  buildVisibleTabIndex,
   getVisibleTabIds,
   reconcileVisibleTabSelection,
   resolveTabPrimaryAction,
@@ -8,7 +9,7 @@ import {
 } from "../src/sidepanel/tabSelection";
 
 describe("tabSelection", () => {
-  it("collects only visible tab ids from the current rows", () => {
+  it("builds visible tab ids and index caches together", () => {
     const rows: PanelRow[] = [
       {
         kind: "window",
@@ -19,18 +20,6 @@ describe("tabSelection", () => {
         collapsed: false,
         totalCount: 2,
         firstUnpinnedTabIndex: 0
-      },
-      {
-        kind: "group",
-        key: "group-66",
-        windowId: 1,
-        groupId: 66,
-        title: "测试组",
-        color: "blue",
-        collapsed: false,
-        totalCount: 1,
-        tabIds: [2],
-        firstTabIndex: 1
       },
       {
         kind: "tab",
@@ -58,7 +47,7 @@ describe("tabSelection", () => {
           id: 2,
           windowId: 1,
           index: 1,
-          groupId: 66,
+          groupId: -1,
           title: "B",
           url: "https://b.com",
           pinned: false,
@@ -70,8 +59,16 @@ describe("tabSelection", () => {
       }
     ];
 
-    expect(getVisibleTabIds(rows)).toEqual([1, 2]);
+    expect(buildVisibleTabIndex(rows)).toEqual({
+      ids: [1, 2],
+      idSet: new Set([1, 2]),
+      indexById: new Map([
+        [1, 0],
+        [2, 1]
+      ])
+    });
   });
+
 
   it("supports ctrl or cmd toggle selection without activating the tab", () => {
     expect(

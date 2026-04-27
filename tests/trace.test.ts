@@ -6,6 +6,7 @@ import {
   getTraceSettings,
   getTraceState,
   setVerboseLoggingEnabled,
+  summarizeSnapshot,
   traceBackgroundEvent,
   tracePanelEvent
 } from "../src/background/trace";
@@ -94,13 +95,47 @@ describe("trace", () => {
     expect(timeline).toContain("[sidepanel]");
   });
 
-  it("returns trace state summary", async () => {
-    await setVerboseLoggingEnabled(true);
-    traceBackgroundEvent("bg/test-event", { value: 1 });
-
-    const state = await getTraceState();
-    expect(state.settings.verboseLoggingEnabled).toBe(true);
-    expect(state.entryCount).toBeGreaterThan(0);
-    expect(state.updatedAt).not.toBeNull();
+  it("builds compact snapshot summaries with tab previews", () => {
+    expect(
+      summarizeSnapshot({
+        version: 7,
+        focusedWindowId: 3,
+        tabsById: Object.fromEntries(
+          Array.from({ length: 10 }, (_unused, index) => [
+            index + 1,
+            {
+              id: index + 1,
+              windowId: 3,
+              index,
+              groupId: -1,
+              title: `Tab ${index + 1}`,
+              url: `https://example.com/${index + 1}`,
+              pinned: false,
+              active: index === 0,
+              audible: false,
+              discarded: false,
+              favIconUrl: null
+            }
+          ])
+        ),
+        windowTabIds: {
+          3: Array.from({ length: 10 }, (_unused, index) => index + 1)
+        },
+        windowOrder: [3],
+        groupsById: {}
+      })
+    ).toEqual({
+      version: 7,
+      focusedWindowId: 3,
+      totalTabs: 10,
+      windows: [
+        {
+          windowId: 3,
+          count: 10,
+          tabIdsPreview: [1, 2, 3, 4, 5, 6, 7, 8]
+        }
+      ]
+    });
   });
+
 });

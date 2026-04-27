@@ -181,10 +181,17 @@ describe("commandExecutor", () => {
     expect(mocks.tabsRemove).toHaveBeenCalledWith([5, 6, 7]);
   });
 
-  it("updates collapsed state for tab groups", async () => {
+  it("returns the owning window when updating collapsed state for tab groups", async () => {
     const mocks = createChromeApiMocks();
+    mocks.tabGroupsGet.mockResolvedValueOnce({
+      id: 12,
+      collapsed: false,
+      color: "blue" as chrome.tabGroups.ColorEnum,
+      title: "测试组",
+      windowId: 7
+    });
 
-    await executeTabCommand(
+    const result = await executeTabCommand(
       {
         type: "group/set-collapsed",
         groupId: 12,
@@ -193,9 +200,11 @@ describe("commandExecutor", () => {
       toChromeApi(mocks)
     );
 
+    expect(mocks.tabGroupsGet).toHaveBeenCalledWith(12);
     expect(mocks.tabGroupsUpdate).toHaveBeenCalledWith(12, {
       collapsed: true
     });
+    expect(result.affectedWindowIds).toEqual([7]);
     expect(mocks.tabsGet).not.toHaveBeenCalled();
     expect(mocks.tabsUpdate).not.toHaveBeenCalled();
     expect(mocks.windowsUpdate).not.toHaveBeenCalled();

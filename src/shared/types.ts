@@ -231,4 +231,20 @@ export type PanelRow =
       matchesSearch?: boolean;
     };
 
+export type WindowRenderItem =
+  | {
+      kind: "single";
+      row: Exclude<PanelRow, { kind: "window" }>;
+    }
+  | {
+      kind: "group-block";
+      groupRow: Extract<PanelRow, { kind: "group" }>;
+      childRows: Array<Extract<PanelRow, { kind: "tab" }> >;
+    };
+
+export interface WindowRenderSection {
+  windowRow: Extract<PanelRow, { kind: "window" }>;
+  items: WindowRenderItem[];
+}
+
 export type SearchFilterMode = "filter" | "highlight";

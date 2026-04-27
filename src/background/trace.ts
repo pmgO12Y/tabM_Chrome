@@ -21,7 +21,8 @@ const DEFAULT_TRACE_SETTINGS: TraceSettingsRecord = {
   changedAt: new Date(0).toISOString()
 };
 const MAX_TRACE_ENTRIES = 400;
-const MAX_PERSISTED_TRACE_ENTRIES = 800;
+const MAX_PERSISTED_TRACE_ENTRIES = 400;
+const TRACE_FLUSH_DELAY_MS = 1500;
 const traceEntries: TraceEntryRecord[] = [];
 const sessionStartMs = Date.now();
 const sessionId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -244,7 +245,7 @@ function appendTraceEntry(params: {
   flushTimer = globalThis.setTimeout(() => {
     flushTimer = null;
     void flushPersistedTrace();
-  }, 500);
+  }, TRACE_FLUSH_DELAY_MS);
 }
 
 async function flushPersistedTrace(): Promise<void> {
@@ -401,7 +402,16 @@ function shouldLogToConsole(entry: TraceEntryRecord): boolean {
   if (entry.level === "error" || entry.level === "warn") {
     return true;
   }
-  return traceSettings.verboseLoggingEnabled;
+
+  if (!traceSettings.verboseLoggingEnabled) {
+    return false;
+  }
+
+  return entry.event.startsWith("command/")
+    || entry.event.startsWith("panel/")
+    || entry.event.startsWith("syncWindow/")
+    || entry.event.startsWith("coordinator/")
+    || entry.category === "trace";
 }
 
 function resolveConsoleMethod(level: TraceEntryLevel): typeof console.info {

@@ -64,13 +64,13 @@ describe("locateNavigation", () => {
     });
   });
 
-  it("does not auto-locate when the active tab did not change or panel is not interactive", () => {
+  it("clears the suppression immediately after consuming the matching activation", () => {
     expect(
       resolveAutoLocateFromLiveActiveTab({
-        previousActiveTabId: 2,
+        previousActiveTabId: 1,
         nextActiveTabId: 2,
         updateSource: "tabs.onActivated",
-        suppressedTabId: null,
+        suppressedTabId: 2,
         isInteractive: true
       })
     ).toEqual({
@@ -85,12 +85,13 @@ describe("locateNavigation", () => {
         nextActiveTabId: 3,
         updateSource: "tabs.onActivated",
         suppressedTabId: null,
-        isInteractive: false
+        isInteractive: true
       })
     ).toEqual({
-      shouldLocate: false,
+      shouldLocate: true,
       nextPreviousActiveTabId: 3,
       nextSuppressedTabId: null
     });
   });
+
 });

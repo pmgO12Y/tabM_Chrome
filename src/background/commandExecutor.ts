@@ -135,11 +135,12 @@ export async function executeTabCommand(
       };
     }
     case "group/set-collapsed": {
+      const group = await chromeApi.tabGroups.get(command.groupId);
       await chromeApi.tabGroups.update(command.groupId, {
         collapsed: command.collapsed
       });
       return {
-        affectedWindowIds: []
+        affectedWindowIds: group.windowId == null ? [] : [group.windowId]
       };
     }
     case "tab/move": {

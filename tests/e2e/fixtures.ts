@@ -47,6 +47,7 @@ export const test = base.extend<E2eFixture>({
 
   sidepanelApi: async ({ sidepanelPage }, use) => {
     const api = await connectSidepanelApi(sidepanelPage);
+    await api.waitForInteractive();
     await use(api);
   }
 });

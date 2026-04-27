@@ -4,7 +4,7 @@ import {
   getUiLanguage,
   resolveLocale
 } from "../shared/i18n";
-import { filterPanelRowsBySearch, flattenWindowSections, hasRowKey, selectCurrentActiveTabId, selectWindowSections } from "../shared/domain/selectors";
+import { buildWindowRenderSections, createSearchResult, flattenWindowSections, selectCurrentActiveTabId, selectWindowSections } from "../shared/domain/selectors";
 import {
   DEFAULT_EXTENSION_SETTINGS,
   EXTENSION_SETTINGS_STORAGE_KEY,
@@ -28,7 +28,7 @@ export default function App() {
   const [settings, setSettings] = useState<ExtensionSettingsRecord>(DEFAULT_EXTENSION_SETTINGS);
   const [liveActiveTabId, setLiveActiveTabId] = useState<number | null>(null);
   const [liveActiveUpdateSource, setLiveActiveUpdateSource] = useState<LiveActiveUpdateSource | null>(null);
-  const [suppressedAutoLocateTabId, setSuppressedAutoLocateTabId] = useState<number | null>(null);
+  const suppressedAutoLocateTabIdRef = useRef<number | null>(null);
   const [locateRequest, setLocateRequest] = useState<{ rowKey: string; requestId: number } | null>(null);
   const locale: SupportedLocale = useMemo(
     () => resolveLocale({ settings, uiLanguage: getUiLanguage() }),
@@ -126,22 +126,15 @@ export default function App() {
     [sections, searchActive]
   );
 
-  const filteredRows = useMemo(
-    () => filterPanelRowsBySearch(rows, searchTerm, filterMode),
+  const searchResult = useMemo(
+    () => createSearchResult(rows, searchTerm, filterMode),
     [rows, searchTerm, filterMode]
   );
+  const filteredRows = searchResult.rows;
+  const matchCount = searchResult.matchCount;
+  const renderSections = useMemo(() => buildWindowRenderSections(filteredRows), [filteredRows]);
+  const filteredRowKeySet = useMemo(() => new Set(filteredRows.map((row) => row.key)), [filteredRows]);
 
-  const matchCount = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return 0;
-    }
-
-    if (filterMode === "filter") {
-      return filteredRows.filter((row) => row.kind === "tab").length;
-    }
-
-    return filteredRows.filter((row) => row.kind === "tab" && row.matchesSearch).length;
-  }, [filteredRows, filterMode, searchTerm]);
 
   const currentActiveTabId = useMemo(() => selectCurrentActiveTabId(snapshot), [snapshot]);
   const toolbarDisabled = !isInteractive || isResyncing;
@@ -260,12 +253,12 @@ export default function App() {
       return;
     }
 
-    if (filteredRows.some((row) => row.key === locateRequest.rowKey)) {
+    if (filteredRowKeySet.has(locateRequest.rowKey)) {
       return;
     }
 
     setLocateRequest(null);
-  }, [filteredRows, locateRequest]);
+  }, [filteredRowKeySet, locateRequest]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -315,7 +308,7 @@ export default function App() {
     category: "panel" | "ui";
   }): void {
     const targetRowKey = `tab-${targetTab.id}`;
-    const targetVisibleInFilteredRows = hasRowKey(filteredRows, targetRowKey);
+    const targetVisibleInFilteredRows = filteredRowKeySet.has(targetRowKey);
     const nextSearchTerm = targetVisibleInFilteredRows ? searchTerm : "";
 
     if (nextSearchTerm !== searchTerm) {
@@ -357,14 +350,12 @@ export default function App() {
       previousActiveTabId: previousLiveActiveTabIdRef.current,
       nextActiveTabId: liveActiveTab?.id ?? null,
       updateSource: liveActiveUpdateSource,
-      suppressedTabId: suppressedAutoLocateTabId,
+      suppressedTabId: suppressedAutoLocateTabIdRef.current,
       isInteractive: !toolbarDisabled
     });
 
     previousLiveActiveTabIdRef.current = decision.nextPreviousActiveTabId;
-    setSuppressedAutoLocateTabId((current) =>
-      current === decision.nextSuppressedTabId ? current : decision.nextSuppressedTabId
-    );
+    suppressedAutoLocateTabIdRef.current = decision.nextSuppressedTabId;
 
     if (!decision.shouldLocate || !liveActiveTab) {
       return;
@@ -374,7 +365,7 @@ export default function App() {
       event: "panel/locate-current-page-auto",
       category: "ui"
     });
-  }, [liveActiveTab, liveActiveUpdateSource, requestLocateForTab, suppressedAutoLocateTabId, toolbarDisabled]);
+  }, [liveActiveTab, liveActiveUpdateSource, requestLocateForTab, toolbarDisabled]);
 
   function closeTab(tabId: number): void {
     postTraceEvent({
@@ -418,7 +409,7 @@ export default function App() {
   }
 
   function handleTabPrimaryAction(params: { tabId: number; shiftKey: boolean; toggleKey: boolean }): void {
-    setSuppressedAutoLocateTabId(params.tabId);
+    suppressedAutoLocateTabIdRef.current = params.tabId;
     postTraceEvent({
       event: "panel/tab-activate-clicked",
       details: params,
@@ -567,6 +558,7 @@ export default function App() {
             locale={locale}
             tabDisplaySize={settings.display.tabDisplaySize}
             rows={filteredRows}
+            renderSections={renderSections}
             currentActiveTabId={currentActiveTabId}
             locateRequest={locateRequest}
             closingTabIds={closingTabIdSet}

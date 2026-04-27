@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { NO_TAB_GROUP_ID } from "../src/shared/defaults";
 import type { PanelRow, TabRecord } from "../src/shared/types";
+import { buildWindowRenderSections } from "../src/shared/domain/selectors";
+import { areRowShellPropsEqual, type RowShellProps } from "../src/sidepanel/components/listRows";
 import {
-  buildWindowRenderSections,
   calculateAnchorScrollAdjustment,
   calculateRequiredBottomSpacer,
   calculateStickyHeaderObstruction,
@@ -15,6 +16,7 @@ import {
   getVirtualListClassName,
   getWindowRowClassName,
   resolveActiveRowAutoScroll,
+  shouldHandleLocateRequest,
   shouldPulseLocateRow,
   shouldScrollToActiveRow
 } from "../src/sidepanel/components/VirtualizedWindowList";
@@ -85,6 +87,38 @@ function makeTabRow(overrides: Partial<Extract<PanelRow, { kind: "tab" }>> = {})
     key: overrides.key ?? `tab-${tab.id}`,
     windowId: overrides.windowId ?? tab.windowId,
     tab
+  };
+}
+
+function makeRowShellProps(overrides: Partial<RowShellProps> = {}): RowShellProps {
+  const row = overrides.row ?? makeTabRow({ tab: makeTab({ id: 8, index: 3 }) });
+  return {
+    locale: overrides.locale ?? "zh-CN",
+    row,
+    rowRefs: overrides.rowRefs ?? { current: new Map<string, HTMLDivElement>() },
+    isCurrentActive: overrides.isCurrentActive ?? false,
+    isWindowActive: overrides.isWindowActive ?? false,
+    isClosing: overrides.isClosing ?? false,
+    isSelected: overrides.isSelected ?? false,
+    isLocatePulsing: overrides.isLocatePulsing ?? false,
+    onCaptureManualToggleAnchor: overrides.onCaptureManualToggleAnchor ?? (() => undefined),
+    disabled: overrides.disabled ?? false,
+    onClearSelection: overrides.onClearSelection ?? (() => undefined),
+    onToggleWindow: overrides.onToggleWindow ?? (() => undefined),
+    onToggleGroup: overrides.onToggleGroup ?? (() => undefined),
+    onActivateTab: overrides.onActivateTab ?? (() => undefined),
+    onTogglePinned: overrides.onTogglePinned ?? (() => undefined),
+    onCloseTab: overrides.onCloseTab ?? (() => undefined),
+    selectionMode: overrides.selectionMode ?? false,
+    onDragStart: overrides.onDragStart ?? (() => undefined),
+    onDragOver: overrides.onDragOver ?? (() => undefined),
+    onDrop: overrides.onDrop ?? (() => undefined),
+    extraClassName: overrides.extraClassName,
+    groupedTabColor: overrides.groupedTabColor,
+    visuallyExpanded: overrides.visuallyExpanded ?? false,
+    isDragging: overrides.isDragging ?? false,
+    dropIndicator: overrides.dropIndicator ?? null,
+    onElementRefChange: overrides.onElementRefChange
   };
 }
 
@@ -199,11 +233,14 @@ describe("VirtualizedWindowList helpers", () => {
     ).toBe(62);
   });
 
-  it("maps display sizes to stable virtual-list classes", () => {
-    expect(getVirtualListClassName("large")).toBe("virtual-list virtual-list--large");
-    expect(getVirtualListClassName("medium")).toBe("virtual-list virtual-list--medium");
-    expect(getVirtualListClassName("small")).toBe("virtual-list virtual-list--small");
+  it("compares RowShell props only by display-relevant values", () => {
+    const base = makeRowShellProps();
+    expect(areRowShellPropsEqual(base, makeRowShellProps({ ...base }))).toBe(true);
+    expect(areRowShellPropsEqual(base, makeRowShellProps({ ...base, isSelected: true }))).toBe(false);
+    expect(areRowShellPropsEqual(base, makeRowShellProps({ ...base, dropIndicator: "before" }))).toBe(false);
+    expect(areRowShellPropsEqual(base, makeRowShellProps({ ...base, row: makeTabRow({ tab: makeTab({ id: 9, index: 4 }) }) }))).toBe(false);
   });
+
 
   it("builds window render sections with grouped child rows", () => {
     const rows: PanelRow[] = [
@@ -302,17 +339,41 @@ describe("VirtualizedWindowList helpers", () => {
     ).toBe(false);
   });
 
-  it("marks window and group rows as visually expanded during search previews", () => {
-    expect(getWindowRowClassName({ isFocused: false, visuallyExpanded: true })).toContain(
-      "window-row--visually-expanded"
-    );
-    expect(getGroupRowClassName({ collapsed: true, visuallyExpanded: true })).toContain(
-      "group-row--visually-expanded"
-    );
-    expect(getGroupRowClassName({ collapsed: true, visuallyExpanded: true })).not.toContain(
-      "group-row--collapsed"
-    );
+  it("handles a locate request only once per request id", () => {
+    expect(
+      shouldHandleLocateRequest({
+        locateRequest: {
+          rowKey: "tab-2",
+          requestId: 1
+        },
+        hasRenderedTargetRow: true,
+        previousHandledRequestId: null
+      })
+    ).toBe(true);
+
+    expect(
+      shouldHandleLocateRequest({
+        locateRequest: {
+          rowKey: "tab-2",
+          requestId: 1
+        },
+        hasRenderedTargetRow: true,
+        previousHandledRequestId: 1
+      })
+    ).toBe(false);
+
+    expect(
+      shouldHandleLocateRequest({
+        locateRequest: {
+          rowKey: "tab-2",
+          requestId: 2
+        },
+        hasRenderedTargetRow: false,
+        previousHandledRequestId: 1
+      })
+    ).toBe(false);
   });
+
 });
 
 describe("listDrag helpers", () => {

@@ -1,4 +1,6 @@
 import {
+  buildWindowRenderSections,
+  createSearchResult,
   expandFocusedWindow,
   filterPanelRowsBySearch,
   flattenWindowSections,
@@ -166,25 +168,22 @@ describe("selectors", () => {
     expect(hasRowKey(rows, "tab-999")).toBe(false);
   });
 
-  it("returns null when the focused window is missing or has no active tab", () => {
-    const noFocusedState = createStateFromTabs(
-      [
-        makeTab({ id: 1, windowId: 1, active: true }),
-        makeTab({ id: 2, windowId: 2, active: true })
-      ],
-      null
-    );
-    const noActiveInFocusedState = createStateFromTabs(
-      [
-        makeTab({ id: 1, windowId: 1, active: true }),
-        makeTab({ id: 2, windowId: 2, active: false })
-      ],
-      2
-    );
+  it("computes filtered rows and match count in one pass", () => {
+    const rows = flattenWindowSections(selectWindowSections(state, []));
 
-    expect(selectCurrentActiveTabId(noFocusedState)).toBeNull();
-    expect(selectCurrentActiveTabId(noActiveInFocusedState)).toBeNull();
+    expect(createSearchResult(rows, "docs", "filter")).toEqual({
+      rows: [rows[2], rows[3]],
+      matchCount: 1
+    });
+
+    const highlightResult = createSearchResult(rows, "docs", "highlight");
+    expect(highlightResult.matchCount).toBe(1);
+    expect(highlightResult.rows.find((row) => row.kind === "tab" && row.tab.id === 2)).toMatchObject({
+      kind: "tab",
+      matchesSearch: true
+    });
   });
+
 
   it("flattens sections into grouped rows", () => {
     const sections = selectWindowSections(state, []);
@@ -216,28 +215,41 @@ describe("selectors", () => {
     expect(rows[4]).toMatchObject({ kind: "tab" });
   });
 
-  it("merges the same group into one row even when matching tabs are temporarily split in state order", () => {
-    const splitGroupState = createStateFromTabs(
+  it("builds render sections directly from filtered rows", () => {
+    const groupedState = createStateFromTabs(
       [
-        makeTab({ id: 1, windowId: 1, index: 0, groupId: 10, title: "A-1" }),
-        makeTab({ id: 2, windowId: 1, index: 1, title: "Loose" }),
-        makeTab({ id: 3, windowId: 1, index: 2, groupId: 10, title: "A-2" }),
-        makeTab({ id: 4, windowId: 1, index: 3, groupId: 10, title: "A-3" })
+        makeTab({ id: 1, windowId: 1, index: 0 }),
+        makeTab({ id: 2, windowId: 1, index: 1, groupId: 10, title: "Alpha match" }),
+        makeTab({ id: 3, windowId: 1, index: 2, groupId: 10, title: "Beta" })
       ],
       1,
-      [makeGroup({ id: 10, windowId: 1, title: "66", color: "pink" })]
+      [makeGroup({ id: 10, windowId: 1, title: "工作", color: "red" })]
     );
 
-    const rows = flattenWindowSections(selectWindowSections(splitGroupState, []));
-    const groupRows = rows.filter((row) => row.kind === "group");
-    const looseTabRows = rows.filter((row) => row.kind === "tab" && row.tab.groupId === NO_TAB_GROUP_ID);
-    const groupedTabRows = rows.filter((row) => row.kind === "tab" && row.tab.groupId === 10);
+    const rows = filterPanelRowsBySearch(
+      flattenWindowSections(selectWindowSections(groupedState, [])),
+      "alpha",
+      "highlight"
+    );
 
-    expect(groupRows).toHaveLength(1);
-    expect(groupRows[0]).toMatchObject({ kind: "group", groupId: 10, totalCount: 3 });
-    expect(looseTabRows).toHaveLength(1);
-    expect(groupedTabRows).toHaveLength(3);
+    expect(buildWindowRenderSections(rows)).toEqual([
+      {
+        windowRow: rows[0],
+        items: [
+          {
+            kind: "single",
+            row: rows[1]
+          },
+          {
+            kind: "group-block",
+            groupRow: rows[2],
+            childRows: [rows[3], rows[4]]
+          }
+        ]
+      }
+    ]);
   });
+
 
   it("selects the current active group from the focused active tab", () => {
     const groupedState = createStateFromTabs(

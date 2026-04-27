@@ -1,6 +1,6 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { translate, type SupportedLocale } from "../../shared/i18n";
-import type { PanelRow, TabDisplaySize } from "../../shared/types";
+import type { PanelRow, TabDisplaySize, WindowRenderSection } from "../../shared/types";
 import type { DragSource, DropTarget } from "./listDrag";
 import { buildDragCommand, createDragSource, createSelectedTabsDragSource, resolveDropTarget } from "./listDrag";
 import { RowShell } from "./listRows";
@@ -9,6 +9,7 @@ interface VirtualizedWindowListProps {
   locale: SupportedLocale;
   tabDisplaySize: TabDisplaySize;
   rows: PanelRow[];
+  renderSections: WindowRenderSection[];
   currentActiveTabId: number | null;
   locateRequest: {
     rowKey: string;
@@ -52,19 +53,6 @@ interface VirtualizedWindowListProps {
     color: chrome.tabGroups.ColorEnum;
     collapsed: boolean;
   }) => void;
-}
-
-type WindowRenderItem =
-  | { kind: "single"; row: Exclude<PanelRow, { kind: "window" }> }
-  | {
-      kind: "group-block";
-      groupRow: Extract<PanelRow, { kind: "group" }>;
-      childRows: Array<Extract<PanelRow, { kind: "tab" }>>;
-    };
-
-export interface WindowRenderSection {
-  windowRow: Extract<PanelRow, { kind: "window" }>;
-  items: WindowRenderItem[];
 }
 
 export function getRowShellClassName(params: {
@@ -139,32 +127,6 @@ export function getTabRowClassName(params: {
   }${isSelected ? " tab-row--selected" : ""}${isClosing ? " tab-row--closing" : ""}${
     matchesSearch === false ? " tab-row--unmatched" : ""
   }${isLocatePulsing ? " tab-row--locate-pulsing" : ""}`;
-}
-
-export function buildWindowRenderSections(rows: PanelRow[]): WindowRenderSection[] {
-  const sections: WindowRenderSection[] = [];
-
-  for (let index = 0; index < rows.length; index += 1) {
-    const row = rows[index];
-    if (row.kind !== "window") {
-      continue;
-    }
-
-    const sectionRows: Array<Exclude<PanelRow, { kind: "window" }>> = [];
-    let cursor = index + 1;
-    while (cursor < rows.length && rows[cursor].kind !== "window") {
-      sectionRows.push(rows[cursor] as Exclude<PanelRow, { kind: "window" }>);
-      cursor += 1;
-    }
-
-    sections.push({
-      windowRow: row,
-      items: buildRenderItems(sectionRows)
-    });
-    index = cursor - 1;
-  }
-
-  return sections;
 }
 
 export function shouldScrollToActiveRow(params: {
@@ -325,6 +287,23 @@ export function shouldPulseLocateRow(params: {
   return locateRequest != null && hasRenderedTargetRow;
 }
 
+export function shouldHandleLocateRequest(params: {
+  locateRequest: {
+    rowKey: string;
+    requestId: number;
+  } | null;
+  hasRenderedTargetRow: boolean;
+  previousHandledRequestId: number | null;
+}): boolean {
+  const { locateRequest, hasRenderedTargetRow, previousHandledRequestId } = params;
+
+  return (
+    locateRequest != null
+    && hasRenderedTargetRow
+    && locateRequest.requestId !== previousHandledRequestId
+  );
+}
+
 export function getVirtualListClassName(tabDisplaySize: TabDisplaySize): string {
   return `virtual-list virtual-list--${tabDisplaySize}`;
 }
@@ -333,6 +312,7 @@ export function VirtualizedWindowList({
   locale,
   tabDisplaySize,
   rows,
+  renderSections,
   currentActiveTabId,
   locateRequest,
   closingTabIds,
@@ -356,22 +336,102 @@ export function VirtualizedWindowList({
   const hasCompletedInitialScrollRef = useRef(false);
   const previousScrolledRowKeyRef = useRef<string | null>(null);
   const suppressedAutoScrollRowKeyRef = useRef<string | null>(null);
+  const rowsRef = useRef(rows);
+  rowsRef.current = rows;
+  const selectedTabIdsRef = useRef(selectedTabIds);
+  selectedTabIdsRef.current = selectedTabIds;
+  const dragSourceRef = useRef<DragSource | null>(null);
   const pendingManualAnchorRef = useRef<{
     rowKey: string;
     previousRowTop: number;
   } | null>(null);
   const [bottomSpacerHeight, setBottomSpacerHeight] = useState(0);
   const [dragSource, setDragSource] = useState<DragSource | null>(null);
+  dragSourceRef.current = dragSource;
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const [windowStickyOffset, setWindowStickyOffset] = useState(0);
   const [measuredWindowHeaderNode, setMeasuredWindowHeaderNode] = useState<HTMLDivElement | null>(null);
   const [locatePulseRowKey, setLocatePulseRowKey] = useState<string | null>(null);
+  const previousHandledLocateRequestIdRef = useRef<number | null>(null);
   const activeRowKey = currentActiveTabId != null ? `tab-${currentActiveTabId}` : null;
-  const hasActiveRowInList = useMemo(
-    () => activeRowKey != null && rows.some((row) => row.key === activeRowKey),
-    [activeRowKey, rows]
-  );
-  const windowSections = useMemo(() => buildWindowRenderSections(rows), [rows]);
+  const activeRowKeyRef = useRef<string | null>(null);
+  activeRowKeyRef.current = activeRowKey;
+  const onClearSelectionRef = useRef(onClearSelection);
+  onClearSelectionRef.current = onClearSelection;
+  const onToggleWindowRef = useRef(onToggleWindow);
+  onToggleWindowRef.current = onToggleWindow;
+  const onToggleGroupRef = useRef(onToggleGroup);
+  onToggleGroupRef.current = onToggleGroup;
+  const onActivateTabRef = useRef(onActivateTab);
+  onActivateTabRef.current = onActivateTab;
+  const onTogglePinnedRef = useRef(onTogglePinned);
+  onTogglePinnedRef.current = onTogglePinned;
+  const onCloseTabRef = useRef(onCloseTab);
+  onCloseTabRef.current = onCloseTab;
+  const onMoveTabRef = useRef(onMoveTab);
+  onMoveTabRef.current = onMoveTab;
+  const onMoveTabsRef = useRef(onMoveTabs);
+  onMoveTabsRef.current = onMoveTabs;
+  const onMoveGroupRef = useRef(onMoveGroup);
+  onMoveGroupRef.current = onMoveGroup;
+  const onTraceEventRef = useRef(onTraceEvent);
+  onTraceEventRef.current = onTraceEvent;
+  const rowKeySet = useMemo(() => new Set(rows.map((row) => row.key)), [rows]);
+  const hasActiveRowInList = activeRowKey != null && rowKeySet.has(activeRowKey);
+
+  const handleClearSelection = useCallback(() => {
+    onClearSelectionRef.current();
+  }, []);
+
+  const handleToggleWindowAction = useCallback((windowId: number) => {
+    onToggleWindowRef.current(windowId);
+  }, []);
+
+  const handleToggleGroupAction = useCallback((groupId: number, collapsed: boolean) => {
+    onToggleGroupRef.current(groupId, collapsed);
+  }, []);
+
+  const handleActivateTabAction = useCallback((params: { tabId: number; shiftKey: boolean; toggleKey: boolean }) => {
+    onActivateTabRef.current(params);
+  }, []);
+
+  const handleTogglePinnedAction = useCallback((tabId: number, pinned: boolean) => {
+    onTogglePinnedRef.current(tabId, pinned);
+  }, []);
+
+  const handleCloseTabAction = useCallback((tabId: number) => {
+    onCloseTabRef.current(tabId);
+  }, []);
+
+  const handleMoveTabAction = useCallback((command: {
+    tabId: number;
+    targetWindowId: number;
+    targetIndex: number;
+    targetGroupId: number | null;
+  }) => {
+    onMoveTabRef.current(command);
+  }, []);
+
+  const handleMoveTabsAction = useCallback((command: {
+    tabIds: number[];
+    targetWindowId: number;
+    targetIndex: number;
+    targetGroupId: number | null;
+  }) => {
+    onMoveTabsRef.current(command);
+  }, []);
+
+  const handleMoveGroupAction = useCallback((command: {
+    groupId: number;
+    tabIds: number[];
+    targetWindowId: number;
+    targetIndex: number;
+    title: string;
+    color: chrome.tabGroups.ColorEnum;
+    collapsed: boolean;
+  }) => {
+    onMoveGroupRef.current(command);
+  }, []);
 
   useLayoutEffect(() => {
     const scrollContainer = scrollContainerRef.current;
@@ -451,10 +511,21 @@ export function VirtualizedWindowList({
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
-    const targetRow = locateRequest == null ? null : rowRefs.current.get(locateRequest.rowKey);
-    if (!locateRequest || !targetRow || !scrollContainer) {
+    const currentLocateRequest = locateRequest;
+    if (currentLocateRequest == null) {
       return;
     }
+
+    const targetRow = rowRefs.current.get(currentLocateRequest.rowKey) ?? null;
+    if (!scrollContainer || !targetRow || !shouldHandleLocateRequest({
+      locateRequest: currentLocateRequest,
+      hasRenderedTargetRow: true,
+      previousHandledRequestId: previousHandledLocateRequestIdRef.current
+    })) {
+      return;
+    }
+
+    previousHandledLocateRequestIdRef.current = currentLocateRequest.requestId;
 
     const rowTop = getRowTopWithinContainer(targetRow, scrollContainer);
     const rowBottom = rowTop + targetRow.getBoundingClientRect().height;
@@ -467,8 +538,8 @@ export function VirtualizedWindowList({
     });
 
     onTraceEvent?.("list/scroll-to-locate-target", {
-      rowKey: locateRequest.rowKey,
-      requestId: locateRequest.requestId,
+      rowKey: currentLocateRequest.rowKey,
+      requestId: currentLocateRequest.requestId,
       scrollAdjustment,
       rowTop,
       rowBottom,
@@ -484,7 +555,7 @@ export function VirtualizedWindowList({
       });
     }
 
-    setLocatePulseRowKey(locateRequest.rowKey);
+    setLocatePulseRowKey(currentLocateRequest.rowKey);
   }, [locateRequest, onTraceEvent, rows, scrollContainerRef]);
 
   useEffect(() => {
@@ -502,10 +573,14 @@ export function VirtualizedWindowList({
   }, [locatePulseRowKey]);
 
   useEffect(() => {
-    if (locatePulseRowKey && !rows.some((row) => row.key === locatePulseRowKey)) {
+    if (locateRequest == null) {
+      previousHandledLocateRequestIdRef.current = null;
+    }
+
+    if (locatePulseRowKey && !rowKeySet.has(locatePulseRowKey)) {
       setLocatePulseRowKey(null);
     }
-  }, [locatePulseRowKey, rows]);
+  }, [locatePulseRowKey, locateRequest, rowKeySet]);
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
@@ -558,11 +633,11 @@ export function VirtualizedWindowList({
   }, [activeRowKey, hasActiveRowInList, rows, scrollContainerRef]);
 
   useEffect(() => {
-    if (dragSource && !rows.some((row) => row.key === dragSource.rowKey)) {
+    if (dragSource && !rowKeySet.has(dragSource.rowKey)) {
       setDragSource(null);
       setDropTarget(null);
     }
-  }, [dragSource, rows]);
+  }, [dragSource, rowKeySet]);
 
   useLayoutEffect(() => {
     if (!measuredWindowHeaderNode) {
@@ -593,11 +668,11 @@ export function VirtualizedWindowList({
     };
   }, [measuredWindowHeaderNode]);
 
-  function captureManualToggleAnchor(rowKey: string): void {
+  const captureManualToggleAnchor = useCallback((rowKey: string): void => {
     const scrollContainer = scrollContainerRef.current;
     const rowNode = rowRefs.current.get(rowKey);
 
-    suppressedAutoScrollRowKeyRef.current = activeRowKey;
+    suppressedAutoScrollRowKeyRef.current = activeRowKeyRef.current;
 
     if (!scrollContainer || !rowNode) {
       pendingManualAnchorRef.current = null;
@@ -608,33 +683,34 @@ export function VirtualizedWindowList({
       rowKey,
       previousRowTop: getRowTopWithinContainer(rowNode, scrollContainer)
     };
-  }
+  }, [scrollContainerRef]);
 
-  function clearDragState(): void {
+  const clearDragState = useCallback((): void => {
     setDragSource(null);
     setDropTarget(null);
-  }
+  }, []);
 
-  function handleDragStart(row: PanelRow, event: React.DragEvent<HTMLElement>): void {
+  const handleDragStart = useCallback((row: PanelRow, event: React.DragEvent<HTMLElement>): void => {
     if (disabled) {
       event.preventDefault();
       return;
     }
 
-    if (row.kind === "tab" && !selectedTabIds.has(row.tab.id) && selectedTabIds.size > 0) {
-      onClearSelection();
+    const currentSelectedTabIds = selectedTabIdsRef.current;
+    if (row.kind === "tab" && !currentSelectedTabIds.has(row.tab.id) && currentSelectedTabIds.size > 0) {
+      handleClearSelection();
     }
 
     const selectedTabsSource =
-      row.kind === "tab" && selectedTabIds.has(row.tab.id)
+      row.kind === "tab" && currentSelectedTabIds.has(row.tab.id)
         ? createSelectedTabsDragSource({
             row,
-            rows,
-            selectedTabIds
+            rows: rowsRef.current,
+            selectedTabIds: currentSelectedTabIds
           })
         : null;
 
-    if (row.kind === "tab" && selectedTabIds.has(row.tab.id) && selectedTabIds.size > 1 && !selectedTabsSource) {
+    if (row.kind === "tab" && currentSelectedTabIds.has(row.tab.id) && currentSelectedTabIds.size > 1 && !selectedTabsSource) {
       event.preventDefault();
       return;
     }
@@ -645,7 +721,7 @@ export function VirtualizedWindowList({
       return;
     }
 
-    onTraceEvent?.("list/drag-start", {
+    onTraceEventRef.current?.("list/drag-start", {
       rowKey: row.key,
       rowKind: row.kind,
       source
@@ -655,15 +731,16 @@ export function VirtualizedWindowList({
     event.dataTransfer.setData("text/plain", row.key);
     setDragSource(source);
     setDropTarget(null);
-  }
+  }, [disabled, handleClearSelection]);
 
-  function handleDragOver(row: PanelRow, event: React.DragEvent<HTMLElement>): void {
-    if (disabled || !dragSource) {
+  const handleDragOver = useCallback((row: PanelRow, event: React.DragEvent<HTMLElement>): void => {
+    const currentDragSource = dragSourceRef.current;
+    if (disabled || !currentDragSource) {
       return;
     }
 
     const target = resolveDropTarget({
-      source: dragSource,
+      source: currentDragSource,
       targetRow: row,
       pointerRatio: getPointerRatio(event)
     });
@@ -675,24 +752,25 @@ export function VirtualizedWindowList({
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
     setDropTarget((current) =>
-      current &&
-      current.rowKey === target.rowKey &&
-      current.indicator === target.indicator &&
-      current.targetWindowId === target.targetWindowId &&
-      current.targetIndex === target.targetIndex &&
-      current.targetGroupId === target.targetGroupId
+      current
+      && current.rowKey === target.rowKey
+      && current.indicator === target.indicator
+      && current.targetWindowId === target.targetWindowId
+      && current.targetIndex === target.targetIndex
+      && current.targetGroupId === target.targetGroupId
         ? current
         : target
     );
-  }
+  }, [disabled]);
 
-  function handleDrop(row: PanelRow, event: React.DragEvent<HTMLElement>): void {
-    if (disabled || !dragSource) {
+  const handleDrop = useCallback((row: PanelRow, event: React.DragEvent<HTMLElement>): void => {
+    const currentDragSource = dragSourceRef.current;
+    if (disabled || !currentDragSource) {
       return;
     }
 
     const target = resolveDropTarget({
-      source: dragSource,
+      source: currentDragSource,
       targetRow: row,
       pointerRatio: getPointerRatio(event)
     });
@@ -703,13 +781,13 @@ export function VirtualizedWindowList({
 
     event.preventDefault();
     const command = buildDragCommand({
-      source: dragSource,
+      source: currentDragSource,
       target
     });
-    onTraceEvent?.("list/drop", {
+    onTraceEventRef.current?.("list/drop", {
       rowKey: row.key,
       rowKind: row.kind,
-      dragSource,
+      dragSource: currentDragSource,
       target,
       command
     });
@@ -720,17 +798,17 @@ export function VirtualizedWindowList({
     }
 
     if (command.type === "tab/move") {
-      onMoveTab(command);
+      handleMoveTabAction(command);
       return;
     }
 
     if (command.type === "tabs/move") {
-      onMoveTabs(command);
+      handleMoveTabsAction(command);
       return;
     }
 
-    onMoveGroup(command);
-  }
+    handleMoveGroupAction(command);
+  }, [clearDragState, disabled, handleMoveGroupAction, handleMoveTabAction, handleMoveTabsAction]);
 
   if (rows.length === 0) {
     return (
@@ -773,7 +851,7 @@ export function VirtualizedWindowList({
       }}
     >
       <div className="stack-list">
-        {windowSections.map((section, sectionIndex) => (
+        {renderSections.map((section, sectionIndex) => (
           <section
             key={section.windowRow.key}
             className="window-section"
@@ -782,21 +860,22 @@ export function VirtualizedWindowList({
               locale={locale}
               row={section.windowRow}
               rowRefs={rowRefs}
-              currentActiveTabId={currentActiveTabId}
-              closingTabIds={closingTabIds}
-              selectedTabIds={selectedTabIds}
-              locatePulseRowKey={locatePulseRowKey}
+              isCurrentActive={false}
+              isWindowActive={false}
+              isClosing={false}
+              isSelected={false}
+              isLocatePulsing={false}
               onCaptureManualToggleAnchor={captureManualToggleAnchor}
               disabled={disabled}
-              onClearSelection={onClearSelection}
-              onToggleWindow={onToggleWindow}
-              onToggleGroup={onToggleGroup}
-              onActivateTab={onActivateTab}
-              onTogglePinned={onTogglePinned}
-              onCloseTab={onCloseTab}
+              onClearSelection={handleClearSelection}
+              onToggleWindow={handleToggleWindowAction}
+              onToggleGroup={handleToggleGroupAction}
+              onActivateTab={handleActivateTabAction}
+              onTogglePinned={handleTogglePinnedAction}
+              onCloseTab={handleCloseTabAction}
               selectionMode={selectionMode}
-              dragSource={dragSource}
-              dropTarget={dropTarget}
+              isDragging={dragSource?.rowKey === section.windowRow.key}
+              dropIndicator={dropTarget?.rowKey === section.windowRow.key ? dropTarget.indicator : null}
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
@@ -815,21 +894,22 @@ export function VirtualizedWindowList({
                       key={item.row.key}
                       row={item.row}
                       rowRefs={rowRefs}
-                      currentActiveTabId={currentActiveTabId}
-                      closingTabIds={closingTabIds}
-                      selectedTabIds={selectedTabIds}
-                      locatePulseRowKey={locatePulseRowKey}
+                      isCurrentActive={item.row.kind === "tab" && item.row.tab.id === currentActiveTabId}
+                      isWindowActive={item.row.kind === "tab" && item.row.tab.active && item.row.tab.id !== currentActiveTabId}
+                      isClosing={item.row.kind === "tab" && closingTabIds.has(item.row.tab.id)}
+                      isSelected={item.row.kind === "tab" && selectedTabIds.has(item.row.tab.id)}
+                      isLocatePulsing={locatePulseRowKey === item.row.key}
                       onCaptureManualToggleAnchor={captureManualToggleAnchor}
                       disabled={disabled}
-                      onClearSelection={onClearSelection}
-                      onToggleWindow={onToggleWindow}
-                      onToggleGroup={onToggleGroup}
-                      onActivateTab={onActivateTab}
-                      onTogglePinned={onTogglePinned}
-                      onCloseTab={onCloseTab}
+                      onClearSelection={handleClearSelection}
+                      onToggleWindow={handleToggleWindowAction}
+                      onToggleGroup={handleToggleGroupAction}
+                      onActivateTab={handleActivateTabAction}
+                      onTogglePinned={handleTogglePinnedAction}
+                      onCloseTab={handleCloseTabAction}
                       selectionMode={selectionMode}
-                      dragSource={dragSource}
-                      dropTarget={dropTarget}
+                      isDragging={dragSource?.rowKey === item.row.key}
+                      dropIndicator={dropTarget?.rowKey === item.row.key ? dropTarget.indicator : null}
                       onDragStart={handleDragStart}
                       onDragOver={handleDragOver}
                       onDrop={handleDrop}
@@ -849,23 +929,22 @@ export function VirtualizedWindowList({
                         locale={locale}
                         row={item.groupRow}
                         rowRefs={rowRefs}
-                        currentActiveTabId={currentActiveTabId}
-                        closingTabIds={closingTabIds}
-                        selectedTabIds={selectedTabIds}
-                        locatePulseRowKey={locatePulseRowKey}
+                        isCurrentActive={false}
+                        isWindowActive={false}
+                        isClosing={false}
+                        isSelected={false}
+                        isLocatePulsing={false}
                         onCaptureManualToggleAnchor={captureManualToggleAnchor}
                         disabled={disabled}
-                        onClearSelection={onClearSelection}
-                        onToggleWindow={onToggleWindow}
-                        onToggleGroup={onToggleGroup}
-                        onActivateTab={onActivateTab}
-                        onTogglePinned={onTogglePinned}
-                        onCloseTab={onCloseTab}
+                        onClearSelection={handleClearSelection}
+                        onToggleWindow={handleToggleWindowAction}
+                        onToggleGroup={handleToggleGroupAction}
+                        onActivateTab={handleActivateTabAction}
+                        onTogglePinned={handleTogglePinnedAction}
+                        onCloseTab={handleCloseTabAction}
                         selectionMode={selectionMode}
-                        extraClassName="group-block__header"
-                        visuallyExpanded={searchActive && item.groupRow.collapsed}
-                        dragSource={dragSource}
-                        dropTarget={dropTarget}
+                        isDragging={dragSource?.rowKey === item.groupRow.key}
+                        dropIndicator={dropTarget?.rowKey === item.groupRow.key ? dropTarget.indicator : null}
                         onDragStart={handleDragStart}
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
@@ -878,25 +957,26 @@ export function VirtualizedWindowList({
                               key={row.key}
                               row={row}
                               rowRefs={rowRefs}
-                              currentActiveTabId={currentActiveTabId}
-                              closingTabIds={closingTabIds}
-                              selectedTabIds={selectedTabIds}
-                              locatePulseRowKey={locatePulseRowKey}
+                              isCurrentActive={row.tab.id === currentActiveTabId}
+                              isWindowActive={row.tab.active && row.tab.id !== currentActiveTabId}
+                              isClosing={closingTabIds.has(row.tab.id)}
+                              isSelected={selectedTabIds.has(row.tab.id)}
+                              isLocatePulsing={locatePulseRowKey === row.key}
                               onCaptureManualToggleAnchor={captureManualToggleAnchor}
                               disabled={disabled}
-                              onClearSelection={onClearSelection}
-                              onToggleWindow={onToggleWindow}
-                              onToggleGroup={onToggleGroup}
-                              onActivateTab={onActivateTab}
-                              onTogglePinned={onTogglePinned}
-                              onCloseTab={onCloseTab}
+                              onClearSelection={handleClearSelection}
+                              onToggleWindow={handleToggleWindowAction}
+                              onToggleGroup={handleToggleGroupAction}
+                              onActivateTab={handleActivateTabAction}
+                              onTogglePinned={handleTogglePinnedAction}
+                              onCloseTab={handleCloseTabAction}
                               selectionMode={selectionMode}
                               extraClassName={`group-block__item${
                                 index === item.childRows.length - 1 ? " group-block__item--last" : ""
                               }`}
                               groupedTabColor={item.groupRow.color}
-                              dragSource={dragSource}
-                              dropTarget={dropTarget}
+                              isDragging={dragSource?.rowKey === row.key}
+                              dropIndicator={dropTarget?.rowKey === row.key ? dropTarget.indicator : null}
                               onDragStart={handleDragStart}
                               onDragOver={handleDragOver}
                               onDrop={handleDrop}
@@ -921,42 +1001,6 @@ export function VirtualizedWindowList({
       </div>
     </div>
   );
-}
-
-function buildRenderItems(rows: Array<Exclude<PanelRow, { kind: "window" }>>): WindowRenderItem[] {
-  const items: WindowRenderItem[] = [];
-
-  for (let index = 0; index < rows.length; index += 1) {
-    const row = rows[index];
-    if (row.kind !== "group") {
-      items.push({
-        kind: "single",
-        row
-      });
-      continue;
-    }
-
-    const childRows: Array<Extract<PanelRow, { kind: "tab" }>> = [];
-    let cursor = index + 1;
-    while (cursor < rows.length) {
-      const candidate = rows[cursor];
-      if (candidate.kind !== "tab" || candidate.tab.groupId !== row.groupId) {
-        break;
-      }
-
-      childRows.push(candidate);
-      cursor += 1;
-    }
-
-    items.push({
-      kind: "group-block",
-      groupRow: row,
-      childRows
-    });
-    index = cursor - 1;
-  }
-
-  return items;
 }
 
 function getRowTopWithinContainer(rowNode: HTMLDivElement, scrollContainer: HTMLDivElement): number {

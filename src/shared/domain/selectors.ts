@@ -1,6 +1,16 @@
 import { NO_TAB_GROUP_ID } from "../defaults";
 import { formatWindowTitle } from "../i18n";
-import type { PanelRow, SupportedLocale, TabGroupRecord, TabRecord, TabStoreState, WindowSection, WindowSectionItem } from "../types";
+import type {
+  PanelRow,
+  SupportedLocale,
+  TabGroupRecord,
+  TabRecord,
+  TabStoreState,
+  WindowRenderItem,
+  WindowRenderSection,
+  WindowSection,
+  WindowSectionItem
+} from "../types";
 
 type TabRow = Extract<PanelRow, { kind: "tab" }>;
 type GroupRow = Extract<PanelRow, { kind: "group" }>;
@@ -75,6 +85,32 @@ export function flattenWindowSections(
       ...section.items.flatMap((item) => createItemRows(section.windowId, item, includeCollapsedChildren))
     ];
   });
+}
+
+export function buildWindowRenderSections(rows: readonly PanelRow[]): WindowRenderSection[] {
+  const sections: WindowRenderSection[] = [];
+
+  for (let index = 0; index < rows.length; index += 1) {
+    const row = rows[index];
+    if (row.kind !== "window") {
+      continue;
+    }
+
+    const sectionRows: Array<Exclude<PanelRow, { kind: "window" }>> = [];
+    let cursor = index + 1;
+    while (cursor < rows.length && rows[cursor].kind !== "window") {
+      sectionRows.push(rows[cursor] as Exclude<PanelRow, { kind: "window" }>);
+      cursor += 1;
+    }
+
+    sections.push({
+      windowRow: row,
+      items: buildRenderItems(sectionRows)
+    });
+    index = cursor - 1;
+  }
+
+  return sections;
 }
 
 export function selectCurrentActiveTabId(state: TabStoreState): number | null {
@@ -158,19 +194,33 @@ export function filterPanelRowsBySearch(
   searchTerm: string,
   mode: "filter" | "highlight"
 ): PanelRow[] {
-  const term = normalizeSearchTerm(searchTerm);
-  if (!term) {
-    return [...rows];
-  }
-
-  const windowBlocks = collectWindowRowBlocks(rows);
-  return mode === "filter"
-    ? windowBlocks.flatMap((block) => filterWindowBlock(block, term))
-    : windowBlocks.flatMap((block) => highlightWindowBlock(block, term));
+  return createSearchResult(rows, searchTerm, mode).rows;
 }
 
 export function countSearchMatches(rows: readonly PanelRow[]): number {
   return rows.filter((row) => row.kind === "tab" && row.matchesSearch).length;
+}
+
+export function createSearchResult(
+  rows: readonly PanelRow[],
+  searchTerm: string,
+  mode: "filter" | "highlight"
+): {
+  rows: PanelRow[];
+  matchCount: number;
+} {
+  const term = normalizeSearchTerm(searchTerm);
+  if (!term) {
+    return {
+      rows: [...rows],
+      matchCount: 0
+    };
+  }
+
+  const windowBlocks = collectWindowRowBlocks(rows);
+  return mode === "filter"
+    ? filterWindowBlocks(windowBlocks, term)
+    : highlightWindowBlocks(windowBlocks, term);
 }
 
 export function getSearchMatchingTabIds(rows: readonly PanelRow[]): number[] {
@@ -191,6 +241,42 @@ export function resolveCollapsedWindowIdsForTarget(params: {
   }
 
   return collapsedWindowIds.filter((windowId) => windowId !== targetWindowId);
+}
+
+function buildRenderItems(rows: Array<Exclude<PanelRow, { kind: "window" }>>): WindowRenderItem[] {
+  const items: WindowRenderItem[] = [];
+
+  for (let index = 0; index < rows.length; index += 1) {
+    const row = rows[index];
+    if (row.kind !== "group") {
+      items.push({
+        kind: "single",
+        row
+      });
+      continue;
+    }
+
+    const childRows: Array<Extract<PanelRow, { kind: "tab" }>> = [];
+    let cursor = index + 1;
+    while (cursor < rows.length) {
+      const candidate = rows[cursor];
+      if (candidate.kind !== "tab" || candidate.tab.groupId !== row.groupId) {
+        break;
+      }
+
+      childRows.push(candidate);
+      cursor += 1;
+    }
+
+    items.push({
+      kind: "group-block",
+      groupRow: row,
+      childRows
+    });
+    index = cursor - 1;
+  }
+
+  return items;
 }
 
 function selectTabsForWindow(state: TabStoreState, windowId: number): TabRecord[] {
@@ -407,9 +493,35 @@ function collectGroupTabRows(
   };
 }
 
-function filterWindowBlock(block: WindowRowBlock, term: string): PanelRow[] {
+function filterWindowBlocks(blocks: readonly WindowRowBlock[], term: string): {
+  rows: PanelRow[];
+  matchCount: number;
+} {
+  return blocks.reduce<{ rows: PanelRow[]; matchCount: number }>(
+    (result, block) => {
+      const filteredBlock = filterWindowBlock(block, term);
+      return {
+        rows: [...result.rows, ...filteredBlock.rows],
+        matchCount: result.matchCount + filteredBlock.matchCount
+      };
+    },
+    {
+      rows: [],
+      matchCount: 0
+    }
+  );
+}
+
+function filterWindowBlock(block: WindowRowBlock, term: string): {
+  rows: PanelRow[];
+  matchCount: number;
+} {
   const filteredEntries = block.entries.flatMap((entry) => filterWindowBlockEntry(entry, term));
-  return filteredEntries.length > 0 ? [block.windowRow, ...filteredEntries] : [];
+  const matchCount = filteredEntries.filter((row) => row.kind === "tab").length;
+  return {
+    rows: filteredEntries.length > 0 ? [block.windowRow, ...filteredEntries] : [],
+    matchCount
+  };
 }
 
 function filterWindowBlockEntry(entry: WindowBlockEntry, term: string): PanelRow[] {
@@ -421,15 +533,41 @@ function filterWindowBlockEntry(entry: WindowBlockEntry, term: string): PanelRow
   return matchingTabs.length > 0 ? [entry.row, ...matchingTabs] : [];
 }
 
-function highlightWindowBlock(block: WindowRowBlock, term: string): PanelRow[] {
+function highlightWindowBlocks(blocks: readonly WindowRowBlock[], term: string): {
+  rows: PanelRow[];
+  matchCount: number;
+} {
+  return blocks.reduce<{ rows: PanelRow[]; matchCount: number }>(
+    (result, block) => {
+      const highlightedBlock = highlightWindowBlock(block, term);
+      return {
+        rows: [...result.rows, ...highlightedBlock.rows],
+        matchCount: result.matchCount + highlightedBlock.matchCount
+      };
+    },
+    {
+      rows: [],
+      matchCount: 0
+    }
+  );
+}
+
+function highlightWindowBlock(block: WindowRowBlock, term: string): {
+  rows: PanelRow[];
+  matchCount: number;
+} {
   const highlightedEntries = block.entries.flatMap((entry) => highlightWindowBlockEntry(entry, term));
-  const hasWindowMatch = highlightedEntries.some((row) => row.kind === "tab" && row.matchesSearch);
+  const matchCount = highlightedEntries.filter((row) => row.kind === "tab" && row.matchesSearch).length;
+  const hasWindowMatch = matchCount > 0;
   const highlightedWindowRow: WindowRow = {
     ...block.windowRow,
     matchesSearch: hasWindowMatch
   };
 
-  return [highlightedWindowRow, ...highlightedEntries];
+  return {
+    rows: [highlightedWindowRow, ...highlightedEntries],
+    matchCount
+  };
 }
 
 function highlightWindowBlockEntry(entry: WindowBlockEntry, term: string): PanelRow[] {

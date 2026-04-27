@@ -1,3 +1,7 @@
+import { NO_TAB_GROUP_ID } from "../shared/defaults";
+import { normalizeChromeTabGroup } from "../shared/domain/normalizeGroup";
+import { normalizeChromeTab } from "../shared/domain/normalizeTab";
+import type { TabRecord } from "../shared/types";
 import type { BackgroundRuntimeDependencies } from "./backgroundHandlers";
 
 export type BackgroundEventHandlerDependencies = Pick<
@@ -26,6 +30,10 @@ export function createTabEventHandlers(deps: Pick<
   | "detachedTabWindowIds"
   | "enqueueStoreTask"
   | "handleActivated"
+  | "ensureInitialized"
+  | "store"
+  | "handlePatch"
+  | "syncGroupFromChrome"
 >): {
   onCreated: (tab: chrome.tabs.Tab) => void;
   onUpdated: (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => void;
@@ -35,6 +43,161 @@ export function createTabEventHandlers(deps: Pick<
   onRemoved: (tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) => void;
   onActivated: (activeInfo: chrome.tabs.TabActiveInfo) => void;
 } {
+  const scheduleAutoWindowSync = (params: {
+    windowId: number;
+    cause: string;
+    reason: string;
+    tabId?: number | null;
+    groupId?: number | null;
+    previousWindowId?: number | null;
+    previousIndex?: number | null;
+    nextIndex?: number | null;
+  }): void => {
+    deps.traceBackgroundEvent("autocorrect/window-resync", {
+      windowId: params.windowId,
+      cause: params.cause,
+      reason: params.reason,
+      tabId: params.tabId ?? null,
+      groupId: params.groupId ?? null,
+      previousWindowId: params.previousWindowId ?? null,
+      previousIndex: params.previousIndex ?? null,
+      nextIndex: params.nextIndex ?? null
+    });
+    void deps.windowSyncCoordinator.scheduleWindowSync({
+      windowId: params.windowId,
+      cause: `autocorrect/${params.cause}`
+    });
+  };
+
+  const scheduleAutoCrossWindowSync = (params: {
+    sourceWindowId: number;
+    targetWindowId: number;
+    cause: string;
+    tabId: number;
+  }): void => {
+    deps.traceBackgroundEvent("autocorrect/window-resync", {
+      sourceWindowId: params.sourceWindowId,
+      targetWindowId: params.targetWindowId,
+      cause: params.cause,
+      reason: "window-changed",
+      tabId: params.tabId
+    });
+    void deps.windowSyncCoordinator.scheduleCrossWindowSync({
+      sourceWindowId: params.sourceWindowId,
+      targetWindowId: params.targetWindowId,
+      cause: `autocorrect/${params.cause}`
+    });
+  };
+
+  const ensureKnownGroup = async (tab: TabRecord, cause: string): Promise<void> => {
+    if (tab.groupId === NO_TAB_GROUP_ID || deps.store.getGroup(tab.groupId)) {
+      return;
+    }
+
+    deps.traceBackgroundEvent("autocorrect/group-missing", {
+      cause,
+      tabId: tab.id,
+      groupId: tab.groupId,
+      windowId: tab.windowId
+    });
+    await deps.syncGroupFromChrome(tab.groupId);
+
+    if (!deps.store.getGroup(tab.groupId)) {
+      scheduleAutoWindowSync({
+        windowId: tab.windowId,
+        cause,
+        reason: "group-missing",
+        tabId: tab.id,
+        groupId: tab.groupId
+      });
+    }
+  };
+
+  const applyPatchFirstTabUpsert = async (tab: chrome.tabs.Tab, cause: "tabs/onCreated" | "tabs/onUpdated"): Promise<void> => {
+    await deps.ensureInitialized();
+
+    const normalizedTab = normalizeChromeTab(tab);
+    if (!normalizedTab) {
+      scheduleAutoWindowSync({
+        windowId: tab.windowId,
+        cause,
+        reason: "normalize-failed",
+        tabId: tab.id ?? null,
+        groupId: tab.groupId ?? null
+      });
+      return;
+    }
+
+    const existingTab = deps.store.getTab(normalizedTab.id);
+    if (existingTab && existingTab.windowId !== normalizedTab.windowId) {
+      scheduleAutoCrossWindowSync({
+        sourceWindowId: existingTab.windowId,
+        targetWindowId: normalizedTab.windowId,
+        cause,
+        tabId: normalizedTab.id
+      });
+      return;
+    }
+
+    if (existingTab && existingTab.index !== normalizedTab.index) {
+      scheduleAutoWindowSync({
+        windowId: normalizedTab.windowId,
+        cause,
+        reason: "index-changed",
+        tabId: normalizedTab.id,
+        groupId: normalizedTab.groupId,
+        previousIndex: existingTab.index,
+        nextIndex: normalizedTab.index
+      });
+      return;
+    }
+
+    deps.handlePatch(deps.store.upsertTab(normalizedTab));
+    deps.traceBackgroundEvent(cause === "tabs/onCreated" ? "patch/tab-created" : "patch/tab-updated", {
+      tabId: normalizedTab.id,
+      windowId: normalizedTab.windowId,
+      groupId: normalizedTab.groupId,
+      index: normalizedTab.index
+    });
+    await ensureKnownGroup(normalizedTab, cause);
+  };
+
+  const applyPatchFirstTabRemove = async (tabId: number, removeInfo: chrome.tabs.TabRemoveInfo): Promise<void> => {
+    await deps.ensureInitialized();
+
+    if (!deps.store.hasTab(tabId)) {
+      scheduleAutoWindowSync({
+        windowId: removeInfo.windowId,
+        cause: "tabs/onRemoved",
+        reason: "missing-tab",
+        tabId
+      });
+      return;
+    }
+
+    deps.handlePatch(deps.store.removeTab(tabId, removeInfo.windowId));
+    deps.traceBackgroundEvent("patch/tab-removed", {
+      tabId,
+      windowId: removeInfo.windowId,
+      isWindowClosing: removeInfo.isWindowClosing
+    });
+  };
+
+  const isStatusOnlyUpdate = (changeInfo: chrome.tabs.TabChangeInfo): boolean => {
+    const changeKeys = Object.keys(changeInfo);
+    return changeKeys.length === 1 && changeInfo.status != null;
+  };
+
+  const hasPresentationImpact = (changeInfo: chrome.tabs.TabChangeInfo): boolean => (
+    changeInfo.title != null
+    || changeInfo.url != null
+    || changeInfo.favIconUrl != null
+    || changeInfo.pinned != null
+    || changeInfo.audible != null
+    || changeInfo.discarded != null
+    || changeInfo.groupId != null
+  );
+
   return {
     onCreated: (tab) => {
       deps.traceBackgroundEvent("tabs/onCreated", {
@@ -44,10 +207,7 @@ export function createTabEventHandlers(deps: Pick<
         pendingUrl: tab.pendingUrl,
         url: tab.url
       });
-      void deps.windowSyncCoordinator.scheduleWindowSync({
-        windowId: tab.windowId,
-        cause: "tabs/onCreated"
-      });
+      void deps.enqueueStoreTask(() => applyPatchFirstTabUpsert(tab, "tabs/onCreated"));
     },
     onUpdated: (tabId, changeInfo, tab) => {
       deps.traceBackgroundEvent("tabs/onUpdated", {
@@ -59,10 +219,25 @@ export function createTabEventHandlers(deps: Pick<
         groupId: tab.groupId
       });
 
-      void deps.windowSyncCoordinator.scheduleWindowSync({
-        windowId: tab.windowId,
-        cause: "tabs/onUpdated"
-      });
+      if (isStatusOnlyUpdate(changeInfo)) {
+        deps.traceBackgroundEvent("patch/tab-update-skipped", {
+          tabId,
+          windowId: tab.windowId,
+          reason: "status-only"
+        });
+        return;
+      }
+
+      if (!hasPresentationImpact(changeInfo)) {
+        deps.traceBackgroundEvent("patch/tab-update-skipped", {
+          tabId,
+          windowId: tab.windowId,
+          reason: "non-visual-change"
+        });
+        return;
+      }
+
+      void deps.enqueueStoreTask(() => applyPatchFirstTabUpsert(tab, "tabs/onUpdated"));
     },
     onMoved: (tabId, moveInfo) => {
       deps.traceBackgroundEvent("tabs/onMoved", {
@@ -110,10 +285,7 @@ export function createTabEventHandlers(deps: Pick<
         return;
       }
 
-      void deps.windowSyncCoordinator.scheduleWindowSync({
-        windowId: removeInfo.windowId,
-        cause: "tabs/onRemoved"
-      });
+      void deps.enqueueStoreTask(() => applyPatchFirstTabRemove(tabId, removeInfo));
     },
     onActivated: (activeInfo) => {
       deps.enqueueStoreTask(() => deps.handleActivated(activeInfo));
@@ -129,6 +301,7 @@ export function createTabGroupEventHandlers(deps: Pick<
   | "store"
   | "handlePatch"
   | "syncWindowFromChrome"
+  | "traceBackgroundEvent"
 >): {
   onCreated: (group: chrome.tabGroups.TabGroup) => void;
   onUpdated: (group: chrome.tabGroups.TabGroup) => void;
@@ -139,7 +312,29 @@ export function createTabGroupEventHandlers(deps: Pick<
       deps.enqueueStoreTask(() => deps.syncGroupFromChrome(group.id, group));
     },
     onUpdated: (group) => {
-      deps.enqueueStoreTask(() => deps.syncGroupFromChrome(group.id, group));
+      deps.enqueueStoreTask(async () => {
+        await deps.ensureInitialized();
+        const normalizedGroup = normalizeChromeTabGroup(group);
+        const existingGroup = deps.store.getGroup(normalizedGroup.id);
+        deps.handlePatch(deps.store.upsertGroup(normalizedGroup));
+        deps.traceBackgroundEvent("patch/group-updated", {
+          groupId: normalizedGroup.id,
+          windowId: normalizedGroup.windowId,
+          color: normalizedGroup.color,
+          collapsed: normalizedGroup.collapsed,
+          title: normalizedGroup.title
+        });
+
+        if (!existingGroup || existingGroup.windowId !== normalizedGroup.windowId) {
+          deps.traceBackgroundEvent("autocorrect/group-resync", {
+            cause: "tabGroups/onUpdated",
+            reason: existingGroup ? "window-changed" : "missing-group",
+            groupId: normalizedGroup.id,
+            windowId: normalizedGroup.windowId
+          });
+          await deps.syncGroupFromChrome(group.id, group);
+        }
+      });
     },
     onRemoved: (group) => {
       deps.enqueueStoreTask(async () => {
