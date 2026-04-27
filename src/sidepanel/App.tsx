@@ -8,7 +8,8 @@ import { filterPanelRowsBySearch, flattenWindowSections, hasRowKey, selectCurren
 import {
   DEFAULT_EXTENSION_SETTINGS,
   EXTENSION_SETTINGS_STORAGE_KEY,
-  loadExtensionSettings
+  loadExtensionSettings,
+  mergeExtensionSettings
 } from "../shared/settings";
 import type { ExtensionSettingsRecord, SearchFilterMode, SupportedLocale, TabCommand, TabRecord } from "../shared/types";
 import { VirtualizedWindowList } from "./components/VirtualizedWindowList";
@@ -90,7 +91,9 @@ export default function App() {
       }
 
       setSettings(
-        (settingsChange.newValue as ExtensionSettingsRecord | undefined) ?? DEFAULT_EXTENSION_SETTINGS
+        mergeExtensionSettings(
+          settingsChange.newValue as Partial<ExtensionSettingsRecord> | undefined
+        )
       );
     };
 
@@ -562,6 +565,7 @@ export default function App() {
         {!isLoading ? (
           <VirtualizedWindowList
             locale={locale}
+            tabDisplaySize={settings.display.tabDisplaySize}
             rows={filteredRows}
             currentActiveTabId={currentActiveTabId}
             locateRequest={locateRequest}

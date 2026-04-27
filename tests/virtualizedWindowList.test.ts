@@ -12,6 +12,7 @@ import {
   getRowShellClassName,
   getStickyScrollStyle,
   getTabRowClassName,
+  getVirtualListClassName,
   getWindowRowClassName,
   resolveActiveRowAutoScroll,
   shouldPulseLocateRow,
@@ -196,6 +197,12 @@ describe("VirtualizedWindowList helpers", () => {
         groupHeaderOverlap: 6
       })
     ).toBe(62);
+  });
+
+  it("maps display sizes to stable virtual-list classes", () => {
+    expect(getVirtualListClassName("large")).toBe("virtual-list virtual-list--large");
+    expect(getVirtualListClassName("medium")).toBe("virtual-list virtual-list--medium");
+    expect(getVirtualListClassName("small")).toBe("virtual-list virtual-list--small");
   });
 
   it("builds window render sections with grouped child rows", () => {

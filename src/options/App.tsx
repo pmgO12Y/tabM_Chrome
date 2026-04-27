@@ -11,12 +11,14 @@ import {
   DEFAULT_EXTENSION_SETTINGS,
   EXTENSION_SETTINGS_STORAGE_KEY,
   loadExtensionSettings,
+  mergeExtensionSettings,
   resetExtensionSettings,
   saveExtensionSettings
 } from "../shared/settings";
 import type {
   ExtensionSettingsRecord,
   LocaleMode,
+  TabDisplaySize,
   TraceSettingsRecord
 } from "../shared/types";
 import {
@@ -26,6 +28,7 @@ import {
 } from "../sidepanel/panelPortAdapter";
 
 const LANGUAGE_OPTIONS: LocaleMode[] = ["system", "zh-CN", "en"];
+const TAB_DISPLAY_SIZE_OPTIONS: readonly TabDisplaySize[] = ["large", "medium", "small"];
 
 interface DebugTraceState {
   settings: TraceSettingsRecord;
@@ -77,7 +80,9 @@ export default function App() {
       }
 
       setSettings(
-        (settingsChange.newValue as ExtensionSettingsRecord | undefined) ?? DEFAULT_EXTENSION_SETTINGS
+        mergeExtensionSettings(
+          settingsChange.newValue as Partial<ExtensionSettingsRecord> | undefined
+        )
       );
       setLoading(false);
     };
@@ -147,6 +152,16 @@ export default function App() {
       ...settings,
       locale: {
         mode
+      }
+    });
+    setSettings(nextSettings);
+  }
+
+  async function handleTabDisplaySizeChange(tabDisplaySize: TabDisplaySize): Promise<void> {
+    const nextSettings = await saveExtensionSettings({
+      ...settings,
+      display: {
+        tabDisplaySize
       }
     });
     setSettings(nextSettings);
@@ -284,7 +299,29 @@ export default function App() {
         <div className="settings-card__header">
           <div>
             <h2 id="settings-ui-title" className="settings-card__title">{t("options.section.ui.title")}</h2>
-            <p className="settings-card__description">{t("options.comingSoon")}</p>
+            <p className="settings-card__description">{t("options.section.ui.description")}</p>
+          </div>
+        </div>
+        <div className="settings-segmented" role="group" aria-labelledby="tab-display-size-label">
+          <div className="settings-select__copy">
+            <span id="tab-display-size-label" className="settings-toggle__label">{t("options.displaySize.label")}</span>
+            <span className="settings-toggle__hint">{t("options.displaySize.hint")}</span>
+          </div>
+          <div className="settings-segmented__control" aria-label={t("options.displaySize.label")}>
+            {TAB_DISPLAY_SIZE_OPTIONS.map((size) => (
+              <button
+                key={size}
+                type="button"
+                className={`settings-segmented__option${settings.display.tabDisplaySize === size ? " settings-segmented__option--active" : ""}`}
+                aria-pressed={settings.display.tabDisplaySize === size}
+                onClick={() => {
+                  void handleTabDisplaySizeChange(size);
+                }}
+                disabled={loading}
+              >
+                {t(`options.displaySize.option.${size}` as TranslationKey)}
+              </button>
+            ))}
           </div>
         </div>
       </section>

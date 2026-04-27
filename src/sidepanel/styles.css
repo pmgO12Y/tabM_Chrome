@@ -17,6 +17,21 @@
   --panel-inline-gap: 2px;
   --tab-row-actions-width: 58px;
   --tab-row-action-size: 24px;
+  --window-row-padding-y-top: 11px;
+  --window-row-padding-y-bottom: 10px;
+  --window-row-title-font-size: 16px;
+  --window-row-meta-font-size: 14px;
+  --group-row-padding-y: 4px;
+  --group-row-padding-x: 10px;
+  --group-row-title-font-size: 13px;
+  --group-row-count-font-size: 12px;
+  --group-row-chevron-font-size: 12px;
+  --tab-row-main-padding-y: 8px;
+  --tab-row-main-padding-left: 12px;
+  --tab-row-gap: 10px;
+  --tab-row-favicon-size: 20px;
+  --tab-row-favicon-placeholder-radius: 4px;
+  --tab-row-title-font-size: 16px;
   --group-grey-bg: #5f6368;
   --group-grey-text: #ffffff;
   --group-grey-outline: #5f6368;
@@ -147,7 +162,7 @@ button:focus-visible {
   border-radius: 8px;
   background: rgba(23, 32, 51, 0.92);
   color: #ffffff;
-  font-size: 14px;
+  font-size: var(--window-row-meta-font-size);
   line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
@@ -297,7 +312,7 @@ button:focus-visible {
   border-radius: 8px;
   background: rgba(23, 32, 51, 0.92);
   color: #ffffff;
-  font-size: 14px;
+  font-size: var(--window-row-meta-font-size);
   line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
@@ -388,7 +403,7 @@ button:focus-visible {
 .fatal-error__title,
 .error-state__title,
 .debug-state__title {
-  font-size: 14px;
+  font-size: var(--window-row-meta-font-size);
   font-weight: 600;
 }
 
@@ -415,6 +430,60 @@ button:focus-visible {
 .virtual-list {
   min-height: 100%;
   min-width: 0;
+}
+
+.virtual-list--large {
+  --window-row-padding-y-top: 13px;
+  --window-row-padding-y-bottom: 12px;
+  --window-row-title-font-size: 18px;
+  --window-row-meta-font-size: 15px;
+  --group-row-padding-y: 6px;
+  --group-row-padding-x: 12px;
+  --group-row-title-font-size: 14px;
+  --group-row-count-font-size: 13px;
+  --group-row-chevron-font-size: 13px;
+  --tab-row-main-padding-y: 10px;
+  --tab-row-main-padding-left: 14px;
+  --tab-row-gap: 12px;
+  --tab-row-favicon-size: 22px;
+  --tab-row-favicon-placeholder-radius: 5px;
+  --tab-row-title-font-size: 18px;
+}
+
+.virtual-list--medium {
+  --window-row-padding-y-top: 11px;
+  --window-row-padding-y-bottom: 10px;
+  --window-row-title-font-size: 16px;
+  --window-row-meta-font-size: 14px;
+  --group-row-padding-y: 4px;
+  --group-row-padding-x: 10px;
+  --group-row-title-font-size: 13px;
+  --group-row-count-font-size: 12px;
+  --group-row-chevron-font-size: 12px;
+  --tab-row-main-padding-y: 8px;
+  --tab-row-main-padding-left: 12px;
+  --tab-row-gap: 10px;
+  --tab-row-favicon-size: 20px;
+  --tab-row-favicon-placeholder-radius: 4px;
+  --tab-row-title-font-size: 16px;
+}
+
+.virtual-list--small {
+  --window-row-padding-y-top: 9px;
+  --window-row-padding-y-bottom: 8px;
+  --window-row-title-font-size: 14px;
+  --window-row-meta-font-size: 12px;
+  --group-row-padding-y: 3px;
+  --group-row-padding-x: 8px;
+  --group-row-title-font-size: 12px;
+  --group-row-count-font-size: 11px;
+  --group-row-chevron-font-size: 11px;
+  --tab-row-main-padding-y: 6px;
+  --tab-row-main-padding-left: 10px;
+  --tab-row-gap: 8px;
+  --tab-row-favicon-size: 16px;
+  --tab-row-favicon-placeholder-radius: 4px;
+  --tab-row-title-font-size: 14px;
 }
 
 .stack-list {
@@ -485,7 +554,7 @@ button:focus-visible {
   grid-template-columns: 12px minmax(0, 1fr) max-content;
   align-items: center;
   gap: 6px;
-  padding: 11px 16px 10px;
+  padding: var(--window-row-padding-y-top) 16px var(--window-row-padding-y-bottom);
   background: rgba(23, 32, 51, 0.05);
   font-weight: 600;
   text-align: left;
@@ -515,7 +584,7 @@ button:focus-visible {
   display: block;
   min-width: 0;
   max-width: 100%;
-  font-size: 16px;
+  font-size: var(--window-row-title-font-size);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -531,14 +600,14 @@ button:focus-visible {
 
 .window-row__current {
   flex: none;
-  font-size: 14px;
+  font-size: var(--window-row-meta-font-size);
   color: var(--accent);
   white-space: nowrap;
 }
 
 .window-row__count {
   flex: none;
-  font-size: 14px;
+  font-size: var(--window-row-meta-font-size);
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -573,7 +642,7 @@ button:focus-visible {
   margin: 0;
   border: 0;
   border-radius: 8px 8px 0 0;
-  padding: 4px 10px;
+  padding: var(--group-row-padding-y) var(--group-row-padding-x);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -595,7 +664,7 @@ button:focus-visible {
   width: 0;
   min-width: 0;
   max-width: 100%;
-  font-size: 13px;
+  font-size: var(--group-row-title-font-size);
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -610,12 +679,12 @@ button:focus-visible {
 }
 
 .group-row__count {
-  font-size: 12px;
+  font-size: var(--group-row-count-font-size);
   font-weight: 600;
 }
 
 .group-row__chevron {
-  font-size: 12px;
+  font-size: var(--group-row-chevron-font-size);
 }
 
 .group-row:not(:disabled):hover {
@@ -942,10 +1011,10 @@ button:focus-visible {
 .tab-row__main {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--tab-row-gap);
   min-width: 0;
   width: 100%;
-  padding: 8px 0 8px 12px;
+  padding: var(--tab-row-main-padding-y) 0 var(--tab-row-main-padding-y) var(--tab-row-main-padding-left);
   border: 0;
   background: transparent;
   color: inherit;
@@ -958,8 +1027,8 @@ button:focus-visible {
 }
 
 .tab-row__favicon {
-  width: 20px;
-  height: 20px;
+  width: var(--tab-row-favicon-size);
+  height: var(--tab-row-favicon-size);
   display: grid;
   place-items: center;
   flex: none;
@@ -969,15 +1038,15 @@ button:focus-visible {
 
 .tab-row__favicon img {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: var(--tab-row-favicon-size);
+  height: var(--tab-row-favicon-size);
 }
 
 .tab-row__favicon-placeholder {
   display: block;
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
+  width: var(--tab-row-favicon-size);
+  height: var(--tab-row-favicon-size);
+  border-radius: var(--tab-row-favicon-placeholder-radius);
   background: rgba(23, 32, 51, 0.08);
 }
 
@@ -987,7 +1056,7 @@ button:focus-visible {
   width: 0;
   flex: 1 1 0;
   max-width: 100%;
-  font-size: 16px;
+  font-size: var(--tab-row-title-font-size);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

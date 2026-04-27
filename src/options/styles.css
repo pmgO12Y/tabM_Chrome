@@ -163,6 +163,46 @@ input:focus-visible {
   background: var(--surface);
   color: inherit;
 }
+.settings-segmented {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-segmented__control {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(23, 32, 51, 0.04);
+}
+
+.settings-segmented__option {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: transparent;
+  color: #24324a;
+  min-width: 52px;
+}
+
+.settings-segmented__option--active {
+  background: rgba(31, 87, 255, 0.14);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.settings-segmented__option:hover:not(:disabled) {
+  background: rgba(23, 32, 51, 0.08);
+}
+
+.settings-segmented__option--active:hover:not(:disabled) {
+  background: #ffffff;
+}
 
 
 .settings-button-row {

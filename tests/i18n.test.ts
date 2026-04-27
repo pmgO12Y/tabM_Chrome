@@ -50,4 +50,32 @@ describe("i18n", () => {
     expect(translate("zh-CN", "sidepanel.toolbar.locateCurrentPageUnavailable")).toBe("当前页面不在侧边栏快照中");
     expect(translate("en", "sidepanel.toolbar.locateCurrentPageUnavailable")).toBe("Current page is not in the side panel snapshot");
   });
+
+  it("exposes tab display size labels in both locales", () => {
+    expect(translate("zh-CN", "options.displaySize.label")).toBe("标签显示大小");
+    expect(translate("zh-CN", "options.displaySize.option.large")).toBe("大");
+    expect(translate("zh-CN", "options.displaySize.option.medium")).toBe("中");
+    expect(translate("zh-CN", "options.displaySize.option.small")).toBe("小");
+    expect(translate("en", "options.displaySize.label")).toBe("Tab display size");
+    expect(translate("en", "options.displaySize.option.large")).toBe("Large");
+    expect(translate("en", "options.displaySize.option.medium")).toBe("Medium");
+    expect(translate("en", "options.displaySize.option.small")).toBe("Small");
+  });
+
+  it("formats window titles using the active locale", () => {
+    expect(
+      formatWindowTitle({
+        locale: "zh-CN",
+        visibleWindowIndex: 2,
+        activeTabTitle: "当前页"
+      })
+    ).toBe("窗口 2 - 当前页");
+    expect(
+      formatWindowTitle({
+        locale: "en",
+        visibleWindowIndex: 3,
+        activeTabTitle: ""
+      })
+    ).toBe("Window 3");
+  });
 });

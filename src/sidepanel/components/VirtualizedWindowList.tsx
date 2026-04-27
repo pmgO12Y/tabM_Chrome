@@ -1,12 +1,13 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { translate, type SupportedLocale } from "../../shared/i18n";
-import type { PanelRow } from "../../shared/types";
+import type { PanelRow, TabDisplaySize } from "../../shared/types";
 import type { DragSource, DropTarget } from "./listDrag";
 import { buildDragCommand, createDragSource, createSelectedTabsDragSource, resolveDropTarget } from "./listDrag";
 import { RowShell } from "./listRows";
 
 interface VirtualizedWindowListProps {
   locale: SupportedLocale;
+  tabDisplaySize: TabDisplaySize;
   rows: PanelRow[];
   currentActiveTabId: number | null;
   locateRequest: {
@@ -324,8 +325,13 @@ export function shouldPulseLocateRow(params: {
   return locateRequest != null && hasRenderedTargetRow;
 }
 
+export function getVirtualListClassName(tabDisplaySize: TabDisplaySize): string {
+  return `virtual-list virtual-list--${tabDisplaySize}`;
+}
+
 export function VirtualizedWindowList({
   locale,
+  tabDisplaySize,
   rows,
   currentActiveTabId,
   locateRequest,
@@ -745,7 +751,7 @@ export function VirtualizedWindowList({
 
   return (
     <div
-      className="virtual-list"
+      className={getVirtualListClassName(tabDisplaySize)}
       role="tree"
       aria-label={translate(locale, "sidepanel.list.aria")}
       style={getStickyScrollStyle(windowStickyOffset)}

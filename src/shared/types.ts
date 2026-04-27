@@ -10,6 +10,12 @@ export interface LocaleSettingsRecord {
   mode: LocaleMode;
 }
 
+export type TabDisplaySize = "large" | "medium" | "small";
+
+export interface DisplaySettingsRecord {
+  tabDisplaySize: TabDisplaySize;
+}
+
 export type LocalizedTextRecord =
   | {
       key: string;
@@ -22,6 +28,7 @@ export type LocalizedTextRecord =
 export interface ExtensionSettingsRecord {
   badge: BadgeSettingsRecord;
   locale: LocaleSettingsRecord;
+  display: DisplaySettingsRecord;
   updatedAt: string;
 }
 
