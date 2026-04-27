@@ -80,9 +80,11 @@ export function createPanelPortAdapter(options: PanelPortAdapterOptions): PanelP
   };
 
   const connect = (): void => {
-    if (disposed) {
+    if (disposed || activePort) {
       return;
     }
+
+    clearReconnectTimer();
 
     try {
       activePort = connectPort();

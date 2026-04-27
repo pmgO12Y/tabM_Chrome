@@ -1,4 +1,4 @@
-import { CloseSmall, Filter, MonitorOne, Star } from "@icon-park/react";
+import { CloseSmall, Filter, Star } from "@icon-park/react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { translate, type SupportedLocale } from "../shared/i18n";
 import type { ToolbarTooltipPlacement } from "./toolbarTooltip";
@@ -11,12 +11,11 @@ interface SearchBarProps {
   disabled?: boolean;
   onSearchChange: (term: string) => void;
   onFilterModeChange: (mode: SearchFilterMode) => void;
-  onMoveToNewWindow: () => void;
   onClearSearch: () => void;
   onTraceEvent?: (event: string, details: Record<string, unknown>) => void;
 }
 
-type SearchTooltipType = "clear" | "mode" | "move";
+type SearchTooltipType = "clear" | "mode";
 
 interface SearchTooltipState {
   type: SearchTooltipType;
@@ -31,7 +30,6 @@ export function SearchBar({
   disabled = false,
   onSearchChange,
   onFilterModeChange,
-  onMoveToNewWindow,
   onClearSearch,
   onTraceEvent
 }: SearchBarProps & {
@@ -93,16 +91,6 @@ export function SearchBar({
     onFilterModeChange(nextMode);
   }, [filterMode, matchCount, onFilterModeChange, onTraceEvent, searchTerm]);
 
-  const handleMoveToNewWindowClick = useCallback(() => {
-    hideSearchTooltip();
-    onTraceEvent?.("panel/search-move-matches-to-new-window", {
-      searchTerm,
-      filterMode,
-      matchCount
-    });
-    onMoveToNewWindow();
-  }, [filterMode, matchCount, onMoveToNewWindow, onTraceEvent, searchTerm]);
-
   function showSearchTooltip(type: SearchTooltipType, anchor: HTMLButtonElement): void {
     setSearchTooltip({ type, anchor });
   }
@@ -161,9 +149,7 @@ export function SearchBar({
   const searchTooltipLabel = searchTooltip
     ? searchTooltip.type === "clear"
       ? translate(locale, "sidepanel.search.clear")
-      : searchTooltip.type === "mode"
-        ? modeToggleLabel
-        : translate(locale, "sidepanel.search.moveToNewWindow")
+      : modeToggleLabel
     : null;
 
   return (
@@ -223,21 +209,6 @@ export function SearchBar({
               ) : (
                 <Star theme="outline" size="14" />
               )}
-            </button>
-
-            <button
-              type="button"
-              className="search-bar__button"
-              onPointerDown={hideSearchTooltip}
-              onClick={handleMoveToNewWindowClick}
-              onPointerEnter={(event) => showSearchTooltip("move", event.currentTarget)}
-              onPointerLeave={hideSearchTooltip}
-              onFocus={(event) => showSearchTooltip("move", event.currentTarget)}
-              onBlur={hideSearchTooltip}
-              disabled={disabled || matchCount === 0}
-              aria-label={translate(locale, "sidepanel.search.moveToNewWindow")}
-            >
-              <MonitorOne theme="outline" size="14" />
             </button>
           </>
         )}

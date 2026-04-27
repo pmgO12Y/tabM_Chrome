@@ -138,6 +138,33 @@ button:focus-visible {
   white-space: nowrap;
 }
 
+.panel-toolbar__hovered-tab {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 1px;
+}
+
+.panel-toolbar__hovered-tab-title,
+.panel-toolbar__hovered-tab-url {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel-toolbar__hovered-tab-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1d2940;
+}
+
+.panel-toolbar__hovered-tab-url {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 .panel-toolbar__actions {
   display: inline-flex;
   align-items: center;

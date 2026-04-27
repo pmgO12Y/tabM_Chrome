@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { resolveBulkToggleToolbarAction } from "../src/sidepanel/toolbarActions";
+import { translate } from "../src/shared/i18n";
 
 describe("toolbarActions", () => {
   it("prefers expand when any window is collapsed", () => {
@@ -32,18 +33,15 @@ describe("toolbarActions", () => {
     });
   });
 
-  it("switches to collapse only when every window and group is expanded", () => {
+  it("provides toolbar copy for moving tabs to a new window", () => {
     expect(
-      resolveBulkToggleToolbarAction(
-        {
-          hasCollapsedWindows: false,
-          hasCollapsedGroups: false
-        },
-        "zh-CN"
-      )
-    ).toEqual({
-      mode: "collapse",
-      label: "全部收起"
-    });
+      translate("zh-CN", "sidepanel.toolbar.moveToNewWindow", {
+        count: 3
+      })
+    ).toBe("移动到新窗口（3）");
+  });
+
+  it("provides hover preview copy for title and url without new keys", () => {
+    expect(translate("zh-CN", "sidepanel.toolbar.selectedCount", { count: 2 })).toBe("已选 2 项");
   });
 });

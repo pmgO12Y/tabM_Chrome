@@ -526,11 +526,36 @@ function filterWindowBlock(block: WindowRowBlock, term: string): {
 
 function filterWindowBlockEntry(entry: WindowBlockEntry, term: string): PanelRow[] {
   if (entry.kind === "tab") {
-    return matchesSearchTerm(entry.row.tab, term) ? [entry.row] : [];
+    return matchesSearchTerm(entry.row.tab, term)
+      ? [
+          {
+            ...entry.row,
+            matchesSearch: true
+          }
+        ]
+      : [];
   }
 
-  const matchingTabs = entry.tabs.filter((tabRow) => matchesSearchTerm(tabRow.tab, term));
-  return matchingTabs.length > 0 ? [entry.row, ...matchingTabs] : [];
+  const matchingTabs = entry.tabs.flatMap((tabRow) =>
+    matchesSearchTerm(tabRow.tab, term)
+      ? [
+          {
+            ...tabRow,
+            matchesSearch: true
+          }
+        ]
+      : []
+  );
+
+  return matchingTabs.length > 0
+    ? [
+        {
+          ...entry.row,
+          matchesSearch: true
+        },
+        ...matchingTabs
+      ]
+    : [];
 }
 
 function highlightWindowBlocks(blocks: readonly WindowRowBlock[], term: string): {

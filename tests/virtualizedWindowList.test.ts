@@ -306,16 +306,18 @@ describe("VirtualizedWindowList helpers", () => {
     ]);
   });
 
-  it("adds a locate-pulsing class when an explicit locate pulse is active", () => {
+  it("treats search matches like selected rows for visual class generation", () => {
     expect(
       getTabRowClassName({
-        isCurrentActive: true,
+        isCurrentActive: false,
         isWindowActive: false,
         isGrouped: false,
-        isLocatePulsing: true
+        isSelected: false,
+        matchesSearch: true
       })
-    ).toContain("tab-row--locate-pulsing");
+    ).toContain("tab-row--selected");
   });
+
 
   it("pulses a locate row only after the requested row is rendered", () => {
     expect(

@@ -12,6 +12,11 @@ import {
   getWindowRowClassName
 } from "./VirtualizedWindowList";
 
+export interface HoveredTabPreview {
+  title: string;
+  url: string;
+}
+
 export interface RowShellProps {
   locale: SupportedLocale;
   row: PanelRow;
@@ -43,6 +48,7 @@ export interface RowShellProps {
   isDragging?: boolean;
   dropIndicator?: DropTarget["indicator"] | null;
   onElementRefChange?: (node: HTMLDivElement | null) => void;
+  onHoveredTabChange?: (preview: HoveredTabPreview | null) => void;
 }
 
 function RowShellInner({
@@ -71,7 +77,8 @@ function RowShellInner({
   visuallyExpanded = false,
   isDragging = false,
   dropIndicator = null,
-  onElementRefChange
+  onElementRefChange,
+  onHoveredTabChange
 }: RowShellProps) {
   const shellExtraClassName = [
     extraClassName,
@@ -115,8 +122,7 @@ function RowShellInner({
         onDragStart={onDragStart}
         onDragOver={onDragOver}
         onDrop={onDrop}
-        groupedTabColor={groupedTabColor}
-        visuallyExpanded={visuallyExpanded}
+        onHoveredTabChange={onHoveredTabChange}
       />
     </div>
   );
@@ -176,7 +182,8 @@ function PanelListRow({
   onDragOver,
   onDrop,
   groupedTabColor,
-  visuallyExpanded = false
+  visuallyExpanded = false,
+  onHoveredTabChange
 }: {
   locale: SupportedLocale;
   row: PanelRow;
@@ -203,6 +210,7 @@ function PanelListRow({
   onDrop: (row: PanelRow, event: React.DragEvent<HTMLElement>) => void;
   groupedTabColor?: chrome.tabGroups.ColorEnum;
   visuallyExpanded?: boolean;
+  onHoveredTabChange?: (preview: HoveredTabPreview | null) => void;
 }) {
   if (row.kind === "window") {
     return (
@@ -300,6 +308,10 @@ function PanelListRow({
         }
         aria-current={isCurrentActive ? "page" : undefined}
         aria-selected={isSelected}
+        onPointerEnter={() => onHoveredTabChange?.({ title: row.tab.title, url: row.tab.url })}
+        onPointerLeave={() => onHoveredTabChange?.(null)}
+        onFocus={() => onHoveredTabChange?.({ title: row.tab.title, url: row.tab.url })}
+        onBlur={() => onHoveredTabChange?.(null)}
         onClick={(event) =>
           onActivateTab({
             tabId: row.tab.id,

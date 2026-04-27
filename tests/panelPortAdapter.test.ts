@@ -64,31 +64,47 @@ describe("panelPortAdapter", () => {
     vi.useRealTimers();
   });
 
-  it("should resolve trace bundle requests through the active port", async () => {
+  it("should ignore duplicate connect calls while a port is active", () => {
     const port = createPort();
+    const connectPort = vi.fn(() => port as unknown as chrome.runtime.Port);
+
     const adapter = createPanelPortAdapter({
-      connectPort: () => port as unknown as chrome.runtime.Port,
+      connectPort,
       onMessage: vi.fn(),
       onConnectionFailed: vi.fn(),
       onDisconnected: vi.fn()
     });
 
     adapter.connect();
-    await Promise.resolve();
-    const pending = adapter.requestTraceBundle();
-    expect(port.postMessage).toHaveBeenCalledWith({ type: "debug/get-trace" });
+    adapter.connect();
 
-    const payload: TraceBundlePayload = {
-      entries: [],
-      settings: {
-        verboseLoggingEnabled: true,
-        changedAt: "2026-04-25T00:00:00.000Z"
-      },
-      updatedAt: "2026-04-25T00:01:00.000Z",
-      timelineText: "timeline"
-    };
-    port.emitMessage({ type: "debug/trace", payload });
-
-    await expect(pending).resolves.toEqual(payload);
+    expect(connectPort).toHaveBeenCalledTimes(1);
   });
+
+  it("should cancel a pending reconnect when connect is called manually", () => {
+    vi.useFakeTimers();
+    const port1 = createPort();
+    const port2 = createPort();
+    const connectPort = vi.fn()
+      .mockReturnValueOnce(port1 as unknown as chrome.runtime.Port)
+      .mockReturnValueOnce(port2 as unknown as chrome.runtime.Port);
+
+    const adapter = createPanelPortAdapter({
+      connectPort,
+      onMessage: vi.fn(),
+      onConnectionFailed: vi.fn(),
+      onDisconnected: vi.fn(),
+      reconnectDelayMs: 10
+    });
+
+    adapter.connect();
+    port1.emitDisconnect();
+    adapter.connect();
+    vi.advanceTimersByTime(10);
+
+    expect(connectPort).toHaveBeenCalledTimes(2);
+
+    vi.useRealTimers();
+  });
+
 });

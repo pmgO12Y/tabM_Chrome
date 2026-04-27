@@ -4,6 +4,7 @@ import {
   expandFocusedWindow,
   filterPanelRowsBySearch,
   flattenWindowSections,
+  getSearchMatchingTabIds,
   hasRowKey,
   resolveActiveGroupAutoExpand,
   resolveCollapsedWindowIdsForTarget,
@@ -172,9 +173,17 @@ describe("selectors", () => {
     const rows = flattenWindowSections(selectWindowSections(state, []));
 
     expect(createSearchResult(rows, "docs", "filter")).toEqual({
-      rows: [rows[2], rows[3]],
+      rows: [
+        rows[2],
+        {
+          ...rows[3],
+          matchesSearch: true
+        }
+      ],
       matchCount: 1
     });
+
+    expect(getSearchMatchingTabIds(createSearchResult(rows, "docs", "filter").rows)).toEqual([2]);
 
     const highlightResult = createSearchResult(rows, "docs", "highlight");
     expect(highlightResult.matchCount).toBe(1);

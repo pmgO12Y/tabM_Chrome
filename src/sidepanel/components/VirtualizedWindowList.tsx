@@ -3,6 +3,7 @@ import { translate, type SupportedLocale } from "../../shared/i18n";
 import type { PanelRow, TabDisplaySize, WindowRenderSection } from "../../shared/types";
 import type { DragSource, DropTarget } from "./listDrag";
 import { buildDragCommand, createDragSource, createSelectedTabsDragSource, resolveDropTarget } from "./listDrag";
+import type { HoveredTabPreview } from "./listRows";
 import { RowShell } from "./listRows";
 
 interface VirtualizedWindowListProps {
@@ -21,6 +22,7 @@ interface VirtualizedWindowListProps {
   disabled?: boolean;
   searchActive?: boolean;
   onTraceEvent?: (event: string, details: Record<string, unknown>) => void;
+  onHoveredTabChange?: (preview: HoveredTabPreview | null) => void;
   selectionMode: boolean;
   onClearSelection: () => void;
   onToggleWindow: (windowId: number) => void;
@@ -124,7 +126,7 @@ export function getTabRowClassName(params: {
     isCurrentActive ? " tab-row--current-active" : isWindowActive ? " tab-row--window-active" : ""
   }${groupedTabColor ? ` tab-row--grouped tab-row--grouped-${groupedTabColor}` : ""}${
     isCurrentActive && isGrouped ? " tab-row--grouped-current-active" : ""
-  }${isSelected ? " tab-row--selected" : ""}${isClosing ? " tab-row--closing" : ""}${
+  }${isSelected || matchesSearch ? " tab-row--selected" : ""}${isClosing ? " tab-row--closing" : ""}${
     matchesSearch === false ? " tab-row--unmatched" : ""
   }${isLocatePulsing ? " tab-row--locate-pulsing" : ""}`;
 }
@@ -321,6 +323,7 @@ export function VirtualizedWindowList({
   disabled = false,
   searchActive = false,
   onTraceEvent,
+  onHoveredTabChange,
   selectionMode,
   onClearSelection,
   onToggleWindow,
@@ -884,6 +887,7 @@ export function VirtualizedWindowList({
               })}
               visuallyExpanded={searchActive && section.windowRow.collapsed}
               onElementRefChange={sectionIndex === 0 ? setMeasuredWindowHeaderNode : undefined}
+              onHoveredTabChange={onHoveredTabChange}
             />
             {searchActive || !section.windowRow.collapsed ? (
               <div className="window-section__body">
@@ -913,6 +917,7 @@ export function VirtualizedWindowList({
                       onDragStart={handleDragStart}
                       onDragOver={handleDragOver}
                       onDrop={handleDrop}
+                      onHoveredTabChange={onHoveredTabChange}
                     />
                   ) : (
                     <div
@@ -948,6 +953,7 @@ export function VirtualizedWindowList({
                         onDragStart={handleDragStart}
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
+                        onHoveredTabChange={onHoveredTabChange}
                       />
                       {!item.groupRow.collapsed || searchActive ? (
                         <div className="group-block__body">
@@ -980,6 +986,7 @@ export function VirtualizedWindowList({
                               onDragStart={handleDragStart}
                               onDragOver={handleDragOver}
                               onDrop={handleDrop}
+                              onHoveredTabChange={onHoveredTabChange}
                             />
                           ))}
                         </div>

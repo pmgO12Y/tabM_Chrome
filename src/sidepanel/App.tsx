@@ -4,7 +4,7 @@ import {
   getUiLanguage,
   resolveLocale
 } from "../shared/i18n";
-import { buildWindowRenderSections, createSearchResult, flattenWindowSections, selectCurrentActiveTabId, selectWindowSections } from "../shared/domain/selectors";
+import { buildWindowRenderSections, createSearchResult, flattenWindowSections, getSearchMatchingTabIds, selectCurrentActiveTabId, selectWindowSections } from "../shared/domain/selectors";
 import {
   DEFAULT_EXTENSION_SETTINGS,
   EXTENSION_SETTINGS_STORAGE_KEY,
@@ -13,6 +13,7 @@ import {
 } from "../shared/settings";
 import type { ExtensionSettingsRecord, SearchFilterMode, SupportedLocale, TabCommand, TabRecord } from "../shared/types";
 import { VirtualizedWindowList } from "./components/VirtualizedWindowList";
+import type { HoveredTabPreview } from "./components/listRows";
 import { createPanelCommandActions } from "./panelCommands";
 import { SearchBar, focusSearchInput } from "./SearchBar";
 import { SidepanelStatus } from "./SidepanelStatus";
@@ -30,6 +31,7 @@ export default function App() {
   const [liveActiveUpdateSource, setLiveActiveUpdateSource] = useState<LiveActiveUpdateSource | null>(null);
   const suppressedAutoLocateTabIdRef = useRef<number | null>(null);
   const [locateRequest, setLocateRequest] = useState<{ rowKey: string; requestId: number } | null>(null);
+  const [hoveredTabPreview, setHoveredTabPreview] = useState<HoveredTabPreview | null>(null);
   const locale: SupportedLocale = useMemo(
     () => resolveLocale({ settings, uiLanguage: getUiLanguage() }),
     [settings]
@@ -148,6 +150,12 @@ export default function App() {
         category: "selection"
       });
     });
+  const searchMatchingTabIds = useMemo(() => getSearchMatchingTabIds(filteredRows), [filteredRows]);
+  const effectiveSelectedTabIds = useMemo(
+    () => Array.from(new Set([...selectedTabIds, ...searchMatchingTabIds])),
+    [searchMatchingTabIds, selectedTabIds]
+  );
+  const moveToNewWindowCount = effectiveSelectedTabIds.length;
   const { closingTabIdSet, startClosing } = useClosingTabs(snapshot);
 
   useActiveGroupAutoExpand({
@@ -451,23 +459,7 @@ export default function App() {
   }
 
   function handleMoveToNewWindow(): void {
-    if (matchCount === 0) {
-      return;
-    }
-
-    const matchingTabIds = filteredRows.reduce<number[]>((tabIds, row) => {
-      if (row.kind !== "tab") {
-        return tabIds;
-      }
-
-      if (filterMode === "highlight" && !row.matchesSearch) {
-        return tabIds;
-      }
-
-      return [...tabIds, row.tab.id];
-    }, []);
-
-    if (matchingTabIds.length === 0) {
+    if (moveToNewWindowCount === 0) {
       return;
     }
 
@@ -477,12 +469,13 @@ export default function App() {
         searchTerm,
         filterMode,
         matchCount,
-        matchingTabIds
+        selectedTabIds,
+        effectiveSelectedTabIds
       },
       category: "command"
     });
 
-    commandActions.moveTabsToNewWindow(matchingTabIds);
+    commandActions.moveTabsToNewWindow(effectiveSelectedTabIds);
     setSearchTerm("");
   }
 
@@ -505,6 +498,7 @@ export default function App() {
       <SidepanelToolbar
         locale={locale}
         appShellRef={appShellRef}
+        hoveredTabPreview={hoveredTabPreview}
         selectedCount={selectedTabIds.length}
         hasCollapsedWindows={hasCollapsedWindows}
         hasCollapsedGroups={hasCollapsedGroups}
@@ -524,6 +518,8 @@ export default function App() {
         onExpandAll={expandAll}
         onCollapseAll={collapseAll}
         onCloseSelected={closeSelectedTabs}
+        moveToNewWindowCount={moveToNewWindowCount}
+        onMoveToNewWindow={handleMoveToNewWindow}
         selectionMode={selectionMode}
         onToggleSelectionMode={() => {
           if (selectionMode) {
@@ -566,6 +562,7 @@ export default function App() {
             scrollContainerRef={panelScrollRef}
             disabled={listDisabled}
             searchActive={searchActive}
+            onHoveredTabChange={setHoveredTabPreview}
             onTraceEvent={(event, details) => {
               postTraceEvent({
                 event,
@@ -594,7 +591,6 @@ export default function App() {
         disabled={toolbarDisabled}
         onSearchChange={setSearchTerm}
         onFilterModeChange={setFilterMode}
-        onMoveToNewWindow={handleMoveToNewWindow}
         onClearSearch={handleClearSearch}
         onTraceEvent={(event, details) => {
           postTraceEvent({
