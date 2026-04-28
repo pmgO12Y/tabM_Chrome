@@ -1,256 +1,476 @@
+/* ═══════════════════════════════════════════════
+   Settings — Chrome native style
+   ═══════════════════════════════════════════════ */
+
 :root {
   color-scheme: light;
-  font-family: "IBM Plex Sans", "PingFang SC", "Hiragino Sans GB", sans-serif;
-  line-height: 1.4;
+  font-family: "IBM Plex Sans", "PingFang SC", "Hiragino Sans GB", system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
   font-weight: 400;
-  background: #f6f8fc;
-  color: #172033;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  background: #fff;
+  color: #1d1f27;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  --accent: #1f57ff;
-  --text-muted: #5e6777;
-  --border: rgba(23, 32, 51, 0.1);
-  --surface: #ffffff;
+
+  --accent: #1a73e8;
+  --accent-soft: #e8f0fe;
+  --accent-border: #a8c7fa;
+
+  --fg: #1d1f27;
+  --fg-dim: #5f6368;
+  --fg-faint: #80868b;
+
+  --surface: #fff;
+  --surface-mid: #f8f9fa;
+  --surface-hover: rgba(29, 31, 39, 0.04);
+
+  --border: #dadce0;
+  --border-light: #e8eaed;
 }
 
 * {
   box-sizing: border-box;
 }
 
-html,
-body,
-#root {
+html, body, #root {
   width: 100%;
   min-height: 100%;
   margin: 0;
 }
 
 body {
-  background: #f6f8fc;
+  background: #fff;
 }
 
-button,
-input {
+button, input, select {
   font: inherit;
+  color: inherit;
 }
 
 button {
   cursor: pointer;
 }
 
-button:disabled,
-input:disabled {
+button:disabled, input:disabled, select:disabled {
   cursor: not-allowed;
-  opacity: 0.55;
+  opacity: 0.45;
 }
 
-button:focus-visible,
-input:focus-visible {
-  outline: 2px solid rgba(31, 87, 255, 0.45);
+:focus-visible {
+  outline: 2px solid var(--accent-border);
   outline-offset: 2px;
 }
 
-.settings-page {
-  width: min(100%, 760px);
+/* ═══════════════════════════════════════════════
+   Page
+   ═══════════════════════════════════════════════ */
+
+.page {
+  width: min(100%, 600px);
   margin: 0 auto;
-  padding: 32px 20px 40px;
+  padding: 24px 20px 40px;
   display: grid;
-  gap: 16px;
+  gap: 0;
 }
 
-.settings-page__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+/* ═══════════════════════════════════════════════
+   Header
+   ═══════════════════════════════════════════════ */
+
+.page__hd {
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--border-light);
 }
 
-.settings-page__eyebrow {
-  margin: 0 0 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent);
-}
-
-.settings-page__title {
+.page__title {
   margin: 0;
-  font-size: 28px;
-  line-height: 1.1;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--fg);
+  letter-spacing: -0.01em;
 }
 
-.settings-page__description {
-  margin: 8px 0 0;
-  color: var(--text-muted);
-  font-size: 14px;
-}
-
-.settings-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 18px 18px 16px;
-  display: grid;
-  gap: 14px;
-}
-
-.settings-card__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.settings-card__title {
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.2;
-}
-
-.settings-card__description {
-  margin: 6px 0 0;
-  color: var(--text-muted);
+.page__desc {
+  margin: 4px 0 0;
   font-size: 13px;
+  color: var(--fg-dim);
 }
 
-.settings-toggle {
+/* ═══════════════════════════════════════════════
+   Panel — single white container
+   ═══════════════════════════════════════════════ */
+
+.panel {
+  display: grid;
+  gap: 0;
+}
+
+/* ═══════════════════════════════════════════════
+   Group — a settings section
+   ═══════════════════════════════════════════════ */
+
+.group {
+  display: grid;
+  gap: 0;
+  padding: 20px 0 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.group:last-of-type {
+  border-bottom: 0;
+}
+
+.group__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.group__desc {
+  margin: 2px 0 8px;
+  font-size: 12px;
+  color: var(--fg-dim);
+  line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════
+   Item — a single setting row
+   ═══════════════════════════════════════════════ */
+
+.item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }
 
-.settings-toggle__copy {
+.item--seg {
+  align-items: flex-start;
+  cursor: default;
+  min-height: 0;
+}
+
+.item--flat {
+  cursor: default;
+  min-height: 28px;
+}
+
+.item__copy {
+  min-width: 0;
+  flex: 1 1 auto;
   display: grid;
-  gap: 4px;
+  gap: 1px;
 }
 
-.settings-toggle__label {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.settings-toggle__hint {
+.item__label {
   font-size: 13px;
-  color: var(--text-muted);
+  font-weight: 400;
+  color: var(--fg);
 }
 
-.settings-toggle__input {
+.item--flat .item__label {
+  font-weight: 500;
+}
+
+.item__hint {
+  font-size: 11.5px;
+  color: var(--fg-faint);
+}
+
+.item__val {
+  flex: none;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--fg-dim);
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════
+   Checkbox — custom rounded square
+   ═══════════════════════════════════════════════ */
+
+.check {
+  position: relative;
+  flex: none;
   width: 18px;
   height: 18px;
+}
+
+.check__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   margin: 0;
-  accent-color: var(--accent);
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
 }
 
-.settings-select {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.settings-select__copy {
-  display: grid;
-  gap: 4px;
-}
-
-.settings-select__input {
-  min-width: 180px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 12px;
+.check__box {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid var(--border);
   background: var(--surface);
-  color: inherit;
-}
-.settings-segmented {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  transition: all 0.1s;
 }
 
-.settings-segmented__control {
+.check__input:checked + .check__box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.check__input:checked + .check__box::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  width: 5px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(40deg);
+}
+
+.check__input:focus-visible + .check__box {
+  outline: 2px solid var(--accent-border);
+  outline-offset: 0;
+}
+
+.check__input:disabled + .check__box {
+  opacity: 0.5;
+  background: var(--surface-mid);
+}
+
+/* ═══════════════════════════════════════════════
+   Select
+   ═══════════════════════════════════════════════ */
+
+.sel {
+  position: relative;
+  flex: none;
+  min-width: 130px;
+}
+
+.sel::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4.5px solid var(--fg-dim);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.sel__ctrl {
+  width: 100%;
+  height: 30px;
+  padding: 0 24px 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface-mid);
+  font-size: 13px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: border-color 0.1s, background 0.1s;
+}
+
+.sel__ctrl:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+.sel__ctrl:focus-visible {
+  border-color: var(--accent);
+  background: var(--surface);
+  outline: 2px solid var(--accent-border);
+}
+
+/* ═══════════════════════════════════════════════
+   Segmented control
+   ═══════════════════════════════════════════════ */
+
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-mid);
+  flex: none;
+}
+
+.seg__btn {
+  min-width: 42px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--fg-dim);
+  font-size: 12px;
+  font-weight: 400;
+  transition: all 0.08s;
+}
+
+.seg__btn:hover:not(:disabled) {
+  color: var(--fg);
+  background: rgba(29, 31, 39, 0.04);
+}
+
+.seg__btn--on {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--fg);
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.seg__btn--on:hover:not(:disabled) {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+/* ═══════════════════════════════════════════════
+   Placeholder (Coming soon)
+   ═══════════════════════════════════════════════ */
+
+.ph {
+  padding: 2px 0;
+}
+
+.ph__text {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--fg-faint);
+}
+
+/* ═══════════════════════════════════════════════
+   Debug
+   ═══════════════════════════════════════════════ */
+
+.debug {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 16px;
+  padding: 4px 0;
+}
+
+.debug__item {
+  font-size: 12px;
+  color: var(--fg-faint);
+}
+
+.debug__item--warn {
+  color: #b45309;
+  width: 100%;
+}
+
+.acts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+}
+
+.acts__btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px;
-  border: 0;
-  border-radius: 12px;
-  background: rgba(23, 32, 51, 0.04);
+  justify-content: center;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--fg-dim);
+  font-size: 12px;
+  transition: all 0.1s;
 }
 
-.settings-segmented__option {
-  border: 0;
-  border-radius: 8px;
-  padding: 8px 12px;
-  background: transparent;
-  color: #24324a;
-  min-width: 52px;
+.acts__btn:hover:not(:disabled) {
+  background: var(--surface-mid);
+  border-color: var(--border);
+  color: var(--fg);
 }
 
-.settings-segmented__option--active {
-  background: rgba(31, 87, 255, 0.14);
-  color: var(--accent);
-  font-weight: 600;
-  box-shadow: none;
-}
+/* ═══════════════════════════════════════════════
+   Footer / Reset
+   ═══════════════════════════════════════════════ */
 
-.settings-segmented__option:hover:not(:disabled) {
-  background: rgba(23, 32, 51, 0.08);
-}
-
-.settings-segmented__option--active:hover:not(:disabled) {
-  background: #ffffff;
-}
-
-
-.settings-button-row {
+.page__ft {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  justify-content: flex-start;
+  padding-top: 16px;
 }
 
-.settings-button {
-  border: 0;
-  border-radius: 10px;
-  padding: 10px 14px;
-  background: rgba(23, 32, 51, 0.08);
-  color: #24324a;
+.page__reset {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--fg-faint);
+  font-size: 12px;
+  transition: all 0.1s;
 }
 
-.settings-button:hover:not(:disabled) {
-  background: rgba(23, 32, 51, 0.12);
+.page__reset:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: rgba(185, 28, 28, 0.15);
+  color: #b91c1c;
 }
 
-.settings-debug__meta {
-  display: grid;
-  gap: 6px;
-}
+/* ═══════════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════════ */
 
-.settings-debug__metaItem {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 13px;
-}
+@media (max-width: 480px) {
+  .page {
+    padding: 16px 14px 32px;
+  }
 
-.settings-status {
-  margin: 0;
-  font-size: 13px;
-}
+  .item {
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 0;
+  }
 
-.settings-status--warning {
-  color: #b54708;
-}
+  .item--seg {
+    padding-top: 4px;
+  }
 
-.settings-page__reset {
-  border: 0;
-  border-radius: 10px;
-  padding: 10px 14px;
-  background: rgba(23, 32, 51, 0.08);
-  color: #24324a;
-}
+  .sel,
+  .seg {
+    width: 100%;
+  }
 
-.settings-page__reset:hover:not(:disabled) {
-  background: rgba(23, 32, 51, 0.12);
+  .seg {
+    justify-content: stretch;
+  }
+
+  .seg__btn {
+    flex: 1 1 0;
+  }
+
+  .page__ft {
+    justify-content: stretch;
+  }
+
+  .page__reset {
+    width: 100%;
+    justify-content: center;
+  }
 }
