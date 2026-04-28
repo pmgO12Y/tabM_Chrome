@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 概念 9：拖拽管理 - 移动/拖放操作 -->
+  <defs>
+    <linearGradient id="bg9" x1="0" y1="0" x2="128" y2="128">
+      <stop offset="0%" stop-color="#1B1B2F"/>
+      <stop offset="100%" stop-color="#2D2D5E"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="url(#bg9)"/>
+  <!-- 虚线原位置 -->
+  <rect x="18" y="50" width="72" height="16" rx="4" stroke="#fff" stroke-width="1.5" stroke-dasharray="4,3" fill="none" opacity="0.15"/>
+  <rect x="18" y="70" width="65" height="16" rx="4" stroke="#fff" stroke-width="1.5" stroke-dasharray="4,3" fill="none" opacity="0.12"/>
+  <!-- 被拖动的标签块 -->
+  <g transform="translate(12, -8) rotate(-5, 64, 58)">
+    <rect x="42" y="52" width="72" height="18" rx="5" fill="#1f57ff" opacity="0.25"/>
+    <rect x="42" y="52" width="72" height="18" rx="5" stroke="#fff" stroke-width="1.5" opacity="0.4"/>
+    <rect x="48" y="56" width="14" height="10" rx="3" fill="#fff" opacity="0.3"/>
+    <rect x="66" y="58" width="35" height="6" rx="3" fill="#fff" opacity="0.25"/>
+    <!-- 拖拽手柄 -->
+    <rect x="106" y="57" width="3" height="8" rx="1.5" fill="#fff" opacity="0.4"/>
+    <rect x="110" y="57" width="3" height="8" rx="1.5" fill="#fff" opacity="0.3"/>
+  </g>
+  <!-- 鼠标光标 -->
+  <path d="M22 82 L14 46 L36 68 L26 70 L30 84 Z" fill="#fff" opacity="0.5"/>
+  <path d="M22 82 L14 46 L36 68 L26 70 Z" fill="#fff" opacity="0.2"/>
+  <!-- 拖拽尾迹 -->
+  <path d="M30 42 Q40 32 52 34" fill="none" stroke="#fff" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.15"/>
+  <!-- 放置指示线 -->
+  <line x1="18" y1="44" x2="110" y2="44" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity="0.08"/>
+</svg>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 概念 6：炫彩流带 - 动态多色曲线，代表标签流转管理 -->
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#0D1117"/>
+  <!-- 三条彩色弧形流带 -->
+  <path d="M30 80 Q40 40 70 45 Q100 50 95 80" fill="none" stroke="#FF4757" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
+  <path d="M25 88 Q38 48 70 52 Q102 56 98 86" fill="none" stroke="#1F57FF" stroke-width="8" stroke-linecap="round" opacity="0.8"/>
+  <path d="M20 96 Q36 56 70 59 Q104 62 101 92" fill="none" stroke="#FFC312" stroke-width="5" stroke-linecap="round" opacity="0.7"/>
+  <!-- 装饰光点 -->
+  <circle cx="32" cy="72" r="3" fill="#fff" opacity="0.4"/>
+  <circle cx="42" cy="42" r="2.5" fill="#FFC312" opacity="0.6"/>
+  <circle cx="94" cy="78" r="3" fill="#fff" opacity="0.3"/>
+</svg>

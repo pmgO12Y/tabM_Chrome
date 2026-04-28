@@ -45,6 +45,7 @@ export interface TabRecord {
   audible: boolean;
   discarded: boolean;
   favIconUrl: string | null;
+  lastAccessed: number;
 }
 
 export interface TabGroupRecord {

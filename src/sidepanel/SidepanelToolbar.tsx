@@ -1,4 +1,4 @@
-import { CloseSmall, Refresh, SettingTwo, ExpandDownOne, FoldUpOne, ListCheckbox, CheckSmall, Aiming, MonitorOne } from "@icon-park/react";
+import { CloseSmall, Refresh, SettingTwo, ExpandDownOne, FoldUpOne, ListCheckbox, CheckSmall, Aiming, MonitorOne, Intersection } from "@icon-park/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { translate, type SupportedLocale } from "../shared/i18n";
 import { resolveBulkToggleToolbarAction } from "./toolbarActions";
@@ -69,6 +69,7 @@ export function SidepanelToolbar({
   hasCollapsedGroups,
   disabled,
   onResync,
+  onSelectDuplicates,
   onLocateCurrentPage,
   canLocateCurrentPage,
   locateCurrentPageDisabledReasonKey,
@@ -89,6 +90,7 @@ export function SidepanelToolbar({
   hasCollapsedGroups: boolean;
   disabled: boolean;
   onResync: () => void;
+  onSelectDuplicates: () => void;
   onLocateCurrentPage: () => void;
   canLocateCurrentPage: boolean;
   locateCurrentPageDisabledReasonKey: "sidepanel.toolbar.locateCurrentPageUnavailable" | null;
@@ -120,6 +122,13 @@ export function SidepanelToolbar({
       icon: selectionMode ? CheckSmall : ListCheckbox,
       onClick: onToggleSelectionMode,
       active: selectionMode
+    },
+    {
+      key: "select-duplicates",
+      label: translate(locale, disabled ? "sidepanel.toolbar.selectDuplicates.disabled" : "sidepanel.toolbar.selectDuplicates"),
+      icon: Intersection,
+      onClick: onSelectDuplicates,
+      disabled: disabled
     },
     {
       key: "resync",

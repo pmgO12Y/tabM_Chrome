@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 概念 7：马赛克 T - 色块拼接成 T 字 -->
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#fff"/>
+  <!-- 4x4 彩色网格，形成 T 形 -->
+  <!-- 第一行 -->
+  <rect x="28" y="22" width="72" height="16" rx="4" fill="#1F57FF"/>
+  <rect x="28" y="22" width="72" height="16" rx="4" fill="#1F57FF" opacity="0.15"/>
+  <!-- T 竖杠 -->
+  <rect x="52" y="22" width="24" height="84" rx="4" fill="#1F57FF"/>
+  <!-- 竖杠右侧的色块点缀 -->
+  <rect x="52" y="46" width="24" height="16" rx="4" fill="#FF4757" opacity="0.85"/>
+  <rect x="52" y="66" width="24" height="16" rx="4" fill="#FFC312" opacity="0.85"/>
+  <!-- 左上角色块分割线 -->
+  <rect x="28" y="42" width="20" height="6" rx="3" fill="#FF4757"/>
+  <rect x="28" y="52" width="20" height="6" rx="3" fill="#FFC312"/>
+  <rect x="28" y="62" width="20" height="6" rx="3" fill="#1F57FF" opacity="0.6"/>
+  <!-- 左下 -->
+  <rect x="28" y="72" width="20" height="6" rx="3" fill="#FF4757" opacity="0.6"/>
+  <rect x="28" y="82" width="20" height="6" rx="3" fill="#FFC312" opacity="0.4"/>
+  <!-- 底部分割 -->
+  <rect x="28" y="96" width="72" height="10" rx="4" fill="#1F57FF" opacity="0.1"/>
+  <rect x="52" y="96" width="24" height="10" rx="4" fill="#FF4757" opacity="0.3"/>
+</svg>

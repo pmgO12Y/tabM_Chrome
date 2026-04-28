@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   applyDocumentLocale,
   getUiLanguage,
-  resolveLocale
+  resolveLocale,
+  translate
 } from "../shared/i18n";
 import { buildWindowRenderSections, createSearchResult, flattenWindowSections, getSearchMatchingTabIds, selectCurrentActiveTabId, selectWindowSections } from "../shared/domain/selectors";
+import { computeDuplicateSelection } from "../shared/domain/duplicateDetection";
 import {
   DEFAULT_EXTENSION_SETTINGS,
   EXTENSION_SETTINGS_STORAGE_KEY,
@@ -155,7 +157,7 @@ export default function App() {
   const toolbarDisabled = !isInteractive || isResyncing;
   const listDisabled = !hasUsableSnapshot;
 
-  const { selectionMode, selectedTabIds, selectedTabIdSet, clearSelection, enterSelectionMode, exitSelectionMode, removeFromSelection, handlePrimaryAction } =
+  const { selectionMode, selectedTabIds, selectedTabIdSet, clearSelection, enterSelectionMode, exitSelectionMode, removeFromSelection, replaceSelection, handlePrimaryAction } =
     useTabSelection(filteredRows, (event, details) => {
       postTraceEvent({
         event,
@@ -170,6 +172,7 @@ export default function App() {
   );
   const moveToNewWindowCount = effectiveSelectedTabIds.length;
   const { closingTabIdSet, startClosing } = useClosingTabs(snapshot);
+  const [duplicateToast, setDuplicateToast] = useState<string | null>(null);
 
   useActiveGroupAutoExpand({
     snapshot,
@@ -471,6 +474,31 @@ export default function App() {
     setSearchTerm("");
   }
 
+  function handleSelectDuplicates(): void {
+    const result = computeDuplicateSelection(snapshot.tabsById, snapshot.windowTabIds);
+
+    if (!result.hasDuplicates) {
+      postTraceEvent({
+        event: "panel/duplicates-none",
+        details: {},
+        category: "selection"
+      });
+      setDuplicateToast(translate(locale, "sidepanel.toast.noDuplicates"));
+      return;
+    }
+
+    postTraceEvent({
+      event: "panel/duplicates-selected",
+      details: {
+        duplicateCount: result.tabIdsToSelect.length,
+        urlGroupCount: 0
+      },
+      category: "selection"
+    });
+    replaceSelection(result.tabIdsToSelect);
+    enterSelectionMode();
+  }
+
   function handleMoveToNewWindow(): void {
     if (moveToNewWindowCount === 0) {
       return;
@@ -491,6 +519,20 @@ export default function App() {
     commandActions.moveTabsToNewWindow(effectiveSelectedTabIds);
     setSearchTerm("");
   }
+
+  useEffect(() => {
+    if (duplicateToast === null) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setDuplicateToast(null);
+    }, 2000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [duplicateToast]);
 
   useEffect(() => {
     if (copyTraceState === "idle") {
@@ -519,6 +561,7 @@ export default function App() {
         canLocateCurrentPage={canLocateCurrentPage}
         locateCurrentPageDisabledReasonKey={locateDisabledReason}
         onLocateCurrentPage={requestLocateCurrentPage}
+        onSelectDuplicates={handleSelectDuplicates}
         onResync={resyncPanel}
         onOpenSettings={() => {
           postTraceEvent({
@@ -553,6 +596,7 @@ export default function App() {
           traceEnabled={traceSettings.verboseLoggingEnabled}
           traceEntryCount={traceEntryCount}
           traceUpdatedAt={traceUpdatedAt}
+          duplicateToast={duplicateToast}
           onCopyDebugTrace={
             errorMessage
               ? () => {

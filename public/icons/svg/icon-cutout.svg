@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 镂空 - 从实体中切出标签形状 -->
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#fff"/>
+  <!-- 蓝色大圆 -->
+  <circle cx="64" cy="64" r="50" fill="#1F57FF"/>
+  <!-- 镂空标签（从蓝色中切出白色空间） -->
+  <mask id="cutout-mask">
+    <rect x="0" y="0" width="128" height="128" fill="#fff"/>
+    <rect x="42" y="42" width="44" height="44" rx="8" fill="#000"/>
+    <rect x="42" y="42" width="44" height="12" rx="8" fill="#000"/>
+    <rect x="42" y="48" width="44" height="6" fill="#000"/>
+  </mask>
+  <circle cx="64" cy="64" r="50" fill="#1F57FF" mask="url(#cutout-mask)"/>
+  <!-- 镂空内部细节 -->
+  <rect x="48" y="60" width="28" height="3" rx="1.5" fill="#1F57FF" opacity="0.15"/>
+  <rect x="48" y="66" width="22" height="3" rx="1.5" fill="#1F57FF" opacity="0.1"/>
+  <rect x="48" y="72" width="25" height="3" rx="1.5" fill="#1F57FF" opacity="0.08"/>
+  <!-- 红色装饰小圆 -->
+  <circle cx="64" cy="82" r="4" fill="#FF4757"/>
+</svg>

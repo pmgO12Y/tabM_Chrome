@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#F5F7FA"/>
+  <!-- 等距 3D 方块 -->
+  <!-- 顶面 -->
+  <polygon points="64,24 100,42 64,60 28,42" fill="#1F57FF" opacity="0.95"/>
+  <!-- 右面 -->
+  <polygon points="100,42 100,74 64,92 64,60" fill="#1a4ae0" opacity="0.85"/>
+  <!-- 左面 -->
+  <polygon points="28,42 28,74 64,92 64,60" fill="#0f3cb8" opacity="0.7"/>
+  <!-- 右面开槽（标签插入口） -->
+  <polygon points="82,51 92,56 92,68 82,63" fill="#F5F7FA" opacity="0.6"/>
+  <!-- 标签从插槽伸出 -->
+  <rect x="78" y="40" width="12" height="16" rx="1.5" fill="#FF4757" transform="skewY(30)"/>
+  <!-- 被扭曲修正 -->
+  <polygon points="78,50 90,44 90,56 78,62" fill="#FF4757"/>
+  <polygon points="90,44 94,46 94,58 90,56" fill="#e03040"/>
+  <!-- 高光 -->
+  <polygon points="64,24 100,42 64,60 28,42" fill="#fff" opacity="0.06"/>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 概念 1：三色爆裂 - 三块大胆重叠的彩色卡片 -->
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#fff"/>
+  <!-- 黄色卡片（底层） -->
+  <rect x="26" y="30" width="72" height="64" rx="12" fill="#FFC312" transform="rotate(-8, 62, 62)"/>
+  <!-- 红色卡片（中层） -->
+  <rect x="28" y="28" width="72" height="64" rx="12" fill="#FF4757" transform="rotate(-3, 62, 62)"/>
+  <!-- 蓝色卡片（顶层） -->
+  <rect x="30" y="26" width="72" height="64" rx="12" fill="#1F57FF"/>
+  <!-- 白色圆点（简约指示） -->
+  <circle cx="56" cy="56" r="12" fill="#fff" opacity="0.95"/>
+  <circle cx="56" cy="56" r="5" fill="#1F57FF"/>
+</svg>

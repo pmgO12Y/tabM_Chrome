@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 负空间 - 周围形状围出标签 -->
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#1F57FF"/>
+  <!-- 白色元素围绕中心，形成负空间标签 -->
+  <!-- 左上白色方块 -->
+  <rect x="16" y="20" width="36" height="36" rx="6" fill="#fff"/>
+  <!-- 右上白色长条 -->
+  <rect x="56" y="20" width="56" height="36" rx="6" fill="#fff"/>
+  <!-- 左中和左下白色条 -->
+  <rect x="16" y="60" width="20" height="48" rx="6" fill="#fff"/>
+  <!-- 右中和右下白色条 -->
+  <rect x="92" y="60" width="20" height="48" rx="6" fill="#fff"/>
+  <!-- 底部中央白色条 -->
+  <rect x="40" y="96" width="48" height="16" rx="6" fill="#fff"/>
+  <!-- 红色强调圆 -->
+  <circle cx="64" cy="60" r="8" fill="#FF4757"/>
+  <circle cx="64" cy="60" r="4" fill="#fff"/>
+  <!-- 标签指示线 -->
+  <rect x="40" y="56" width="48" height="3" rx="1.5" fill="#fff" opacity="0.3"/>
+  <rect x="40" y="62" width="40" height="3" rx="1.5" fill="#fff" opacity="0.2"/>
+  <rect x="40" y="68" width="44" height="3" rx="1.5" fill="#fff" opacity="0.15"/>
+</svg>

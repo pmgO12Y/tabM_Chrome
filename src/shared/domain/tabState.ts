@@ -273,6 +273,7 @@ function isSameTab(left: TabRecord, right: TabRecord): boolean {
     left.audible === right.audible &&
     left.discarded === right.discarded &&
     left.groupId === right.groupId &&
-    left.favIconUrl === right.favIconUrl
+    left.favIconUrl === right.favIconUrl &&
+    left.lastAccessed === right.lastAccessed
   );
 }

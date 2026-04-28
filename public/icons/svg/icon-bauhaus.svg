@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 包豪斯 - 红黄蓝几何构成 -->
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#F5F5F0"/>
+  <!-- 红色大圆 -->
+  <circle cx="42" cy="44" r="26" fill="#E63946"/>
+  <!-- 黄色方形（半透明叠在红上） -->
+  <rect x="40" y="38" width="40" height="40" rx="4" fill="#FFD60A" opacity="0.85"/>
+  <!-- 蓝色大弧形 -->
+  <path d="M48 80 Q80 70 96 50" fill="none" stroke="#1F57FF" stroke-width="8" stroke-linecap="round"/>
+  <!-- 黑色直线 -->
+  <line x1="20" y1="90" x2="100" y2="90" stroke="#1a1a1a" stroke-width="5" stroke-linecap="round"/>
+  <!-- 白色小圆（标签指示） -->
+  <circle cx="62" cy="58" r="6" fill="#fff"/>
+  <circle cx="62" cy="58" r="3" fill="#E63946"/>
+</svg>

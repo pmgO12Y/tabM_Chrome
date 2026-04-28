@@ -23,7 +23,8 @@ export function normalizeChromeTab(
     active: Boolean(tab.active),
     audible: Boolean(tab.audible),
     discarded: Boolean(tab.discarded),
-    favIconUrl: getSafeFaviconUrl(tab)
+    favIconUrl: getSafeFaviconUrl(tab),
+    lastAccessed: tab.lastAccessed ?? 0
   };
 }
 

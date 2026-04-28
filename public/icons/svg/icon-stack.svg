@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 概念 2：标签页叠层 - 多彩标签堆叠 -->
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="128" y2="128">
+      <stop offset="0%" stop-color="#0D1B3E"/>
+      <stop offset="100%" stop-color="#1A3A6B"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="url(#bg2)"/>
+  <!-- 叠层标签 - 后方 -->
+  <rect x="28" y="42" width="72" height="54" rx="6" fill="#3A7BFF" opacity="0.2" transform="rotate(-6, 64, 69)"/>
+  <rect x="26" y="40" width="72" height="54" rx="6" fill="#5B9AFF" opacity="0.3" transform="rotate(-3, 64, 69)"/>
+  <!-- 叠层标签 - 中间 -->
+  <rect x="24" y="36" width="72" height="54" rx="6" fill="#7BB3FF" opacity="0.5"/>
+  <!-- 叠层标签 - 前方（聚焦） -->
+  <rect x="22" y="32" width="72" height="54" rx="6" fill="#fff"/>
+  <!-- 标签页横条（顶部） -->
+  <rect x="22" y="32" width="72" height="14" rx="6" fill="#F0F4FF"/>
+  <rect x="22" y="40" width="72" height="6" fill="#F0F4FF"/>
+  <!-- 标签页图标 -->
+  <circle cx="30" cy="39" r="3" fill="#1f57ff" opacity="0.3"/>
+  <rect x="36" y="37" width="30" height="4" rx="2" fill="#1f57ff" opacity="0.15"/>
+  <!-- 内容区域 -->
+  <rect x="30" y="54" width="55" height="4" rx="2" fill="#1f57ff" opacity="0.12"/>
+  <rect x="30" y="62" width="48" height="4" rx="2" fill="#1f57ff" opacity="0.08"/>
+  <rect x="30" y="70" width="52" height="4" rx="2" fill="#1f57ff" opacity="0.06"/>
+  <!-- 右下角标签计数 -->
+  <rect x="60" y="62" width="26" height="18" rx="9" fill="#1f57ff" opacity="0.08"/>
+  <text x="73" y="74" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#1f57ff" text-anchor="middle" opacity="0.6">42</text>
+</svg>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 概念 7：搜索 - 放大镜 + 标签页 -->
+  <defs>
+    <linearGradient id="bg7" x1="0" y1="0" x2="128" y2="128">
+      <stop offset="0%" stop-color="#0D2137"/>
+      <stop offset="100%" stop-color="#1A5276"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="url(#bg7)"/>
+  <!-- 标签行背景 -->
+  <rect x="18" y="22" width="60" height="14" rx="4" fill="#fff" opacity="0.08"/>
+  <rect x="18" y="40" width="50" height="14" rx="4" fill="#fff" opacity="0.06"/>
+  <rect x="18" y="76" width="55" height="14" rx="4" fill="#fff" opacity="0.06"/>
+  <rect x="18" y="94" width="60" height="14" rx="4" fill="#fff" opacity="0.08"/>
+  <!-- 高亮匹配的标签 -->
+  <rect x="18" y="58" width="55" height="14" rx="4" fill="#1f57ff" opacity="0.25"/>
+  <rect x="18" y="58" width="55" height="14" rx="4" stroke="#fff" stroke-width="1" opacity="0.2"/>
+  <rect x="22" y="62" width="12" height="6" rx="3" fill="#fff" opacity="0.3"/>
+  <rect x="38" y="63" width="30" height="4" rx="2" fill="#fff" opacity="0.3"/>
+  <!-- 放大镜 -->
+  <circle cx="86" cy="75" r="24" fill="none" stroke="#fff" stroke-width="3.5" opacity="0.25"/>
+  <circle cx="86" cy="75" r="15" fill="none" stroke="#fff" stroke-width="2.5" opacity="0.35"/>
+  <circle cx="86" cy="75" r="6" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.45"/>
+  <line x1="106" y1="95" x2="118" y2="107" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity="0.25"/>
+  <!-- 放大镜高光 -->
+  <path d="M76 65 A14 14 0 0 1 85 61" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity="0.15"/>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <filter id="glow-cyan" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-pink" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#0A0A0F"/>
+  <!-- 背景光晕 -->
+  <circle cx="64" cy="64" r="50" fill="#00F0FF" opacity="0.05" filter="url(#glow-cyan)"/>
+  <!-- 霓虹窗口轮廓 -->
+  <rect x="26" y="34" width="76" height="56" rx="8" fill="none" stroke="#00F0FF" stroke-width="3" filter="url(#glow-cyan)"/>
+  <!-- 顶部栏 -->
+  <line x1="26" y1="46" x2="102" y2="46" stroke="#00F0FF" stroke-width="1.5" opacity="0.4"/>
+  <!-- 3 个控制点 -->
+  <circle cx="34" cy="40" r="2.5" fill="#FF2D78" filter="url(#glow-pink)"/>
+  <circle cx="42" cy="40" r="2.5" fill="#FF2D78" opacity="0.6"/>
+  <circle cx="50" cy="40" r="2.5" fill="#FF2D78" opacity="0.3"/>
+  <!-- 内容行 -->
+  <line x1="34" y1="54" x2="80" y2="54" stroke="#00F0FF" stroke-width="2" opacity="0.5" filter="url(#glow-cyan)"/>
+  <line x1="34" y1="62" x2="70" y2="62" stroke="#00F0FF" stroke-width="2" opacity="0.3" filter="url(#glow-cyan)"/>
+  <line x1="34" y1="70" x2="76" y2="70" stroke="#00F0FF" stroke-width="2" opacity="0.15" filter="url(#glow-cyan)"/>
+  <!-- 侧边霓虹竖线 -->
+  <line x1="90" y1="48" x2="90" y2="82" stroke="#FF2D78" stroke-width="2.5" stroke-linecap="round" filter="url(#glow-pink)" opacity="0.8"/>
+</svg>

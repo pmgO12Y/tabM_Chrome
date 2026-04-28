@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="origami1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1F57FF"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+    <linearGradient id="origami2" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1a4ae0"/>
+      <stop offset="100%" stop-color="#1F57FF"/>
+    </linearGradient>
+    <linearGradient id="origami3" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6B9CFF"/>
+      <stop offset="100%" stop-color="#1F57FF"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#F0F4FF"/>
+  <!-- 折纸三角形组合 -->
+  <!-- 上三角形 -->
+  <polygon points="64,20 104,52 64,52" fill="url(#origami1)"/>
+  <!-- 右三角形 -->
+  <polygon points="104,52 64,84 64,52" fill="url(#origami2)"/>
+  <!-- 左三角形 -->
+  <polygon points="64,52 24,52 64,84" fill="url(#origami3)"/>
+  <!-- 底部三角形 -->
+  <polygon points="64,84 44,100 84,100" fill="#FF4757"/>
+  <!-- 折痕线 -->
+  <line x1="64" y1="52" x2="104" y2="52" stroke="#fff" stroke-width="1" opacity="0.3"/>
+  <line x1="64" y1="52" x2="24" y2="52" stroke="#fff" stroke-width="1" opacity="0.2"/>
+  <line x1="64" y1="52" x2="64" y2="84" stroke="#fff" stroke-width="1" opacity="0.15"/>
+  <!-- 白色高光 -->
+  <polygon points="64,20 80,36 64,52" fill="#fff" opacity="0.1"/>
+</svg>

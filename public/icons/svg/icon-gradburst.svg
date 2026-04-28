@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <radialGradient id="burst" cx="0.2" cy="0.8" r="0.9">
+      <stop offset="0%" stop-color="#FFD93D"/>
+      <stop offset="30%" stop-color="#FF8C42"/>
+      <stop offset="60%" stop-color="#FF4757"/>
+      <stop offset="100%" stop-color="#1F57FF"/>
+    </radialGradient>
+  </defs>
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="url(#burst)"/>
+  <!-- 几何叠加形状 -->
+  <!-- 大圆环 -->
+  <circle cx="64" cy="64" r="44" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.15"/>
+  <circle cx="64" cy="64" r="30" fill="none" stroke="#fff" stroke-width="1" opacity="0.2"/>
+  <!-- 标签矩形 -->
+  <rect x="36" y="42" width="56" height="14" rx="4" fill="#fff" opacity="0.2"/>
+  <rect x="36" y="60" width="56" height="14" rx="4" fill="#fff" opacity="0.12"/>
+  <!-- 中心聚焦圆 -->
+  <circle cx="64" cy="32" r="6" fill="#fff" opacity="0.3"/>
+  <!-- 小点 -->
+  <circle cx="40" cy="90" r="3" fill="#fff" opacity="0.2"/>
+  <circle cx="88" cy="86" r="2.5" fill="#fff" opacity="0.15"/>
+</svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 概念 10：波浪标签 - 彩色波形流动 -->
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#fff"/>
+  <!-- 彩色波浪带 -->
+  <path d="M18 90 Q38 34 64 40 Q90 46 110 90" fill="none" stroke="#1F57FF" stroke-width="14" stroke-linecap="round"/>
+  <path d="M18 90 Q38 34 64 40 Q90 46 110 90" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity="0.6"/>
+  <!-- 波形上的标签悬浮块 -->
+  <rect x="46" y="28" width="36" height="18" rx="5" fill="#FF4757"/>
+  <rect x="46" y="28" width="36" height="18" rx="5" fill="#fff" opacity="0.15"/>
+  <rect x="50" y="32" width="10" height="10" rx="3" fill="#fff" opacity="0.5"/>
+  <rect x="64" y="34" width="14" height="6" rx="3" fill="#fff" opacity="0.4"/>
+  <!-- 波形两端的小标签 -->
+  <rect x="98" y="72" width="20" height="14" rx="4" fill="#FFC312"/>
+  <rect x="10" y="72" width="20" height="14" rx="4" fill="#2ED573"/>
+  <!-- 中心白点 -->
+  <circle cx="64" cy="46" r="3" fill="#fff" opacity="0.5"/>
+</svg>

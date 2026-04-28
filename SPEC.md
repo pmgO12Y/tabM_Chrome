@@ -1,45 +1,46 @@
-# SPEC：顶部操作栏新增“定位到当前页面”
+# SPEC：工具栏"选择重复标签"功能
 
 ## 1. 文档信息
 
 | 字段 | 内容 |
 | --- | --- |
 | 文档名 | `SPEC.md` |
-| 需求主题 | 顶部操作栏新增“定位到当前页面” |
+| 需求主题 | 顶部操作栏新增"选择重复标签"按钮 |
 | 当前状态 | 已完成访谈确认 |
-| 影响范围 | 侧边栏顶部操作栏、列表滚动定位、搜索状态、折叠状态、悬浮提示、瞬时强调样式 |
+| 影响范围 | 侧边栏 `types.ts`、`normalizeTab.ts`、`tabState.ts`、`App.tsx`、`SidepanelToolbar.tsx`、`i18n.ts`、`SidepanelStatus.tsx`（Toast） |
 | 技术栈 | `React` **（前端组件框架）** + `TypeScript` **（带类型约束的 JavaScript）** + `Chrome Extension` **（Chrome 浏览器扩展）** |
-| 参考入口 | [src/sidepanel/App.tsx](src/sidepanel/App.tsx)、[src/sidepanel/SidepanelToolbar.tsx](src/sidepanel/SidepanelToolbar.tsx)、[src/sidepanel/components/VirtualizedWindowList.tsx](src/sidepanel/components/VirtualizedWindowList.tsx) |
+| 参考入口 | [src/sidepanel/SidepanelToolbar.tsx](src/sidepanel/SidepanelToolbar.tsx)、[src/sidepanel/App.tsx](src/sidepanel/App.tsx)、[src/shared/types.ts](src/shared/types.ts)、[src/shared/domain/normalizeTab.ts](src/shared/domain/normalizeTab.ts) |
 
 ---
 
 ## 2. 背景与目标
 
-当前侧边栏已经能显示、搜索、分组、折叠、拖拽和切换标签页。
+当前侧边栏已经能显示所有窗口的标签，并支持手动多选（Shift 范围选、Ctrl 切换选）后进行批量关闭或移动。
 
-但“我现在正在看的页面，在侧边栏里到底在哪”这件事，仍然缺少一个显式入口。
+但用户经常会在多个窗口中打开**相同的网页**（比如重复打开了多个 Gmail、多个 GitHub PR 页面），手动查找和选中这些重复标签非常繁琐。
 
-本次需求只解决一件事：
+本次需求解决：
 
-> 在顶部操作栏增加一个按钮，点击后把侧边栏列表定位到“当前页面”对应的标签项。
+> 在顶部操作栏增加一个按钮，点击后自动扫描所有窗口的标签，**将重复的标签页选中**，每组重复只保留 1 个不选（保留最近活跃的那个），并自动进入选择模式以便用户批量操作。
 
 ### 2.1 本次目标
 
 | 编号 | 目标 |
 | --- | --- |
-| G1 | 提供一个一键可达的“当前页面定位”入口 |
-| G2 | 当搜索或折叠挡住目标时，自动做最小必要处理，让定位成功 |
-| G3 | 不破坏多选、搜索、拖拽、关闭、固定等现有交互 |
-| G4 | 用低成本视觉反馈明确告诉用户“已经定位到了” |
+| G1 | 提供"一键选择所有重复标签"的入口 |
+| G2 | 每组重复 URL 保留最近活跃的 1 个不选，避免误关正在用的页面 |
+| G3 | 单击后自动进入选择模式，用户可立即批量关闭/移动 |
+| G4 | 无重复时给出轻量正向反馈（Toast 提示） |
 
 ### 2.2 本次不做
 
 | 编号 | 不做内容 |
 | --- | --- |
-| NG1 | 不切换浏览器焦点，不跳转到标签页 |
-| NG2 | 不自动触发重新同步 |
-| NG3 | 不在定位结束后恢复先前折叠状态 |
+| NG1 | 不做右键菜单或标签行级"选择此标签的重复项"入口 |
+| NG2 | 不添加排除规则（内部页面、空白页等全部参与检测） |
+| NG3 | 不设最大选中数量保护 |
 | NG4 | 不新增键盘快捷键 |
+| NG5 | 不改变已有选择模式的交互逻辑 |
 
 ---
 
@@ -47,11 +48,10 @@
 
 | 术语 | 定义 |
 | --- | --- |
-| 当前页面 | 用户点击按钮瞬间，浏览器最近聚焦窗口里的激活标签页 |
-| 定位 | 让列表滚动到目标条目进入可视区域，并给出高亮反馈 |
-| 按路径展开 | 只展开目标所在窗口和目标所在分组，不展开无关窗口或分组 |
-| 瞬时强调 | 在现有高亮基础上追加一次 **1.2 秒** 的轻量视觉强调 |
-| 快照缺失 | 实时激活标签页存在，但当前侧边栏快照里没有该标签页 |
+| 重复标签 | 完整 URL **（协议 + 域名 + 路径 + 查询参数 + hash）** 完全一致的两个或多个标签 |
+| 保留一个 | 每组重复标签中，`lastAccessed` **（Chrome 原生记录的上次活跃时间戳）** 最大的标签保留不选，其余均被选中 |
+| 选择模式 | 侧边栏已有的多选模式，顶栏显示"已选 N 项"及"关闭已选"等批量操作按钮 |
+| Toast | 出现在状态区域、短暂显示后自动消失的提示条 |
 
 ---
 
@@ -59,19 +59,18 @@
 
 | 主题 | 最终口径 |
 | --- | --- |
-| 点击后的核心行为 | **滚动并高亮**，不切换浏览器焦点 |
-| “当前页面”的定义 | 以**浏览器实时激活标签页**为准 |
-| 搜索挡住目标时 | 自动清空搜索，再执行定位 |
-| 折叠挡住目标时 | 只做**按路径展开** |
-| 按钮位置 | 放在顶部操作栏里，**紧跟“重新同步”右侧** |
-| 目标不在快照里时 | 按钮置灰，不自动同步 |
-| 置灰提示 | 悬浮提示直接说明禁用原因 |
-| 多选模式中点击 | 保留选择模式与已选项 |
-| 定位完成后的反馈 | 复用现有高亮，并追加一次短暂强调 |
-| 强调时长 | **1.2 秒** |
-| 重复点击 | 重新计时，并重播强调 |
-| 定位引起的展开 | 保持展开，不自动收回 |
-| 定位过程中的目标判定 | 以**点击瞬间**的目标为准 |
+| 触发入口 | **顶部操作栏新增按钮** |
+| 按钮图标 | `Intersection` **（两个重叠的圆，来自 @icon-park/react）** |
+| 按钮位置 | 工具栏主操作区，排序参考上下文 |
+| 重复判定标准 | **严格完整 URL 匹配** |
+| 检测范围 | **跨窗口全局**（所有浏览器窗口） |
+| 保留策略 | 每组保留 `lastAccessed` **最新的那个**不选 |
+| 固定标签（pinned） | **跳过**，不参与检测 |
+| 与现有选择交互 | **清空旧选择**，重新计算新选中 |
+| 是否自动进入选择模式 | **是** |
+| 无重复时的反馈 | **Toast 提示**，短暂显示"未发现重复标签" |
+| 数量保护 | **无限制** |
+| 排除规则 | **无排除**（所有非 pinned 标签一视同仁） |
 
 ---
 
@@ -79,18 +78,21 @@
 
 ```mermaid
 flowchart TD
-    A[用户点击 顶部操作栏的 定位到当前页面] --> B{当前按钮可用吗}
-    B -->|否| C[保持禁用态 仅显示禁用原因]
-    B -->|是| D[冻结本次 targetTabId]
-    D --> E{当前渲染列表里能看到目标吗}
-    E -->|不能| F[清空搜索词]
-    E -->|能| G[保留当前搜索状态]
-    F --> H[按路径展开目标窗口与目标分组]
-    G --> H
-    H --> I[等待目标行渲染出来]
-    I --> J[滚动到目标行进入可视区]
-    J --> K[触发 1.2 秒瞬时强调]
-    K --> L[结束 本次选择状态保持不变]
+    A[用户点击工具栏 "选择重复标签" 按钮] --> B{遍历所有标签，按 URL 分组}
+    B --> C{是否有 URL 出现次数 > 1 的组}
+    C -->|否| D[显示 Toast "未发现重复标签"]
+    D --> E[结束，不进入选择模式]
+    C -->|是| F[清空当前已有选中状态]
+    F --> G[逐组处理重复标签]
+    G --> H[过滤掉 pinned 标签]
+    H --> I[组内按 lastAccessed 降序排列]
+    I --> J[保留第 1 个（最新活跃）不选]
+    J --> K[其余全部加入选中集合]
+    K --> L{还有下一组吗}
+    L -->|有| G
+    L -->|无| M[进入选择模式]
+    M --> N[Toolbar 显示 "已选 N 项"及批量操作按钮]
+    N --> O[结束，用户可批量关闭/移动]
 ```
 
 ---
@@ -101,59 +103,55 @@ flowchart TD
 
 | 编号 | 规则 |
 | --- | --- |
-| FR-01 | 在 [src/sidepanel/SidepanelToolbar.tsx](src/sidepanel/SidepanelToolbar.tsx) 中新增一个“定位到当前页面”按钮 |
-| FR-02 | 该按钮放在“重新同步”右侧，属于主操作区 |
-| FR-03 | 按钮默认使用与现有图标风格一致的线性定位图标 |
+| FR-01 | 在 [src/sidepanel/SidepanelToolbar.tsx](src/sidepanel/SidepanelToolbar.tsx) 中新增"选择重复标签"按钮 |
+| FR-02 | 图标使用 `Intersection` **（@icon-park/react 内置图标，两个重叠的圆）** |
+| FR-03 | 按钮位于主操作区，**紧随 "选择"（ListCheckbox）按钮之后、"重新同步"之前**（按功能优先级：选择类操作 → 同步类操作） |
 | FR-04 | 当工具栏整体不可交互时，按钮跟随现有工具栏一起禁用 |
-| FR-05 | 当实时激活标签页不在当前快照中时，按钮单独禁用 |
-| FR-06 | 可用时，悬浮提示显示正常功能名 |
-| FR-07 | 不可用且原因是快照缺失时，悬浮提示显示“当前页面不在侧边栏快照中” |
+| FR-05 | 可用时悬浮提示：中"选择重复标签"/英"Select duplicate tabs" |
+| FR-06 | 禁用时悬浮提示：中"正在同步，请稍后"/英"Syncing, please wait" |
 
-### 6.2 点击行为
+### 6.2 重复检测算法
 
 | 编号 | 规则 |
 | --- | --- |
-| FR-08 | 点击按钮时，以**点击瞬间**的实时激活标签页作为本次唯一目标 |
-| FR-09 | 本次点击不会把目标切换到“后续又变成新的激活标签页” |
-| FR-10 | 若目标已经在可视区域内，仍然要重播一次瞬时强调 |
-| FR-11 | 若上一轮强调尚未结束，再次点击时必须重置计时并重播 |
+| FR-07 | 数据源为当前 `snapshot.tabsById` **（标签快照）**，遍历所有窗口的所有标签 |
+| FR-08 | 每个标签以 `tab.url` 作为分组 key，**完整 URL 严格匹配** |
+| FR-09 | `tab.pinned === true` 的标签**跳过**，不参与分组 |
+| FR-10 | 分组后，仅保留 `count > 1` 的组（即有重复的组） |
+| FR-11 | 若没有任何分组满足 `count > 1`，视为"无重复" |
+| FR-12 | 对每个重复组，按 `lastAccessed` **降序**排列 |
+| FR-13 | 排序后的第 1 个（`lastAccessed` 最大，即最近活跃的）**保留不选** |
+| FR-14 | 同组其余标签全部列入选中集合 |
+| FR-15 | 若两个标签 `lastAccessed` 相同（极端情况），取 `tab.id` 较大的保留（较新创建的 tab） |
 
-### 6.3 搜索相关规则
+### 6.3 点击行为
 
-| 编号 | 场景 | 系统行为 |
-| --- | --- | --- |
-| FR-12 | 当前没有搜索 | 直接执行定位 |
-| FR-13 | 搜索存在，且目标仍在当前渲染列表中 | 保留搜索词与搜索模式 |
-| FR-14 | 搜索存在，且目标被当前搜索状态隐藏 | 先清空搜索，再执行定位 |
-| FR-15 | 搜索因定位被清空后 | 不自动恢复原搜索词 |
+| 编号 | 规则 |
+| --- | --- |
+| FR-16 | 点击按钮时，**立即**执行重复检测与选中 |
+| FR-17 | 先清空已有选择（调用 `clearSelection()`） |
+| FR-18 | 再设置新选中集合，自动进入选择模式 |
+| FR-19 | 如果已在选择模式中且已有选中项，**同样清空后重新计算** |
+| FR-20 | 选中后**不自动滚动**列表（用户可能想留在当前位置） |
+| FR-21 | 选中后**不展开折叠的窗口或分组**（用户可手动展开） |
 
-### 6.4 折叠相关规则
+### 6.4 无重复反馈
 
-| 编号 | 场景 | 系统行为 |
-| --- | --- | --- |
-| FR-16 | 目标位于已折叠窗口中 | 只展开目标窗口 |
-| FR-17 | 目标位于已折叠分组中 | 只展开目标分组 |
-| FR-18 | 目标同时位于已折叠窗口和分组中 | 同时展开这条路径上的窗口与分组 |
-| FR-19 | 与目标无关的窗口和分组 | 保持原状态 |
-| FR-20 | 为定位而展开的窗口和分组 | 定位完成后保持展开 |
+| 编号 | 规则 |
+| --- | --- |
+| FR-22 | 检测无重复时，**不清空已有选择**（避免中断用户当前操作） |
+| FR-23 | 在 `SidepanelStatus` 区域显示 Toast：中"未发现重复标签"/英"No duplicate tabs found" |
+| FR-24 | Toast 持续时间 **2 秒**，自动消失 |
+| FR-25 | Toast 不阻挡用户交互，纯文字提示，无图标 |
 
 ### 6.5 选择状态规则
 
 | 编号 | 规则 |
 | --- | --- |
-| FR-21 | 点击定位按钮不会退出多选模式 |
-| FR-22 | 点击定位按钮不会清空已选标签 |
-| FR-23 | 点击定位按钮不会改变标签的选中集合 |
-
-### 6.6 视觉反馈规则
-
-| 编号 | 规则 |
-| --- | --- |
-| FR-24 | 目标行继续复用现有“当前激活标签页”高亮样式 |
-| FR-25 | 在此基础上增加一个额外的瞬时强调样式 |
-| FR-26 | 瞬时强调时长固定为 **1.2 秒** |
-| FR-27 | 瞬时强调只允许使用轻量颜色变化，不使用模糊、缩放、阴影扩散或复杂动画 |
-| FR-28 | 瞬时强调应能被重复点击重新触发 |
+| FR-26 | 选择重复后，Toolbar 显示 "已选 N 项" |
+| FR-27 | 选中后用户可正常使用已有批量操作：关闭已选、移动到新窗口 |
+| FR-28 | 选中后用户可通过点击空白区域或按 Esc 取消选择 |
+| FR-29 | **不会**因为选中重复项而触发任何关闭或移动操作 |
 
 ---
 
@@ -161,77 +159,115 @@ flowchart TD
 
 | 方案 | 结论 | 原因 |
 | --- | --- | --- |
-| 在侧边栏直接维护实时激活标签页 | 采用 | 已有 `tabs` 权限，链路更短，禁用态也能实时判断 |
-| 只依赖当前快照里的激活标签页 | 不采用 | 不满足“以实时激活标签页为准” |
-| 每次点击都经后台再查一次目标 | 不采用 | 多一跳，且按钮禁用态不易实时准确 |
+| 使用 `chrome.tabs.query` **直接在侧边栏中实时查询** | 不采用 | 已有 snapshot，额外 API 调用造成不一致风险 |
+| 用 tab ID 递增作为"保留"依据 | 不采用 | 不满足"保留最近活跃的"的用户需求 |
+| `lastAccessed` **加入数据模型** | 采用 | Chrome API 原生提供此字段，只需透传即可 |
+| 使用右键菜单触发 | 不采用 | 用户选择了工具栏按钮方案 |
 
 ---
 
 ## 8. 技术设计
 
-### 8.1 现有代码基础
+### 8.1 需要新增 `lastAccessed` 字段
+
+`TabRecord` **当前缺少** `lastAccessed`，需要透传 Chrome 原生 `tabs.Tab.lastAccessed`。
+
+**影响范围**：
+
+| 文件 | 改动 |
+| --- | --- |
+| [src/shared/types.ts](src/shared/types.ts) | `TabRecord` **新增** `lastAccessed: number` |
+| [src/shared/domain/normalizeTab.ts](src/shared/domain/normalizeTab.ts) | `normalizeChromeTab()` **中新增** `lastAccessed: tab.lastAccessed ?? 0` |
+| [src/shared/domain/tabState.ts](src/shared/domain/tabState.ts) | `isSameTab()` **中增加** `lastAccessed` **比较** |
+
+改完后端数据类型后，侧边栏 snapshot 中就会包含 `lastAccessed`，前端可直接在 App 层计算重复选择。
+
+### 8.2 现有代码基础
 
 | 现有位置 | 已有能力 | 本次用途 |
 | --- | --- | --- |
-| [src/sidepanel/SidepanelToolbar.tsx](src/sidepanel/SidepanelToolbar.tsx) | 渲染顶部操作栏与悬浮提示 | 新增按钮与禁用原因提示 |
-| [src/sidepanel/App.tsx](src/sidepanel/App.tsx) | 汇总搜索、折叠、列表、命令分发 | 承接定位主流程 |
-| [src/sidepanel/useCollapsedWindows.ts](src/sidepanel/useCollapsedWindows.ts) | 维护窗口折叠状态 | 扩展为支持“定向展开窗口” |
-| [src/sidepanel/components/VirtualizedWindowList.tsx](src/sidepanel/components/VirtualizedWindowList.tsx) | 已有激活行自动滚动逻辑 | 扩展为支持显式定位请求 |
-| [src/sidepanel/components/listRows.tsx](src/sidepanel/components/listRows.tsx) | 渲染行样式 | 增加瞬时强调类名 |
-| [src/shared/i18n.ts](src/shared/i18n.ts) | 维护中英文文案 | 新增按钮名与禁用原因文案 |
-| [public/manifest.json](public/manifest.json) | 已声明 `tabs` 权限 | 支持侧边栏直接读取实时激活标签页 |
+| [src/sidepanel/SidepanelToolbar.tsx](src/sidepanel/SidepanelToolbar.tsx) | 渲染顶部操作栏与悬浮提示 | 新增重复选择按钮 |
+| [src/sidepanel/App.tsx](src/sidepanel/App.tsx) | 汇总选择状态与命令分发 | 承接重复检测计算与选中设置 |
+| [src/sidepanel/useTabSelection.ts](src/sidepanel/useTabSelection.ts) | 维护选择模式、选中集合 | 复用 `clearSelection()` 和 `setSelectedTabIds` |
+| [src/sidepanel/SidepanelStatus.tsx](src/sidepanel/SidepanelStatus.tsx) | 显示加载/错误/调试状态 | 新增 Toast 提示区 |
+| [src/shared/i18n.ts](src/shared/i18n.ts) | 维护中英文文案 | 新增按钮名、提示文案 |
 
-### 8.2 推荐实现路径
+### 8.3 重复检测纯函数
 
-| 步骤 | 说明 |
-| --- | --- |
-| S1 | 在 `App.tsx` 中新增实时激活标签页状态 `liveActiveTabId` |
-| S2 | 在侧边栏挂载后，通过 `chrome.tabs.query({ active: true, lastFocusedWindow: true })` 初始化该状态 |
-| S3 | 监听标签激活与窗口焦点变化，持续更新 `liveActiveTabId` |
-| S4 | 根据 `liveActiveTabId` 和当前快照，导出 `canLocateCurrentPage` 与 `locateDisabledReason` |
-| S5 | 点击按钮时冻结本次 `targetTabId`，然后按“清搜索 → 按路径展开 → 滚动 → 强调”顺序执行 |
+在 `App.tsx` 中新增或提取一个**纯函数**（无副作用，便于测试）：
 
-### 8.3 建议新增状态
+```typescript
+interface DuplicateSelectionResult {
+  tabIdsToSelect: number[];  // 需要选中的标签 ID（每组保留 1 个之外的全部）
+  hasDuplicates: boolean;    // 是否有重复
+}
 
-| 状态名 | 所属位置 | 用途 |
+function computeDuplicateSelection(
+  tabsById: Record<number, TabRecord>,
+  windowTabIds: Record<number, number[]>
+): DuplicateSelectionResult;
+```
+
+**算法步骤**：
+
+1. 遍历所有 `windowTabIds` 收集标签 ID
+2. 过滤掉 pinned 的标签
+3. 以 `tab.url` 为 key 分组
+4. 筛选出 `count > 1` 的组
+5. 对每组按 `lastAccessed` 降序排列，若相同取 `tab.id` 较大者
+6. 每组取 `[1..n]` **（排除索引 0）** 加入 `tabIdsToSelect`
+7. 返回结果
+
+### 8.4 App.tsx 中的点击处理
+
+| 步骤 | 动作 | 说明 |
 | --- | --- | --- |
-| `liveActiveTabId` | `App.tsx` | 保存浏览器实时激活标签页标识 |
-| `locateRequest` | `App.tsx` | 表示一次显式定位请求，至少包含 `rowKey` 与递增 `requestId` |
-| `locatePulse` | 列表组件内部 | 控制瞬时强调的目标行与 1.2 秒计时 |
+| 1 | 从 snapshot 读取 `tabsById` + `windowTabIds` | 当前快照数据 |
+| 2 | 调用 `computeDuplicateSelection()` | 纯函数计算 |
+| 3 | 若无重复 | 设置 Toast 状态 → 显示提示 → 2 秒后清除 |
+| 4 | 若有重复 | 调用 `clearSelection()` → 调用 `setSelectedTabIds(result.tabIdsToSelect)` → `enterSelectionMode()` |
+| 5 | 记录 trace 事件 | `panel/duplicates-selected` |
 
-### 8.4 推荐事件来源
+### 8.5 Toast 实现策略
 
-| 事件来源 | 用途 |
+**不引入 Toast 库**，利用现有 `SidepanelStatus` **状态区域的插入能力**，在状态区下方增加一个极简的 `div`：
+
+```tsx
+// App.tsx
+const [duplicateToast, setDuplicateToast] = useState<string | null>(null);
+
+useEffect(() => {
+  if (!duplicateToast) return;
+  const timer = setTimeout(() => setDuplicateToast(null), 2000);
+  return () => clearTimeout(timer);
+}, [duplicateToast]);
+
+// 传给 SidepanelStatus
+<SidepanelStatus ... duplicateToast={duplicateToast} />
+```
+
+**Toast 样式约束**：
+
+| 属性 | 值 |
 | --- | --- |
-| `chrome.tabs.onActivated` | 激活标签页变化时更新 `liveActiveTabId` |
-| `chrome.windows.onFocusChanged` | 窗口焦点变化时更新“当前页面”所属窗口 |
-| `snapshot.version` 变化 | 当快照刷新后重新判断按钮可用性 |
+| 定位 | 静态流内（不脱离文档流，不 absolute/fixed） |
+| 背景色 | 极浅灰色或透明背景 |
+| 字号 | 与 SidepanelStatus 正文一致（12px） |
+| 动画 | 无动画，直接显示/隐藏 |
+| 交互阻挡 | 不阻挡（`pointer-events: none`） |
 
-### 8.5 定位执行细则
+### 8.6 按钮重新启用检测
 
-| 顺序 | 动作 | 说明 |
+按钮不需要额外禁用逻辑，复用现有 `disabled` 属性（当 toolbar 整体不可交互时禁用）。
+
+无需实时检测"是否有重复"来动态禁用按钮。按钮始终可点，点击后执行检测，无重复时显示 Toast。
+
+### 8.7 事件追踪
+
+| 事件名 | 触发时机 | 携带数据 |
 | --- | --- | --- |
-| 1 | 冻结目标 | 以点击瞬间的 `liveActiveTabId` 作为 `targetTabId` |
-| 2 | 判断是否被搜索隐藏 | 若当前渲染列表中不存在 `tab-${targetTabId}`，且当前有搜索词，则清空搜索 |
-| 3 | 展开目标窗口 | 通过扩展后的窗口折叠控制，只展开目标窗口 |
-| 4 | 展开目标分组 | 若目标分组存在且处于折叠态，则发送 `group/set-collapsed(false)` |
-| 5 | 生成显式定位请求 | 把 `tab-${targetTabId}` 与新的 `requestId` 传给列表组件 |
-| 6 | 列表滚动定位 | 列表组件等待目标行渲染后，再滚动到可视区域 |
-| 7 | 播放瞬时强调 | 对目标行增加一次 **1.2 秒** 的轻量强调 |
-
-### 8.6 对现有自动滚动逻辑的要求
-
-当前 [src/sidepanel/components/VirtualizedWindowList.tsx](src/sidepanel/components/VirtualizedWindowList.tsx) 已支持“激活行变化时自动滚动”。
-
-本次新增的是“显式定位请求”。两者不能混成一个概念。
-
-因此应新增一套独立触发条件：
-
-| 项目 | 要求 |
-| --- | --- |
-| 触发源 | 用户点击定位按钮，而不是快照里的激活行自然变化 |
-| 重复点击 | 即使目标没变，也必须因 `requestId` 变化而重新生效 |
-| 可视区内目标 | 即使无需滚动，也必须重播瞬时强调 |
+| `panel/duplicates-selected` | 检测到重复并选中 | `{ duplicateCount: number, selectedCount: number, urlGroupCount: number }` |
+| `panel/duplicates-none` | 未检测到重复 | `{}` |
 
 ---
 
@@ -240,18 +276,13 @@ flowchart TD
 ```mermaid
 stateDiagram-v2
     [*] --> Idle
-    Idle --> Disabled: 当前页面不在快照中
-    Idle --> Ready: 当前页面可定位
-    Disabled --> Ready: 快照追上实时页面
-    Ready --> Locating: 点击按钮
-    Locating --> ClearingSearch: 目标被搜索隐藏
-    Locating --> ExpandingPath: 目标未被搜索隐藏
-    ClearingSearch --> ExpandingPath
-    ExpandingPath --> WaitingRow
-    WaitingRow --> Scrolling
-    Scrolling --> Pulsing
-    Pulsing --> Ready: 1.2 秒结束
-    Pulsing --> Locating: 再次点击并重播
+    Idle --> Computing: 点击按钮
+    Computing --> HasDuplicates: 找到重复项
+    Computing --> NoDuplicates: 无重复
+    HasDuplicates --> SelectionMode: 清空旧选择 + 设置新选中
+    SelectionMode --> Idle: 用户取消选择或操作完成
+    NoDuplicates --> ToastVisible: 显示提示
+    ToastVisible --> Idle: 2 秒超时
 ```
 
 ---
@@ -260,15 +291,16 @@ stateDiagram-v2
 
 | 场景 | 预期行为 |
 | --- | --- |
-| 当前页面已经在可视区 | 不必强制滚动，但仍需重播强调 |
-| 当前页面在过滤模式下被隐藏 | 清空搜索，再定位 |
-| 当前页面在高亮模式下仍可见 | 保留搜索状态，直接定位 |
-| 当前页面位于已折叠窗口中 | 只展开该窗口 |
-| 当前页面位于已折叠分组中 | 只展开该分组 |
-| 当前页面不在快照中 | 按钮置灰，并给出禁用原因 |
-| 正在多选 | 多选模式和已选项都保持不变 |
-| 用户快速连续点击 | 每次点击都重新计时并重播强调 |
-| 工具栏整体不可交互 | 按钮跟随整体禁用 |
+| 所有标签 URL 都唯一 | Toast 提示"未发现重复标签"，已有选择保持不变 |
+| 某组重复中 pinned 标签占多数 | pinned 标签不参与，仍然对非 pinned 的重复进行选中 |
+| 某组重复中只有一个非 pinned 标签 | 该组不产生选中（因为 need `count > 1`） |
+| 用户已选中一些标签后点击按钮 | 清空已有选中，重新计算重复选中 |
+| 用户正在选择模式中点击按钮 | 同上，清空后重新选中 |
+| 浏览器标签数量极大（几百个） | 计算在 `useMemo` **或 `useCallback` 中即时完成，无额外缓存** |
+| 某个标签 URL 为空字符串 | 空 URL 不会和其他标签重复（除非多个标签都是空 URL），正常参与分组 |
+| 所有标签都是 pinned | 无重复，显示 Toast |
+| 快速连续点击按钮 | 每次点击独立计算，前一次的选中被后一次覆盖 |
+| `lastAccessed` 为 0（Chrome 解析失败） | 当作"最不活跃"处理，排在最后，会被选中 |
 
 ---
 
@@ -278,15 +310,17 @@ stateDiagram-v2
 
 | 文案键 | 简体中文 | English |
 | --- | --- | --- |
-| `sidepanel.toolbar.locateCurrentPage` | 定位到当前页面 | Locate current page |
-| `sidepanel.toolbar.locateCurrentPageUnavailable` | 当前页面不在侧边栏快照中 | Current page is not in the side panel snapshot |
+| `sidepanel.toolbar.selectDuplicates` | 选择重复标签 | Select duplicate tabs |
+| `sidepanel.toolbar.selectDuplicates.disabled` | 正在同步，请稍后 | Syncing, please wait |
+| `sidepanel.toast.noDuplicates` | 未发现重复标签 | No duplicate tabs found |
 
 ### 11.2 文案规则
 
 | 场景 | 展示文案 |
 | --- | --- |
-| 按钮可用 | `sidepanel.toolbar.locateCurrentPage` |
-| 因快照缺失而禁用 | `sidepanel.toolbar.locateCurrentPageUnavailable` |
+| 按钮可用，悬浮提示 | `sidepanel.toolbar.selectDuplicates` |
+| 按钮禁用，悬浮提示 | `sidepanel.toolbar.selectDuplicates.disabled` |
+| 无重复时的 Toast | `sidepanel.toast.noDuplicates` |
 
 ---
 
@@ -294,11 +328,10 @@ stateDiagram-v2
 
 | 项目 | 约束 |
 | --- | --- |
-| 新按钮风格 | 必须复用现有顶部操作栏按钮外观体系 |
-| 强调动画 | 只允许轻量颜色层变化 |
-| 性能要求 | 不引入模糊、发光、阴影扩散、缩放、位移动画 |
-| 时长 | 固定 **1.2 秒** |
-| 可重播性 | 同一目标行在短时间内可重复触发 |
+| 新按钮风格 | 必须复用现有顶部操作栏按钮外观体系（`icon` + `outline` theme，18px） |
+| Intersection 图标 | 使用 `@icon-park/react` 的 `Intersection` 组件，`theme="outline"` `size="18"` |
+| Toast 样式 | 纯文字，无背景框/无图标/无动画，直接显示/隐藏 |
+| 性能要求 | 重复检测使用纯函数，不触发额外渲染循环 |
 
 ---
 
@@ -308,33 +341,40 @@ stateDiagram-v2
 
 | 测试文件 | 覆盖重点 |
 | --- | --- |
-| `tests/virtualizedWindowList.test.ts` | 显式定位请求触发滚动；目标已在视口内时仍重播强调；重复点击时可重播 |
-| `tests/toolbarActions.test.ts` 或新增对应测试 | 新按钮顺序、禁用态、提示文案切换 |
-| `tests/i18n.test.ts` | 新增中英文文案键 |
-| `tests/selectors.test.ts` 或新增定位辅助测试 | 搜索隐藏判断、路径展开判断 |
+| `tests/tabSelection.test.ts` | `computeDuplicateSelection()` **纯函数**的 4 类场景 |
+| `tests/sidepanelToolbar.test.tsx` | 新按钮渲染、图标、悬浮提示 |
 
-### 13.2 集成与端到端测试
+### 13.2 computeDuplicateSelection 测试用例
+
+| 用例 | 输入 | 预期输出 |
+| --- | --- | --- |
+| 正常路径 | 5 个标签，2 组重复 | 选中 3 个（2+1-2），hasDuplicates=true |
+| 无重复 | 5 个标签全部 URL 唯一 | 选中 0 个，hasDuplicates=false |
+| 全部 pinned | 5 个标签全部 pinned | 选中 0 个，hasDuplicates=false |
+| 混合 pinned | 3 个重复，其中 1 个 pinned | pinned 不参与，选中 1 个 |
+| 空数据 | 空 `tabsById` | 选中 0 个，hasDuplicates=false |
+| lastAccessed 排序 | 同 URL 3 个，lastAccessed 不同 | 保留 lastAccessed 最大的，选中其余 2 个 |
+
+### 13.3 集成测试
 
 | 测试文件 | 覆盖重点 |
 | --- | --- |
-| `tests/e2e/sidepanel.spec.ts` | 点击按钮后滚动到当前页面 |
-| `tests/e2e/sidepanel.spec.ts` | 过滤模式隐藏目标时会自动清空搜索 |
-| `tests/e2e/sidepanel.spec.ts` | 目标位于折叠窗口/分组时只展开路径 |
-| `tests/e2e/sidepanel.spec.ts` | 快照缺失时按钮置灰且提示原因 |
-| `tests/e2e/sidepanel.spec.ts` | 多选模式下点击定位按钮不清空选择 |
+| `tests/App.test.tsx` | 点击按钮后选择状态变化 |
+| `tests/App.test.tsx` | 无重复时 Toast 显示与消失 |
+| `tests/App.test.tsx` | 重复选中后进入选择模式，toolbar 显示"已选 N 项" |
 
-### 13.3 验收清单
+### 13.4 验收清单
 
 | 编号 | 验收项 |
 | --- | --- |
-| AC-01 | 顶部操作栏出现“定位到当前页面”按钮，位置在“重新同步”右侧 |
-| AC-02 | 点击后不会切换浏览器焦点，只会在侧边栏中定位 |
-| AC-03 | 目标被搜索隐藏时，会自动清空搜索并成功定位 |
-| AC-04 | 目标位于折叠路径中时，只展开目标路径 |
-| AC-05 | 定位不会破坏多选模式和已选项 |
-| AC-06 | 目标已在可视区时，重复点击仍会重播强调 |
-| AC-07 | 强调效果持续 **1.2 秒**，且不使用重型动画 |
-| AC-08 | 当前页面不在快照中时，按钮置灰并说明原因 |
+| AC-01 | 顶部操作栏出现"选择重复标签"按钮，使用 Intersection 图标 |
+| AC-02 | 点击后自动选中所有非 pinned 的重复标签（跨窗口） |
+| AC-03 | 每组重复保留最近活跃的 1 个不选 |
+| AC-04 | 无重复时弹出 Toast"未发现重复标签"，2 秒后自动消失 |
+| AC-05 | 无重复时不清空已有选择 |
+| AC-06 | 选中后自动进入选择模式，可批量关闭/移动 |
+| AC-07 | 与现有 Shift/Ctrl + 点击选择互不干扰 |
+| AC-08 | pinned 标签不参与检测 |
 
 ---
 
@@ -342,6 +382,14 @@ stateDiagram-v2
 
 本需求的最佳实现方式是：
 
-> 在侧边栏前端直接维护“实时激活标签页”，点击按钮时冻结目标，必要时清空搜索并按路径展开，再通过列表组件执行一次独立的显式定位与 **1.2 秒** 瞬时强调。
+> 在 `TabRecord` **中透传** Chrome 原生 `lastAccessed` **字段**，前端点击按钮时使用纯函数 `computeDuplicateSelection()` 计算重复项，**每组保留最近活跃的一个**，其余自动选中并进入选择模式。无重复时通过极简 Toast 反馈。
 
-这样改动范围集中在侧边栏前端，不需要新增后台协议，也不会改变现有标签切换语义。
+改动涉及以下 5 个方面：
+
+1. **后端数据类型**透传（3 个文件，字段级改动）
+2. **前端新增按钮**（`SidepanelToolbar.tsx`）
+3. **前端新增重复检测纯函数**（`App.tsx` 内或独立 `selectors`）
+4. **前端新增 Toast**（`SidepanelStatus.tsx` 扩展）
+5. **中英文文案**（`i18n.ts`）
+
+不改变任何现有交互，不新增后台协议，不修改现有 `tabSelection.ts` 的选择引擎。

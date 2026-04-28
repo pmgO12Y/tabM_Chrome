@@ -174,7 +174,8 @@ describe("chromeQueries", () => {
         active: false,
         audible: false,
         discarded: false,
-        favIconUrl: "https://example.com/icon.ico"
+        favIconUrl: "https://example.com/icon.ico",
+        lastAccessed: 0
       }
     ]);
     expect(tabsQuery).toHaveBeenCalledWith({ windowId: 4 });
@@ -209,7 +210,8 @@ describe("chromeQueries", () => {
         active: false,
         audible: false,
         discarded: false,
-        favIconUrl: null
+        favIconUrl: null,
+        lastAccessed: 0
       }
     ]);
     expect(tabsQuery).toHaveBeenCalledWith({ groupId: 99 });

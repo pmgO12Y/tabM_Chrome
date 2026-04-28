@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="fluid-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="50%" stop-color="#EC4899"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+    <linearGradient id="fluid-grad2" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#0A0A0F"/>
+  <!-- 底部大流体 -->
+  <path d="M20 80 C30 50 50 60 60 40 C70 20 90 30 100 50 C110 70 108 90 100 100 C90 110 50 110 30 105 C10 100 10 110 20 80 Z" fill="url(#fluid-grad)" opacity="0.4"/>
+  <!-- 中间流体 -->
+  <path d="M30 70 C40 40 55 50 65 35 C75 20 85 30 90 50 C95 70 90 85 80 90 C70 95 50 95 40 90 C30 85 20 100 30 70 Z" fill="url(#fluid-grad2)" opacity="0.35"/>
+  <!-- 上部小流体（标签形） -->
+  <path d="M40 50 C45 35 55 30 65 28 C75 26 85 30 90 42 C95 54 88 65 80 68 C72 71 55 70 48 65 C41 60 35 65 40 50 Z" fill="#fff" opacity="0.12"/>
+  <!-- 装饰亮点 -->
+  <circle cx="55" cy="45" r="3" fill="#fff" opacity="0.2"/>
+  <circle cx="80" cy="55" r="2" fill="#fff" opacity="0.15"/>
+  <circle cx="65" cy="50" r="1.5" fill="#fff" opacity="0.25"/>
+</svg>

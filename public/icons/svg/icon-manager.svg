@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 概念 10：极简管理器 - 标签页 + 控制条 -->
+  <defs>
+    <linearGradient id="bg10" x1="0" y1="0" x2="128" y2="128">
+      <stop offset="0%" stop-color="#000428"/>
+      <stop offset="100%" stop-color="#004e92"/>
+    </linearGradient>
+    <!-- 发光效果 -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="url(#bg10)"/>
+  <!-- 浏览器标签栏 -->
+  <rect x="18" y="18" width="92" height="16" rx="4" fill="#fff" opacity="0.08"/>
+  <!-- 标签页（左侧聚焦） -->
+  <rect x="18" y="18" width="40" height="16" rx="4" fill="#1f57ff" opacity="0.4"/>
+  <rect x="18" y="18" width="40" height="16" rx="4" stroke="#fff" stroke-width="0.5" opacity="0.3"/>
+  <rect x="23" y="21" width="8" height="10" rx="3" fill="#fff" opacity="0.5" filter="url(#glow)"/>
+  <rect x="34" y="23" width="20" height="6" rx="3" fill="#fff" opacity="0.4"/>
+  <!-- 其他标签 -->
+  <rect x="60" y="20" width="18" height="12" rx="3" fill="#fff" opacity="0.08"/>
+  <rect x="80" y="20" width="18" height="12" rx="3" fill="#fff" opacity="0.06"/>
+  <!-- 工具栏区域 -->
+  <rect x="18" y="38" width="92" height="10" rx="3" fill="#fff" opacity="0.04"/>
+  <circle cx="26" cy="43" r="3" fill="#fff" opacity="0.08"/>
+  <circle cx="34" cy="43" r="3" fill="#fff" opacity="0.08"/>
+  <circle cx="42" cy="43" r="3" fill="#fff" opacity="0.08"/>
+  <rect x="90" y="40" width="16" height="6" rx="3" fill="#1f57ff" opacity="0.2"/>
+  <!-- 列表面板 -->
+  <rect x="18" y="52" width="92" height="58" rx="4" fill="#fff" opacity="0.06"/>
+  <!-- 列表项 -->
+  <rect x="22" y="56" width="10" height="8" rx="2" fill="#1f57ff" opacity="0.2"/>
+  <rect x="35" y="58" width="40" height="4" rx="2" fill="#fff" opacity="0.15"/>
+  <rect x="78" y="58" width="28" height="4" rx="2" fill="#fff" opacity="0.08"/>
+  <!-- 活跃标签指示 -->
+  <rect x="22" y="68" width="10" height="8" rx="2" fill="#1f57ff" opacity="0.3"/>
+  <rect x="35" y="70" width="50" height="4" rx="2" fill="#fff" opacity="0.2"/>
+  <rect x="22" y="68" width="3" height="8" rx="1.5" fill="#1f57ff" opacity="0.6"/>
+  <rect x="22" y="80" width="10" height="8" rx="2" fill="#1f57ff" opacity="0.15"/>
+  <rect x="35" y="82" width="35" height="4" rx="2" fill="#fff" opacity="0.12"/>
+  <rect x="22" y="92" width="10" height="8" rx="2" fill="#1f57ff" opacity="0.1"/>
+  <rect x="35" y="94" width="45" height="4" rx="2" fill="#fff" opacity="0.08"/>
+  <!-- 搜索栏（底部） -->
+  <rect x="22" y="104" width="84" height="4" rx="2" fill="#fff" opacity="0.06"/>
+  <circle cx="26" cy="106" r="1.5" fill="#fff" opacity="0.1"/>
+</svg>

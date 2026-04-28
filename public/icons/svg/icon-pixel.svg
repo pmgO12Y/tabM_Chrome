@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 像素风 - 8-bit 标签图标 -->
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#1a1a2e"/>
+  <!-- 像素网格背景 -->
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#1a1a2e"/>
+  <!-- 像素 T（标签 tab） -->
+  <!-- 每像素 8x8，格子大小为 8 -->
+  <!-- T 的横线 -->
+  <rect x="36" y="30" width="56" height="8" rx="0" fill="#00E5FF"/>
+  <rect x="36" y="38" width="56" height="8" rx="0" fill="#00C4DC"/>
+  <!-- T 竖线 -->
+  <rect x="56" y="38" width="16" height="8" rx="0" fill="#00C4DC"/>
+  <rect x="56" y="46" width="16" height="8" rx="0" fill="#00A8C0"/>
+  <rect x="56" y="54" width="16" height="8" rx="0" fill="#008FA8"/>
+  <rect x="56" y="62" width="16" height="8" rx="0" fill="#007A90"/>
+  <rect x="56" y="70" width="16" height="8" rx="0" fill="#006878"/>
+  <rect x="56" y="78" width="16" height="8" rx="0" fill="#005868"/>
+  <rect x="56" y="86" width="16" height="8" rx="0" fill="#004A58"/>
+  <!-- 右侧装饰像素列 -->
+  <rect x="76" y="46" width="8" height="8" rx="0" fill="#FFD93D" opacity="0.6"/>
+  <rect x="76" y="54" width="8" height="8" rx="0" fill="#FFD93D" opacity="0.4"/>
+  <rect x="76" y="62" width="8" height="8" rx="0" fill="#FFD93D" opacity="0.2"/>
+  <!-- 左下装饰 -->
+  <rect x="36" y="70" width="8" height="8" rx="0" fill="#FF6B6B" opacity="0.5"/>
+  <rect x="44" y="70" width="8" height="8" rx="0" fill="#FF6B6B" opacity="0.3"/>
+</svg>

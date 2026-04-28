@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 双色对比 - 仅用两种颜色 -->
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#fff"/>
+  <!-- 左半区域：蓝色大圆 -->
+  <clipPath id="duo-clip">
+    <rect x="0" y="0" width="64" height="128"/>
+  </clipPath>
+  <g clip-path="url(#duo-clip)">
+    <rect x="0" y="0" width="128" height="128" rx="24" fill="#1F57FF"/>
+  </g>
+  <!-- 右半区域：红色大矩形 -->
+  <clipPath id="duo-clip2">
+    <rect x="64" y="0" width="64" height="128"/>
+  </clipPath>
+  <g clip-path="url(#duo-clip2)">
+    <rect x="0" y="0" width="128" height="128" rx="24" fill="#FF4757"/>
+  </g>
+  <!-- 中央白色标签图标 -->
+  <rect x="44" y="42" width="40" height="44" rx="8" fill="#fff"/>
+  <rect x="44" y="42" width="40" height="12" rx="8" fill="#F0F2F5"/>
+  <rect x="44" y="48" width="40" height="6" fill="#F0F2F5"/>
+  <!-- 标签内容 -->
+  <rect x="50" y="60" width="28" height="3" rx="1.5" fill="#1F57FF" opacity="0.2"/>
+  <rect x="50" y="66" width="22" height="3" rx="1.5" fill="#FF4757" opacity="0.2"/>
+  <rect x="50" y="72" width="25" height="3" rx="1.5" fill="#1F57FF" opacity="0.12"/>
+</svg>

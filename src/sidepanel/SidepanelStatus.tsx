@@ -10,7 +10,8 @@ export function SidepanelStatus({
   traceEntryCount,
   traceUpdatedAt,
   onCopyDebugTrace,
-  copyTraceState
+  copyTraceState,
+  duplicateToast
 }: {
   locale: SupportedLocale;
   errorMessage: string | null;
@@ -22,6 +23,7 @@ export function SidepanelStatus({
   traceUpdatedAt?: string | null;
   onCopyDebugTrace?: () => void;
   copyTraceState?: "idle" | "success" | "error";
+  duplicateToast?: string | null;
 }) {
   if (isLoading) {
     return (
@@ -77,6 +79,11 @@ export function SidepanelStatus({
               {copyTraceState === "error" ? <p className="error-state__hint">{translate(locale, "sidepanel.error.copyTraceFailed")}</p> : null}
             </>
           ) : null}
+        </div>
+      ) : null}
+      {duplicateToast ? (
+        <div className="duplicate-toast" aria-live="polite">
+          {duplicateToast}
         </div>
       ) : null}
     </>

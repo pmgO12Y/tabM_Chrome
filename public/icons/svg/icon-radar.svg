@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 概念 5：雷达扫描 - 动态扫描定位标签 -->
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#0D1117"/>
+  <!-- 雷达网格圆 -->
+  <circle cx="64" cy="64" r="44" fill="none" stroke="#1F57FF" stroke-width="1.5" opacity="0.15"/>
+  <circle cx="64" cy="64" r="30" fill="none" stroke="#1F57FF" stroke-width="1.5" opacity="0.2"/>
+  <circle cx="64" cy="64" r="16" fill="none" stroke="#1F57FF" stroke-width="1.5" opacity="0.3"/>
+  <!-- 十字线 -->
+  <line x1="64" y1="20" x2="64" y2="108" stroke="#1F57FF" stroke-width="1" opacity="0.2"/>
+  <line x1="20" y1="64" x2="108" y2="64" stroke="#1F57FF" stroke-width="1" opacity="0.2"/>
+  <!-- 扫描扇区 -->
+  <path d="M64 64 L104 42 A44 44 0 0 1 104 86 Z" fill="#1F57FF" opacity="0.1"/>
+  <path d="M64 64 L104 42 A44 44 0 0 1 104 86 Z" fill="none" stroke="#1F57FF" stroke-width="2" opacity="0.4"/>
+  <!-- 检测到的标签点 -->
+  <circle cx="42" cy="46" r="5" fill="#FF4757"/>
+  <circle cx="86" cy="52" r="4" fill="#FFC312"/>
+  <circle cx="78" cy="82" r="3.5" fill="#fff" opacity="0.3"/>
+  <!-- 中心焦点 -->
+  <circle cx="64" cy="64" r="4" fill="#1F57FF"/>
+  <circle cx="64" cy="64" r="8" fill="none" stroke="#1F57FF" stroke-width="2" opacity="0.5"/>
+</svg>

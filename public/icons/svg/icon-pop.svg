@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 波普风 - 粗黑边 + 网点 -->
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#FFD93D"/>
+  <!-- 黑色粗轮廓标签 -->
+  <rect x="28" y="28" width="72" height="66" rx="10" fill="#fff" stroke="#111" stroke-width="5"/>
+  <!-- 顶部黑条 -->
+  <rect x="28" y="28" width="72" height="18" rx="10" fill="#1F57FF" stroke="#111" stroke-width="5"/>
+  <rect x="28" y="38" width="72" height="8" fill="#1F57FF"/>
+  <!-- 控制点 -->
+  <circle cx="40" cy="37" r="4" fill="#FF4757" stroke="#111" stroke-width="2.5"/>
+  <circle cx="52" cy="37" r="4" fill="#fff" stroke="#111" stroke-width="2.5"/>
+  <circle cx="64" cy="37" r="4" fill="#FF4757" stroke="#111" stroke-width="2.5"/>
+  <!-- 内容 -->
+  <rect x="38" y="58" width="50" height="5" rx="2.5" fill="#111" opacity="0.1"/>
+  <rect x="38" y="68" width="40" height="5" rx="2.5" fill="#111" opacity="0.08"/>
+  <rect x="38" y="78" width="44" height="5" rx="2.5" fill="#111" opacity="0.06"/>
+  <!-- 网点效果（左下和右上） -->
+  <g opacity="0.15">
+    <circle cx="18" cy="18" r="2" fill="#111"/>
+    <circle cx="26" cy="18" r="2" fill="#111"/>
+    <circle cx="34" cy="18" r="2" fill="#111"/>
+    <circle cx="18" cy="26" r="2" fill="#111"/>
+    <circle cx="26" cy="26" r="2" fill="#111"/>
+    <circle cx="18" cy="34" r="2" fill="#111"/>
+  </g>
+  <!-- 右下感叹号 -->
+  <text x="82" y="105" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#FF4757" stroke="#111" stroke-width="2">!</text>
+</svg>

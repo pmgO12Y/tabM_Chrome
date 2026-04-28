@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 概念 4：瀑布叠卡 - 阶梯状彩色卡片层叠 -->
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#fff"/>
+  <!-- 阶梯卡片 1 -->
+  <rect x="20" y="24" width="80" height="80" rx="12" fill="#1F57FF" transform="rotate(-12, 60, 64)"/>
+  <!-- 阶梯卡片 2 -->
+  <rect x="24" y="28" width="72" height="72" rx="10" fill="#FF4757" transform="rotate(-4, 60, 64)"/>
+  <!-- 阶梯卡片 3 -->
+  <rect x="28" y="32" width="64" height="64" rx="8" fill="#FFC312"/>
+  <!-- 卡片 3 上的简约留白 -->
+  <rect x="40" y="48" width="40" height="4" rx="2" fill="#fff" opacity="0.2"/>
+  <rect x="40" y="56" width="32" height="4" rx="2" fill="#fff" opacity="0.15"/>
+  <rect x="40" y="64" width="36" height="4" rx="2" fill="#fff" opacity="0.12"/>
+  <!-- 点击点 -->
+  <circle cx="72" cy="80" r="6" fill="#fff" opacity="0.95"/>
+  <circle cx="72" cy="80" r="3" fill="#FFC312"/>
+</svg>

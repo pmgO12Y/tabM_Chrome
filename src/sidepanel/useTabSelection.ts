@@ -64,6 +64,15 @@ export function useTabSelection(
     setSelectionAnchorTabId((current) => (current === tabId ? null : current));
   }
 
+  function replaceSelection(nextTabIds: number[]): void {
+    onTraceEvent?.("panel/selection-replaced", {
+      previousCount: selectedTabIds.length,
+      nextCount: nextTabIds.length
+    });
+    setSelectedTabIds(nextTabIds);
+    setSelectionAnchorTabId(nextTabIds.length > 0 ? (nextTabIds[nextTabIds.length - 1] ?? null) : null);
+  }
+
   function handlePrimaryAction(params: {
     tabId: number;
     shiftKey: boolean;
@@ -119,6 +128,7 @@ export function useTabSelection(
     enterSelectionMode,
     exitSelectionMode,
     removeFromSelection,
+    replaceSelection,
     handlePrimaryAction
   };
 }

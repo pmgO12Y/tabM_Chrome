@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 孟菲斯 - 波普装饰风 -->
+  <rect x="0" y="0" width="128" height="128" rx="24" fill="#FFD93D"/>
+  <!-- 波浪线 -->
+  <path d="M10 105 Q30 95 50 105 Q70 115 90 105 Q110 95 120 105" fill="none" stroke="#1F57FF" stroke-width="4" stroke-linecap="round"/>
+  <!-- 红色圆点网格 -->
+  <circle cx="18" cy="18" r="3" fill="#FF4757"/>
+  <circle cx="38" cy="18" r="3" fill="#FF4757"/>
+  <circle cx="58" cy="18" r="3" fill="#FF4757"/>
+  <circle cx="78" cy="18" r="3" fill="#FF4757"/>
+  <circle cx="98" cy="18" r="3" fill="#FF4757"/>
+  <circle cx="118" cy="18" r="3" fill="#FF4757"/>
+  <circle cx="18" cy="38" r="3" fill="#FF4757"/>
+  <circle cx="118" cy="38" r="3" fill="#FF4757"/>
+  <!-- 中心标签块 -->
+  <rect x="38" y="40" width="52" height="44" rx="8" fill="#fff"/>
+  <rect x="38" y="40" width="52" height="14" rx="8" fill="#1F57FF"/>
+  <rect x="38" y="48" width="52" height="6" fill="#1F57FF"/>
+  <circle cx="46" cy="47" r="3" fill="#fff" opacity="0.5"/>
+  <rect x="52" y="45" width="18" height="4" rx="2" fill="#fff" opacity="0.3"/>
+  <!-- 锯齿线 -->
+  <path d="M30 38 L40 30 L50 38 L60 30 L70 38 L80 30 L90 38" fill="none" stroke="#333" stroke-width="2" opacity="0.2"/>
+  <!-- 内容行 -->
+  <rect x="46" y="62" width="36" height="3" rx="1.5" fill="#333" opacity="0.1"/>
+  <rect x="46" y="68" width="28" height="3" rx="1.5" fill="#333" opacity="0.08"/>
+  <rect x="46" y="74" width="32" height="3" rx="1.5" fill="#333" opacity="0.06"/>
+</svg>
