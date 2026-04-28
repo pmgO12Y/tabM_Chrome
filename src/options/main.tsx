@@ -4,6 +4,9 @@ import { getRuntimeLocale, translate } from "../shared/i18n";
 import App from "./App";
 import "./styles.css";
 
+// 检测平台，用于 CSS 微调
+document.documentElement.dataset.platform = navigator.platform ?? "";
+
 const container = document.getElementById("root");
 
 if (!container) {

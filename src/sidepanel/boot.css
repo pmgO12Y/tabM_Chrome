@@ -4,7 +4,7 @@ body {
   height: 100%;
   margin: 0;
   background: #ffffff;
-  font-family: "IBM Plex Sans", "PingFang SC", "Hiragino Sans GB", sans-serif;
+  font-family: "IBM Plex Sans", "Segoe UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif;
 }
 
 #root {
