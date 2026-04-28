@@ -847,6 +847,14 @@ export function VirtualizedWindowList({
 
         onClearSelection();
       }}
+      onPointerLeave={() => onHoveredTabChange?.(null)}
+      onBlur={(event) => {
+        if (event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          return;
+        }
+
+        onHoveredTabChange?.(null);
+      }}
       onDragEnd={clearDragState}
       onDrop={(event) => {
         event.preventDefault();

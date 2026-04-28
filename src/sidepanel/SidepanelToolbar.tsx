@@ -241,12 +241,6 @@ export function SidepanelToolbar({
               })}
             </div>
           ) : null}
-          {hoveredTabPreview ? (
-            <div className="panel-toolbar__hovered-tab" aria-live="polite">
-              <span className="panel-toolbar__hovered-tab-title">{hoveredTabPreview.title}</span>
-              <span className="panel-toolbar__hovered-tab-url">{hoveredTabPreview.url}</span>
-            </div>
-          ) : null}
           <div className="panel-toolbar__actions" role="toolbar" aria-label={translate(locale, "sidepanel.toolbar.aria")}>
             {leadingToolbarActions.map((action) =>
               renderToolbarButton(action, {
@@ -257,6 +251,12 @@ export function SidepanelToolbar({
             )}
           </div>
         </div>
+        {hoveredTabPreview ? (
+          <div className="panel-toolbar__hovered-tab" aria-live="polite">
+            <span className="panel-toolbar__hovered-tab-title">{hoveredTabPreview.title}</span>
+            <span className="panel-toolbar__hovered-tab-url">{hoveredTabPreview.url}</span>
+          </div>
+        ) : null}
         <div className="panel-toolbar__actions panel-toolbar__actions--end">
           {trailingToolbarActions.map((action) =>
             renderToolbarButton(action, {

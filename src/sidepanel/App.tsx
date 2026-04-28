@@ -62,12 +62,25 @@ export default function App() {
   const panelScrollRef = useRef<HTMLDivElement | null>(null);
   const commandActions = useMemo(() => createPanelCommandActions(dispatchCommand), [dispatchCommand]);
 
+  const handleHoveredTabChange = useCallback((preview: HoveredTabPreview | null) => {
+    setHoveredTabPreview(preview);
+  }, []);
+  const hoveredTabPreviewEnabled = settings.display.hoveredTabPreviewEnabled;
+
   useEffect(() => {
     applyDocumentLocale({
       locale,
       titleKey: "app.sidepanelTitle"
     });
   }, [locale]);
+
+  useEffect(() => {
+    if (hoveredTabPreviewEnabled) {
+      return;
+    }
+
+    setHoveredTabPreview(null);
+  }, [hoveredTabPreviewEnabled]);
 
   useEffect(() => {
     let disposed = false;
@@ -498,7 +511,7 @@ export default function App() {
       <SidepanelToolbar
         locale={locale}
         appShellRef={appShellRef}
-        hoveredTabPreview={hoveredTabPreview}
+        hoveredTabPreview={hoveredTabPreviewEnabled ? hoveredTabPreview : null}
         selectedCount={selectedTabIds.length}
         hasCollapsedWindows={hasCollapsedWindows}
         hasCollapsedGroups={hasCollapsedGroups}
@@ -562,7 +575,7 @@ export default function App() {
             scrollContainerRef={panelScrollRef}
             disabled={listDisabled}
             searchActive={searchActive}
-            onHoveredTabChange={setHoveredTabPreview}
+            onHoveredTabChange={hoveredTabPreviewEnabled ? handleHoveredTabChange : undefined}
             onTraceEvent={(event, details) => {
               postTraceEvent({
                 event,

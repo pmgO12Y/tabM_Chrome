@@ -14,6 +14,7 @@ export type TabDisplaySize = "large" | "medium" | "small";
 
 export interface DisplaySettingsRecord {
   tabDisplaySize: TabDisplaySize;
+  hoveredTabPreviewEnabled: boolean;
 }
 
 export type LocalizedTextRecord =

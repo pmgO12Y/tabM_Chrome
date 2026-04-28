@@ -19,6 +19,11 @@ const mockData = {
     display: {
       tabDisplaySize: "huge"
     }
+  },
+  persistedHoveredPreviewDisabled: {
+    display: {
+      hoveredTabPreviewEnabled: false
+    }
   }
 } as const;
 
@@ -44,6 +49,7 @@ describe("settings", () => {
             enabled: false
           },
           display: {
+            ...DEFAULT_EXTENSION_SETTINGS.display,
             tabDisplaySize: "large"
           }
         },
@@ -59,6 +65,7 @@ describe("settings", () => {
       expect(savedSettings.badge.enabled).toBe(false);
       expect(savedSettings.locale.mode).toBe(DEFAULT_EXTENSION_SETTINGS.locale.mode);
       expect(savedSettings.display.tabDisplaySize).toBe("large");
+      expect(savedSettings.display.hoveredTabPreviewEnabled).toBe(true);
       expect(savedSettings.updatedAt).not.toBe(DEFAULT_EXTENSION_SETTINGS.updatedAt);
       expect(storage.get(EXTENSION_SETTINGS_STORAGE_KEY)).toEqual(savedSettings);
     });
@@ -74,6 +81,22 @@ describe("settings", () => {
       });
 
       expect(settings.display.tabDisplaySize).toBe("large");
+    });
+
+    it("reads back a persisted hovered preview setting", async () => {
+      storage.set(EXTENSION_SETTINGS_STORAGE_KEY, {
+        ...DEFAULT_EXTENSION_SETTINGS,
+        display: {
+          ...DEFAULT_EXTENSION_SETTINGS.display,
+          ...mockData.persistedHoveredPreviewDisabled.display
+        }
+      });
+
+      const settings = await loadExtensionSettings({
+        get: async (key: string) => ({ [key]: storage.get(key) })
+      });
+
+      expect(settings.display.hoveredTabPreviewEnabled).toBe(false);
     });
   });
 

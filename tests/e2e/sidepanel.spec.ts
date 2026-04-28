@@ -288,6 +288,135 @@ test("批量移动到已有窗口后不会反复触发源/目标窗口数量异�
   });
 });
 
+test("鼠标连续切换标签时顶部悬浮预览不会先闪空", async ({ extensionContext, sidepanelApi, sidepanelPage }) => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const firstTitle = `hover-first-${uniqueSuffix}`;
+  const secondTitle = `hover-second-${uniqueSuffix}`;
+
+  const firstTab = await extensionContext.newPage();
+  const secondTab = await extensionContext.newPage();
+  await firstTab.goto(`data:text/html,<title>${firstTitle}</title><body>${firstTitle}</body>`);
+  await secondTab.goto(`data:text/html,<title>${secondTitle}</title><body>${secondTitle}</body>`);
+  await firstTab.waitForLoadState("load");
+  await secondTab.waitForLoadState("load");
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) =>
+      Object.values(snapshot.tabsById).some((tab) => tab.title === firstTitle) &&
+      Object.values(snapshot.tabsById).some((tab) => tab.title === secondTitle)
+  );
+
+  await sidepanelPage.bringToFront();
+
+  const firstTabRow = sidepanelPage.locator(".tab-row__main", {
+    has: sidepanelPage.locator(".tab-row__title", { hasText: firstTitle })
+  }).first();
+  const secondTabRow = sidepanelPage.locator(".tab-row__main", {
+    has: sidepanelPage.locator(".tab-row__title", { hasText: secondTitle })
+  }).first();
+  const hoveredPreview = sidepanelPage.locator(".panel-toolbar__hovered-tab");
+
+  await expect(firstTabRow).toBeVisible();
+  await expect(secondTabRow).toBeVisible();
+
+  await firstTabRow.hover();
+  await expect(hoveredPreview).toContainText(firstTitle);
+
+  await secondTabRow.hover();
+
+  await expect
+    .poll(async () => hoveredPreview.count())
+    .toBe(1);
+  await expect(hoveredPreview).toContainText(secondTitle);
+});
+
+test("鼠标移到标签行右侧操作区时顶部悬浮预览不会闪空", async ({ extensionContext, sidepanelApi, sidepanelPage }) => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const targetTitle = `hover-actions-${uniqueSuffix}`;
+
+  const targetTab = await extensionContext.newPage();
+  await targetTab.goto(`data:text/html,<title>${targetTitle}</title><body>${targetTitle}</body>`);
+  await targetTab.waitForLoadState("load");
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) => Object.values(snapshot.tabsById).some((tab) => tab.title === targetTitle)
+  );
+
+  await sidepanelPage.bringToFront();
+
+  const tabRow = sidepanelPage.locator(".tab-row", {
+    has: sidepanelPage.locator(".tab-row__title", { hasText: targetTitle })
+  }).first();
+  const mainArea = tabRow.locator(".tab-row__main");
+  const actionButton = tabRow.locator(".tab-row__action").first();
+  const hoveredPreview = sidepanelPage.locator(".panel-toolbar__hovered-tab");
+
+  await expect(mainArea).toBeVisible();
+
+  await mainArea.hover();
+  await expect(hoveredPreview).toContainText(targetTitle);
+
+  await actionButton.hover();
+
+  await expect
+    .poll(async () => hoveredPreview.count())
+    .toBe(1);
+  await expect(hoveredPreview).toContainText(targetTitle);
+});
+
+test("鼠标经过标签行之间的空隙时顶部悬浮预览不会闪空", async ({ extensionContext, sidepanelApi, sidepanelPage }) => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const firstTitle = `hover-gap-first-${uniqueSuffix}`;
+  const secondTitle = `hover-gap-second-${uniqueSuffix}`;
+
+  const firstTab = await extensionContext.newPage();
+  const secondTab = await extensionContext.newPage();
+  await firstTab.goto(`data:text/html,<title>${firstTitle}</title><body>${firstTitle}</body>`);
+  await secondTab.goto(`data:text/html,<title>${secondTitle}</title><body>${secondTitle}</body>`);
+  await firstTab.waitForLoadState("load");
+  await secondTab.waitForLoadState("load");
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) =>
+      Object.values(snapshot.tabsById).some((tab) => tab.title === firstTitle) &&
+      Object.values(snapshot.tabsById).some((tab) => tab.title === secondTitle)
+  );
+
+  await sidepanelPage.bringToFront();
+
+  const firstRow = sidepanelPage.locator(".tab-row", {
+    has: sidepanelPage.locator(".tab-row__title", { hasText: firstTitle })
+  }).first();
+  const secondRow = sidepanelPage.locator(".tab-row", {
+    has: sidepanelPage.locator(".tab-row__title", { hasText: secondTitle })
+  }).first();
+  const hoveredPreview = sidepanelPage.locator(".panel-toolbar__hovered-tab");
+
+  await expect(firstRow).toBeVisible();
+  await expect(secondRow).toBeVisible();
+
+  const firstBox = await firstRow.boundingBox();
+  const secondBox = await secondRow.boundingBox();
+  expect(firstBox).not.toBeNull();
+  expect(secondBox).not.toBeNull();
+
+  await sidepanelPage.mouse.move(firstBox!.x + 24, firstBox!.y + firstBox!.height / 2);
+  await expect(hoveredPreview).toContainText(firstTitle);
+
+  const gapY = firstBox!.y + firstBox!.height + Math.max((secondBox!.y - (firstBox!.y + firstBox!.height)) / 2, 1);
+  await sidepanelPage.mouse.move(firstBox!.x + 24, gapY);
+
+  await expect
+    .poll(async () => hoveredPreview.count())
+    .toBe(1);
+
+  await sidepanelPage.mouse.move(secondBox!.x + 24, secondBox!.y + secondBox!.height / 2);
+  await expect(hoveredPreview).toContainText(secondTitle);
+});
+
 test("折叠窗口后搜索仍会显示匹配标签，清空后恢复折叠视图", async ({ extensionContext, sidepanelApi, sidepanelPage }) => {
   const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const hiddenTitle = `search-hidden-${uniqueSuffix}`;

@@ -1,5 +1,5 @@
 import { CloseSmall, Pin } from "@icon-park/react";
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import type { SupportedLocale } from "../../shared/i18n";
 import { buildTabFaviconCandidates } from "../../shared/domain/favicon";
 import { translate } from "../../shared/i18n";
@@ -278,6 +278,10 @@ function PanelListRow({
   }
 
   const tabDisabled = disabled || isClosing;
+  const hoveredPreview = useMemo(
+    () => ({ title: row.tab.title, url: row.tab.url }),
+    [row.tab.title, row.tab.url]
+  );
 
   return (
     <div
@@ -291,6 +295,8 @@ function PanelListRow({
         groupedTabColor,
         matchesSearch: row.matchesSearch
       }) + (tabDisabled ? " tab-row--disabled" : "")}
+      onPointerEnter={() => onHoveredTabChange?.(hoveredPreview)}
+      onFocus={() => onHoveredTabChange?.(hoveredPreview)}
       onDragOver={(event) => onDragOver(row, event)}
       onDrop={(event) => onDrop(row, event)}
     >
@@ -308,10 +314,6 @@ function PanelListRow({
         }
         aria-current={isCurrentActive ? "page" : undefined}
         aria-selected={isSelected}
-        onPointerEnter={() => onHoveredTabChange?.({ title: row.tab.title, url: row.tab.url })}
-        onPointerLeave={() => onHoveredTabChange?.(null)}
-        onFocus={() => onHoveredTabChange?.({ title: row.tab.title, url: row.tab.url })}
-        onBlur={() => onHoveredTabChange?.(null)}
         onClick={(event) =>
           onActivateTab({
             tabId: row.tab.id,
