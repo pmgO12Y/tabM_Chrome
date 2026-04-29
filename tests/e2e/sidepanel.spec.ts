@@ -1,4 +1,4 @@
-import { expect } from "@playwright/test";
+import { expect, type BrowserContext, type Page } from "@playwright/test";
 import type { TabRecord } from "../../src/shared";
 import { openSidepanelPage, type SidepanelApi } from "./helpers/sidepanel";
 import { test } from "./fixtures";
@@ -30,6 +30,37 @@ function getSnapshotTabs(snapshot: Snapshot): TabRecord[] {
 function createLocalPageUrl(slug: string): string {
   const title = `page-${slug}`;
   return `data:text/html,<title>${title}</title><body>${title}</body>`;
+}
+
+async function setHoveredTabPreviewEnabled(
+  extensionContext: BrowserContext,
+  sidepanelPage: Page,
+  enabled: boolean
+) {
+  const extensionId = new URL(sidepanelPage.url()).host;
+  const optionsPage = await extensionContext.newPage();
+
+  await optionsPage.goto(`chrome-extension://${extensionId}/options.html`, {
+    waitUntil: "domcontentloaded",
+    timeout: 10_000
+  });
+
+  const previewToggle = optionsPage.getByLabel("Show hovered tab preview");
+  if (enabled) {
+    await previewToggle.check();
+  } else {
+    await previewToggle.uncheck();
+  }
+
+  await optionsPage.close();
+  await sidepanelPage.waitForFunction(async (expected) => {
+    const result = await chrome.storage.local.get("sidepanelExtensionSettings");
+    return result.sidepanelExtensionSettings?.display?.hoveredTabPreviewEnabled === expected;
+  }, enabled);
+  await sidepanelPage.evaluate(
+    () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+  );
+  await sidepanelPage.bringToFront();
 }
 
 // ---------------------------------------------------------------------------
@@ -307,7 +338,7 @@ test("鼠标连续切换标签时顶部悬浮预览不会先闪空", async ({ ex
       Object.values(snapshot.tabsById).some((tab) => tab.title === secondTitle)
   );
 
-  await sidepanelPage.bringToFront();
+  await setHoveredTabPreviewEnabled(extensionContext, sidepanelPage, true);
 
   const firstTabRow = sidepanelPage.locator(".tab-row__main", {
     has: sidepanelPage.locator(".tab-row__title", { hasText: firstTitle })
@@ -344,7 +375,7 @@ test("鼠标移到标签行右侧操作区时顶部悬浮预览不会闪空", as
     (snapshot) => Object.values(snapshot.tabsById).some((tab) => tab.title === targetTitle)
   );
 
-  await sidepanelPage.bringToFront();
+  await setHoveredTabPreviewEnabled(extensionContext, sidepanelPage, true);
 
   const tabRow = sidepanelPage.locator(".tab-row", {
     has: sidepanelPage.locator(".tab-row__title", { hasText: targetTitle })
@@ -385,7 +416,7 @@ test("鼠标经过标签行之间的空隙时顶部悬浮预览不会闪空", as
       Object.values(snapshot.tabsById).some((tab) => tab.title === secondTitle)
   );
 
-  await sidepanelPage.bringToFront();
+  await setHoveredTabPreviewEnabled(extensionContext, sidepanelPage, true);
 
   const firstRow = sidepanelPage.locator(".tab-row", {
     has: sidepanelPage.locator(".tab-row__title", { hasText: firstTitle })

@@ -30,7 +30,7 @@ test("options 页面切换到 English 后立即影响侧边栏", async ({ extens
   await optionsPage.close();
 });
 
-test("关闭悬浮标签预览后侧边栏顶部不再显示标题和 URL", async ({ extensionContext, sidepanelPage }) => {
+test("开启悬浮标签预览后侧边栏顶部显示标题和 URL，关闭后隐藏", async ({ extensionContext, sidepanelPage }) => {
   const { extensionId } = await openSidepanelPage(extensionContext, "dist");
 
   const optionsPage = await extensionContext.newPage();
@@ -55,12 +55,22 @@ test("关闭悬浮标签预览后侧边栏顶部不再显示标题和 URL", asyn
 
   await expect(tabRow).toBeVisible();
   await tabRow.hover();
-  await expect(hoveredPreview).toContainText(targetTitle);
-
-  await optionsPage.getByLabel("Show hovered tab preview").uncheck();
-
   await expect(hoveredPreview).toHaveCount(0);
 
+  await optionsPage.getByLabel("Show hovered tab preview").check();
+
+  await sidepanelPage.reload({ waitUntil: "domcontentloaded" });
+  await sidepanelPage.bringToFront();
+  await tabRow.hover();
+  await expect(hoveredPreview).toContainText(targetTitle);
+
+  await optionsPage.bringToFront();
+  await optionsPage.getByLabel("Show hovered tab preview").uncheck();
+
+  await sidepanelPage.reload({ waitUntil: "domcontentloaded" });
+  await expect(hoveredPreview).toHaveCount(0);
+
+  await sidepanelPage.bringToFront();
   await tabRow.hover();
   await expect(hoveredPreview).toHaveCount(0);
 

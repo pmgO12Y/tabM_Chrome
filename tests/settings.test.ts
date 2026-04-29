@@ -65,7 +65,7 @@ describe("settings", () => {
       expect(savedSettings.badge.enabled).toBe(false);
       expect(savedSettings.locale.mode).toBe(DEFAULT_EXTENSION_SETTINGS.locale.mode);
       expect(savedSettings.display.tabDisplaySize).toBe("large");
-      expect(savedSettings.display.hoveredTabPreviewEnabled).toBe(true);
+      expect(savedSettings.display.hoveredTabPreviewEnabled).toBe(false);
       expect(savedSettings.updatedAt).not.toBe(DEFAULT_EXTENSION_SETTINGS.updatedAt);
       expect(storage.get(EXTENSION_SETTINGS_STORAGE_KEY)).toEqual(savedSettings);
     });

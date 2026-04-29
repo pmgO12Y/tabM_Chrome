@@ -11,7 +11,7 @@ interface ExtensionSettingsWriter {
 
 export const EXTENSION_SETTINGS_STORAGE_KEY = "sidepanelExtensionSettings";
 export const DEFAULT_TAB_DISPLAY_SIZE: TabDisplaySize = "medium";
-export const DEFAULT_HOVERED_TAB_PREVIEW_ENABLED = true;
+export const DEFAULT_HOVERED_TAB_PREVIEW_ENABLED = false;
 
 export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettingsRecord = {
   badge: {
