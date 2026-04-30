@@ -25,3 +25,18 @@ test-results/
 
 # Claude
 .claude/
+
+# Documentation
+docs/
+SPEC.md
+
+# Icon source files
+icon/
+
+# Build archives
+dist.zip
+
+# Dev tooling config
+.prettierrc
+.prettierignore
+eslint.config.js
