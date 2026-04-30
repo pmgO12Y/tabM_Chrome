@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#302B63"/>
+      <stop offset="100%" stop-color="#0F0C29"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity=".2"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- 漏斗外框 -->
+  <polygon points="126,110 386,110 320,360 192,360" fill="none" stroke="#FFFFFF" stroke-width="3" opacity=".3"/>
+
+  <!-- 漏斗内分层过滤层 -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="1.5" opacity=".12">
+    <line x1="140" y1="170" x2="372" y2="170"/>
+    <line x1="158" y1="230" x2="354" y2="230"/>
+    <line x1="176" y1="290" x2="336" y2="290"/>
+  </g>
+
+  <!-- 入料粒子（混杂无序 → 上方乱飞） -->
+  <g filter="url(#glow)">
+    <circle cx="160" cy="64" r="7" fill="#FF6B6B" opacity=".7"/>
+    <circle cx="210" cy="50" r="6" fill="#FECA57" opacity=".6"/>
+    <circle cx="270" cy="44" r="8" fill="#FF6B6B" opacity=".8"/>
+    <circle cx="340" cy="55" r="6" fill="#FECA57" opacity=".6"/>
+    <circle cx="380" cy="68" r="5" fill="#0ABDE3" opacity=".5"/>
+    <circle cx="130" cy="78" r="5" fill="#FF6B6B" opacity=".5"/>
+    <circle cx="300" cy="72" r="7" fill="#0ABDE3" opacity=".6"/>
+  </g>
+
+  <!-- 入料虚线轨迹（收敛到漏斗口） -->
+  <g stroke="#FFFFFF" stroke-width="1" opacity=".1" fill="none" stroke-dasharray="3,4">
+    <line x1="160" y1="64" x2="180" y2="110"/>
+    <line x1="270" y1="44" x2="256" y2="110"/>
+    <line x1="340" y1="55" x2="332" y2="110"/>
+    <line x1="300" y1="72" x2="290" y2="110"/>
+  </g>
+
+  <!-- 漏斗内粒子（正在过滤中） -->
+  <circle cx="220" cy="200" r="5" fill="#FECA57" opacity=".5"/>
+  <circle cx="290" cy="260" r="4" fill="#0ABDE3" opacity=".4"/>
+  <circle cx="240" cy="320" r="4" fill="#FF6B6B" opacity=".3"/>
+
+  <!-- 过滤输出（有序排列 → 下方整齐） -->
+  <g filter="url(#glow)">
+    <!-- 已筛选出的重复标签（按颜色分组） -->
+    <circle cx="256" cy="380" r="8" fill="#FF6B6B" opacity=".9"/>
+    <!-- 排序输出行 -->
+    <circle cx="216" cy="425" r="6" fill="#FF6B6B" opacity=".8"/>
+    <circle cx="256" cy="425" r="6" fill="#0ABDE3" opacity=".8"/>
+    <circle cx="296" cy="425" r="6" fill="#FECA57" opacity=".8"/>
+    <!-- 底部整齐排列 -->
+    <circle cx="216" cy="450" r="5" fill="#FF6B6B" opacity=".6"/>
+    <circle cx="236" cy="450" r="5" fill="#FF6B6B" opacity=".6"/>
+    <circle cx="256" cy="450" r="5" fill="#0ABDE3" opacity=".5"/>
+    <circle cx="276" cy="450" r="5" fill="#FECA57" opacity=".5"/>
+    <circle cx="296" cy="450" r="5" fill="#FECA57" opacity=".5"/>
+  </g>
+
+  <!-- 底部输出箭头 -->
+  <path d="M 256 390 L 256 410" fill="none" stroke="#FFFFFF" stroke-width="2" opacity=".3"/>
+  <polygon points="256,410 252,404 260,404" fill="#FFFFFF" opacity=".3"/>
+
+  <!-- 漏斗口辉光 -->
+  <ellipse cx="256" cy="360" rx="40" ry="6" fill="#FFFFFF" opacity=".05" filter="url(#glow)"/>
+</svg>

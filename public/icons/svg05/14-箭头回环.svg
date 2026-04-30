@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F8F9FD"/>
+      <stop offset="100%" stop-color="#EBEDF5"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity=".06"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" filter="url(#shadow)">
+    <!-- 上箭头 -->
+    <polyline points="256,120 286,170 226,170" stroke="#FF6B6B"/>
+    <line x1="256" y1="120" x2="256" y2="230" stroke="#FF6B6B"/>
+    <!-- 右箭头 -->
+    <polyline points="392,256 342,286 342,226" stroke="#FECA57"/>
+    <line x1="392" y1="256" x2="282" y2="256" stroke="#FECA57"/>
+    <!-- 下箭头 -->
+    <polyline points="256,392 226,342 286,342" stroke="#4834D4"/>
+    <line x1="256" y1="392" x2="256" y2="282" stroke="#4834D4"/>
+    <!-- 左箭头 -->
+    <polyline points="120,256 170,226 170,286" stroke="#0ABDE3"/>
+    <line x1="120" y1="256" x2="230" y2="256" stroke="#0ABDE3"/>
+  </g>
+  <circle cx="256" cy="256" r="14" fill="#F8F9FD" stroke="#A0AEC0" stroke-width="3" filter="url(#shadow)"/>
+</svg>

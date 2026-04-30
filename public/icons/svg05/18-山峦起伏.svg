@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F8F9FD"/>
+      <stop offset="100%" stop-color="#EBEDF5"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity=".06"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g fill="none" stroke-linejoin="round" stroke-linecap="round" filter="url(#shadow)">
+    <polyline points="80,360 170,220 230,300 310,180 380,280 432,200" stroke="#FF6B6B" stroke-width="12"/>
+    <!-- 第二层（淡色背景层，增加层次感） -->
+    <polyline points="90,380 180,260 245,330 320,220 390,310 432,250" stroke="#4834D4" stroke-width="8" opacity=".35"/>
+  </g>
+</svg>

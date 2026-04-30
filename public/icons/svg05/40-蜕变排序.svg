@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0F0C29"/>
+      <stop offset="50%" stop-color="#302B63"/>
+      <stop offset="100%" stop-color="#24243E"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity=".15"/>
+    </filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- === 左侧：混乱无序 === -->
+  <!-- 散落的标签碎片 -->
+  <g opacity=".5" filter="url(#shadow)">
+    <g transform="rotate(25, 128, 180)">
+      <rect x="100" y="160" width="56" height="40" rx="5" fill="#FF6B6B" opacity=".7"/>
+    </g>
+    <g transform="rotate(-15, 180, 280)">
+      <rect x="155" y="260" width="50" height="36" rx="5" fill="#FECA57" opacity=".6"/>
+    </g>
+    <g transform="rotate(35, 100, 320)">
+      <rect x="75" y="300" width="50" height="36" rx="5" fill="#0ABDE3" opacity=".5"/>
+    </g>
+    <g transform="rotate(-30, 150, 130)">
+      <rect x="125" y="110" width="48" height="34" rx="5" fill="#6C5CE7" opacity=".5"/>
+    </g>
+    <g transform="rotate(10, 120, 380)">
+      <rect x="95" y="360" width="50" height="36" rx="5" fill="#FF6B6B" opacity=".4"/>
+    </g>
+  </g>
+
+  <!-- 左侧混乱标注 -->
+  <text x="128" y="85" fill="#FFFFFF" font-size="11" font-family="sans-serif" text-anchor="middle" opacity=".3">混乱</text>
+
+  <!-- === 中间：转换管道 === -->
+  <g filter="url(#glow)">
+    <!-- 转换箭头 -->
+    <path d="M 220 160 Q 240 256 220 350" fill="none" stroke="#FFFFFF" stroke-width="3" opacity=".3" stroke-dasharray="5,4"/>
+    <path d="M 290 160 Q 270 256 290 350" fill="none" stroke="#FFFFFF" stroke-width="3" opacity=".3" stroke-dasharray="5,4"/>
+    <!-- 正在转换中的粒子 -->
+    <circle cx="256" cy="200" r="6" fill="#FBBF24" opacity=".6"/>
+    <circle cx="248" cy="240" r="5" fill="#FBBF24" opacity=".4"/>
+    <circle cx="264" cy="280" r="5" fill="#FBBF24" opacity=".5"/>
+    <circle cx="252" cy="320" r="6" fill="#FBBF24" opacity=".6"/>
+  </g>
+
+  <!-- === 右侧：有序排列 === -->
+  <!-- 整齐排好的标签组 -->
+  <g filter="url(#shadow)">
+    <!-- 组 1 -->
+    <rect x="305" y="140" width="55" height="36" rx="5" fill="#FF6B6B" opacity=".9"/>
+    <rect x="370" y="140" width="55" height="36" rx="5" fill="#FF6B6B" opacity=".7"/>
+    <!-- 组 2 -->
+    <rect x="305" y="190" width="55" height="36" rx="5" fill="#FECA57" opacity=".85"/>
+    <rect x="370" y="190" width="55" height="36" rx="5" fill="#FECA57" opacity=".65"/>
+    <rect x="305" y="240" width="55" height="36" rx="5" fill="#0ABDE3" opacity=".85"/>
+    <rect x="370" y="240" width="55" height="36" rx="5" fill="#0ABDE3" opacity=".65"/>
+    <!-- 组 3 -->
+    <rect x="305" y="290" width="55" height="36" rx="5" fill="#6C5CE7" opacity=".8"/>
+    <rect x="370" y="290" width="55" height="36" rx="5" fill="#6C5CE7" opacity=".6"/>
+    <rect x="305" y="340" width="55" height="36" rx="5" fill="#FF6B6B" opacity=".7"/>
+  </g>
+
+  <!-- 右侧有序标注 -->
+  <text x="390" y="85" fill="#FFFFFF" font-size="11" font-family="sans-serif" text-anchor="middle" opacity=".5">有序 ✓</text>
+
+  <!-- 中心转换标记 -->
+  <g filter="url(#glow)">
+    <text x="256" y="140" fill="#FBBF24" font-size="13" font-family="sans-serif" text-anchor="middle" font-weight="bold" opacity=".7">整理中</text>
+  </g>
+
+  <!-- 底部"重复发现"标记 -->
+  <g filter="url(#glow)">
+    <circle cx="338" cy="240" r="3" fill="#FBBF24" opacity=".8"/>
+    <circle cx="338" cy="290" r="3" fill="#FBBF24" opacity=".8"/>
+    <circle cx="370" cy="290" r="3" fill="#FBBF24" opacity=".6"/>
+  </g>
+</svg>

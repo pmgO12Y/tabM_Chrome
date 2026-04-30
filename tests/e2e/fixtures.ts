@@ -24,7 +24,6 @@ export const test = base.extend<E2eFixture>({
     const context = await chromium.launchPersistentContext(userDataDir, {
       channel: "chromium",
       headless: false,
-      viewport: { width: 400, height: 800 },
       args: [
         `--disable-extensions-except=${distDir}`,
         `--load-extension=${distDir}`

@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1E3A5F"/>
+      <stop offset="100%" stop-color="#0F1F3A"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity=".15"/>
+    </filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="tract">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- 磁铁（U 型） -->
+  <g filter="url(#shadow)">
+    <!-- 主体 -->
+    <rect x="216" y="80" width="24" height="120" rx="6" fill="#FECA57"/>
+    <rect x="272" y="80" width="24" height="120" rx="6" fill="#FECA57"/>
+    <!-- 底部弧 -->
+    <path d="M 216 160 Q 216 200 256 200 Q 296 200 296 160" fill="none" stroke="#FECA57" stroke-width="24" stroke-linecap="round"/>
+    <!-- N/S 标记 -->
+    <text x="228" y="130" fill="#1E3A5F" font-size="14" font-family="sans-serif" font-weight="bold" text-anchor="middle">N</text>
+    <text x="284" y="130" fill="#1E3A5F" font-size="14" font-family="sans-serif" font-weight="bold" text-anchor="middle">S</text>
+  </g>
+
+  <!-- 磁感线（引力场） -->
+  <g stroke="#4FACFE" stroke-width="1" fill="none" opacity=".15">
+    <path d="M 228 200 Q 180 260 160 340"/>
+    <path d="M 228 200 Q 200 280 200 360"/>
+    <path d="M 256 200 L 256 380"/>
+    <path d="M 284 200 Q 312 280 312 360"/>
+    <path d="M 284 200 Q 332 260 352 340"/>
+  </g>
+
+  <!-- 散落粒子（待吸附） -->
+  <g>
+    <circle cx="120" cy="300" r="7" fill="#FFFFFF" opacity=".15"/>
+    <circle cx="350" cy="270" r="6" fill="#FFFFFF" opacity=".12"/>
+    <circle cx="160" cy="360" r="5" fill="#FFFFFF" opacity=".1"/>
+    <circle cx="370" cy="340" r="7" fill="#FFFFFF" opacity=".13"/>
+    <circle cx="140" cy="420" r="5" fill="#FFFFFF" opacity=".08"/>
+    <circle cx="380" cy="400" r="6" fill="#FFFFFF" opacity=".1"/>
+  </g>
+
+  <!-- 正在被吸附的粒子（带拖尾轨迹） -->
+  <g filter="url(#tract)">
+    <circle cx="180" cy="320" r="8" fill="#FF6B6B" opacity=".7"/>
+    <circle cx="210" cy="310" r="7" fill="#FF6B6B" opacity=".5"/>
+    <circle cx="240" cy="300" r="6" fill="#FF6B6B" opacity=".35"/>
+
+    <circle cx="330" cy="310" r="8" fill="#0ABDE3" opacity=".7"/>
+    <circle cx="310" cy="300" r="7" fill="#0ABDE3" opacity=".5"/>
+    <circle cx="290" cy="295" r="6" fill="#0ABDE3" opacity=".35"/>
+  </g>
+
+  <!-- 底部已排列整齐的标签 -->
+  <g filter="url(#shadow)">
+    <rect x="186" y="380" width="56" height="36" rx="6" fill="#FF6B6B" opacity=".85"/>
+    <rect x="252" y="380" width="56" height="36" rx="6" fill="#0ABDE3" opacity=".85"/>
+    <rect x="318" y="380" width="56" height="36" rx="6" fill="#FECA57" opacity=".8"/>
+  </g>
+
+  <!-- 排列完成指示 -->
+  <g filter="url(#glow)">
+    <line x1="256" y1="416" x2="256" y2="455" stroke="#4FACFE" stroke-width="2" opacity=".3"/>
+    <polygon points="256,455 251,446 261,446" fill="#4FACFE" opacity=".4"/>
+  </g>
+</svg>

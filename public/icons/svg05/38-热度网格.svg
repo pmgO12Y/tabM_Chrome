@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F8F9FD"/>
+      <stop offset="100%" stop-color="#EBEDF5"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000000" flood-opacity=".04"/>
+    </filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- 4x4 热度网格 -->
+  <!-- 行1: 低温（蓝）→ 中温（紫） -->
+  <g filter="url(#shadow)">
+    <rect x="80" y="100" width="80" height="60" rx="6" fill="#EBF4FF"/>
+    <rect x="170" y="100" width="80" height="60" rx="6" fill="#BEE3F8"/>
+    <rect x="260" y="100" width="80" height="60" rx="6" fill="#90CDF4"/>
+    <rect x="350" y="100" width="80" height="60" rx="6" fill="#7F9CF5"/>
+  </g>
+
+  <!-- 行2: 中温（紫）→ 偏高（红紫） -->
+  <g filter="url(#shadow)">
+    <rect x="80" y="170" width="80" height="60" rx="6" fill="#B794F4"/>
+    <rect x="170" y="170" width="80" height="60" rx="6" fill="#D687E3"/>
+    <rect x="260" y="170" width="80" height="60" rx="6" fill="#F687B3"/>
+    <rect x="350" y="170" width="80" height="60" rx="6" fill="#FC8181"/>
+  </g>
+
+  <!-- 行3: 高温（红）→ 极高（橙/黄） -->
+  <g filter="url(#shadow)">
+    <rect x="80" y="240" width="80" height="60" rx="6" fill="#FEB2B2"/>
+    <rect x="170" y="240" width="80" height="60" rx="6" fill="#F6AD55"/>
+    <rect x="260" y="240" width="80" height="60" rx="6" fill="#F6E05E"/>
+    <rect x="350" y="240" width="80" height="60" rx="6" fill="#FED7AA"/>
+  </g>
+
+  <!-- 行4: 冷热交替（活跃模式识别） -->
+  <g filter="url(#shadow)">
+    <rect x="80" y="310" width="80" height="60" rx="6" fill="#C6F6D5"/>
+    <rect x="170" y="310" width="80" height="60" rx="6" fill="#FED7AA"/>
+    <rect x="260" y="310" width="80" height="60" rx="6" fill="#BEE3F8"/>
+    <rect x="350" y="310" width="80" height="60" rx="6" fill="#F6AD55"/>
+  </g>
+
+  <!-- 活动指标（活跃标签标记） -->
+  <g filter="url(#glow)">
+    <circle cx="300" cy="175" r="4" fill="#FFFFFF" opacity=".7"/>
+    <circle cx="390" cy="205" r="5" fill="#FFFFFF" opacity=".8"/>
+    <circle cx="210" cy="275" r="6" fill="#FFFFFF" opacity=".9"/>
+    <circle cx="390" cy="335" r="4" fill="#FFFFFF" opacity=".7"/>
+  </g>
+
+  <!-- 底部统计 -->
+  <g>
+    <rect x="128" y="400" width="256" height="22" rx="11" fill="#E2E8F0" opacity=".4"/>
+    <!-- 热度条 -->
+    <rect x="136" y="408" width="48" height="6" rx="3" fill="#FC8181"/>
+    <rect x="192" y="408" width="48" height="6" rx="3" fill="#F6AD55"/>
+    <rect x="248" y="408" width="48" height="6" rx="3" fill="#90CDF4"/>
+    <rect x="304" y="408" width="48" height="6" rx="3" fill="#C6F6D5"/>
+  </g>
+</svg>

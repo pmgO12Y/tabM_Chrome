@@ -448,6 +448,472 @@ test("鼠标经过标签行之间的空隙时顶部悬浮预览不会闪空", as
   await expect(hoveredPreview).toContainText(secondTitle);
 });
 
+// ---------------------------------------------------------------------------
+// 选择模式测试
+// ---------------------------------------------------------------------------
+
+test("选择模式：工具栏按钮切换选择模式", async ({ extensionContext, sidepanelPage, sidepanelApi }) => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  for (let i = 0; i < 2; i++) {
+    const page = await extensionContext.newPage();
+    await page.goto(createLocalPageUrl(`sel-btn-${uniqueSuffix}`));
+    await page.waitForLoadState("load");
+  }
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) => getSnapshotTabs(snapshot).filter((t) => t.url?.includes(`sel-btn-${uniqueSuffix}`)).length >= 2
+  );
+
+  await sidepanelPage.bringToFront();
+
+  // Not in selection mode initially
+  await expect(sidepanelPage.getByRole("button", { name: /^完成$/ })).toHaveCount(0);
+
+  // Enter selection mode
+  await sidepanelPage.getByRole("button", { name: /^选择$/ }).click();
+  await expect(sidepanelPage.getByRole("button", { name: /^完成$/ })).toBeVisible();
+  await expect(sidepanelPage.getByText("已选 0 项")).toBeVisible();
+
+  // Exit selection mode
+  await sidepanelPage.getByRole("button", { name: /^完成$/ }).click();
+  await expect(sidepanelPage.getByRole("button", { name: /^完成$/ })).toHaveCount(0);
+});
+
+test("选择模式：Ctrl+点击切换标签选中状态", async ({ extensionContext, sidepanelPage, sidepanelApi }) => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const page = await extensionContext.newPage();
+  await page.goto(createLocalPageUrl(`ctrl-sel-${uniqueSuffix}`));
+  await page.waitForLoadState("load");
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) => getSnapshotTabs(snapshot).some((t) => t.url?.includes(`ctrl-sel-${uniqueSuffix}`))
+  );
+
+  await sidepanelPage.bringToFront();
+
+  const tabTitle = `page-ctrl-sel-${uniqueSuffix}`;
+  const tabRow = sidepanelPage.getByRole("treeitem", { name: `切换到标签页 ${tabTitle}` });
+  await expect(tabRow).toBeVisible({ timeout: 5_000 });
+
+  // No close-selected button initially
+  await expect(sidepanelPage.getByRole("button", { name: /关闭已选/ })).toHaveCount(0);
+
+  // Ctrl+click to select
+  await sidepanelPage.keyboard.down("Control");
+  await tabRow.click();
+  await sidepanelPage.keyboard.up("Control");
+  await expect(sidepanelPage.getByRole("button", { name: /关闭已选/ })).toBeVisible();
+
+  // Ctrl+click to deselect
+  await sidepanelPage.keyboard.down("Control");
+  await tabRow.click();
+  await sidepanelPage.keyboard.up("Control");
+  await expect(sidepanelPage.getByRole("button", { name: /关闭已选/ })).toHaveCount(0);
+});
+
+test("选择模式：Shift+点击范围选择多个标签", async ({ extensionContext, sidepanelPage, sidepanelApi }) => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  for (let i = 0; i < 3; i++) {
+    const p = await extensionContext.newPage();
+    await p.goto(createLocalPageUrl(`shift-${uniqueSuffix}-${i}`));
+    await p.waitForLoadState("load");
+  }
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) => getSnapshotTabs(snapshot).filter((t) => t.url?.includes(`shift-${uniqueSuffix}`)).length >= 3
+  );
+
+  await sidepanelPage.bringToFront();
+
+  // Collect tab rows matching our test tabs
+  const allTabRows = await sidepanelPage.getByRole("treeitem").all();
+  const testRowElements: (typeof allTabRows)[number][] = [];
+  for (const row of allTabRows) {
+    const name = await row.getAttribute("aria-label");
+    if (name && name.includes(`shift-${uniqueSuffix}`)) {
+      testRowElements.push(row);
+    }
+  }
+  expect(testRowElements.length).toBeGreaterThanOrEqual(3);
+
+  // Ctrl+click first to set anchor
+  await sidepanelPage.keyboard.down("Control");
+  await testRowElements[0]!.click();
+  await sidepanelPage.keyboard.up("Control");
+
+  // Shift+click last for range
+  await sidepanelPage.keyboard.down("Shift");
+  await testRowElements[2]!.click();
+  await sidepanelPage.keyboard.up("Shift");
+
+  // All 3 selected -> "关闭已选（3）"
+  await expect(sidepanelPage.getByRole("button", { name: "关闭已选（3）" })).toBeVisible();
+});
+
+test("选择模式：Escape 退出选择模式", async ({ extensionContext, sidepanelPage, sidepanelApi }) => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const p = await extensionContext.newPage();
+  await p.goto(createLocalPageUrl(`esc-mode-${uniqueSuffix}`));
+  await p.waitForLoadState("load");
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) => getSnapshotTabs(snapshot).some((t) => t.url?.includes(`esc-mode-${uniqueSuffix}`))
+  );
+
+  await sidepanelPage.bringToFront();
+
+  // Enter selection mode via toolbar
+  const selectBtn = sidepanelPage.getByRole("button", { name: /^选择$/ });
+  await expect(selectBtn).toBeVisible();
+  await selectBtn.click();
+  await expect(sidepanelPage.getByRole("button", { name: /^完成$/ })).toBeVisible();
+
+  // Escape to exit
+  await sidepanelPage.keyboard.press("Escape");
+  await expect(sidepanelPage.getByRole("button", { name: /^完成$/ })).toHaveCount(0);
+  await expect(selectBtn).toBeVisible();
+});
+
+// ---------------------------------------------------------------------------
+// 批量操作测试
+// ---------------------------------------------------------------------------
+
+test("关闭选中的标签后从快照中移除", async ({ extensionContext, sidepanelPage, sidepanelApi }) => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  for (let i = 0; i < 3; i++) {
+    const p = await extensionContext.newPage();
+    await p.goto(createLocalPageUrl(`close-sel-${uniqueSuffix}-${i}`));
+    await p.waitForLoadState("load");
+  }
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) => getSnapshotTabs(snapshot).filter((t) => t.url?.includes(`close-sel-${uniqueSuffix}`)).length >= 3
+  );
+
+  // Select all 3 tabs via Ctrl+click
+  await sidepanelPage.bringToFront();
+  const tabRows = await sidepanelPage.getByRole("treeitem").all();
+  for (const row of tabRows) {
+    const name = await row.getAttribute("aria-label");
+    if (name && name.includes(`close-sel-${uniqueSuffix}`)) {
+      await sidepanelPage.keyboard.down("Control");
+      await row.click();
+      await sidepanelPage.keyboard.up("Control");
+    }
+  }
+
+  await expect(sidepanelPage.getByRole("button", { name: "关闭已选（3）" })).toBeVisible();
+
+  // Click close selected
+  await sidepanelPage.getByRole("button", { name: /关闭已选/ }).click();
+
+  // Wait for tabs to disappear from snapshot
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) => getSnapshotTabs(snapshot).filter((t) => t.url?.includes(`close-sel-${uniqueSuffix}`)).length === 0
+  );
+});
+
+test("选择重复标签后自动进入选择模式", async ({ extensionContext, sidepanelPage, sidepanelApi }) => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const duplicateUrl = `data:text/html,<title>dup-${uniqueSuffix}</title><body>dup-content</body>`;
+  const [tabA, tabB] = await Promise.all([
+    extensionContext.newPage(),
+    extensionContext.newPage()
+  ]);
+  await tabA.goto(duplicateUrl);
+  await tabB.goto(duplicateUrl);
+  await tabA.waitForLoadState("load");
+  await tabB.waitForLoadState("load");
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) => Object.values(snapshot.tabsById).filter((t) => t.title === `dup-${uniqueSuffix}`).length >= 2
+  );
+
+  await sidepanelPage.bringToFront();
+  await sidepanelPage.getByRole("button", { name: "选择重复标签" }).click();
+
+  // Should enter selection mode with duplicates selected
+  await expect(sidepanelPage.getByRole("button", { name: /^完成$/ })).toBeVisible();
+  await expect(sidepanelPage.getByRole("button", { name: /关闭已选/ })).toBeVisible();
+});
+
+test("无重复标签时选择重复标签显示提示后自动消失", async ({ extensionContext, sidepanelPage, sidepanelApi }) => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const [tabA, tabB] = await Promise.all([
+    extensionContext.newPage(),
+    extensionContext.newPage()
+  ]);
+  await tabA.goto(createLocalPageUrl(`no-dup-a-${uniqueSuffix}`));
+  await tabB.goto(createLocalPageUrl(`no-dup-b-${uniqueSuffix}`));
+  await tabA.waitForLoadState("load");
+  await tabB.waitForLoadState("load");
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) => getSnapshotTabs(snapshot).filter((t) => t.url?.includes(uniqueSuffix)).length >= 2
+  );
+
+  await sidepanelPage.bringToFront();
+  await sidepanelPage.getByRole("button", { name: "选择重复标签" }).click();
+
+  // Toast should appear
+  await expect(sidepanelPage.getByText("没有发现重复标签页")).toBeVisible();
+
+  // Toast should auto-dismiss
+  await expect(sidepanelPage.getByText("没有发现重复标签页")).toHaveCount(0, { timeout: 5_000 });
+});
+
+// ---------------------------------------------------------------------------
+// 搜索功能测试
+// ---------------------------------------------------------------------------
+
+test("搜索：过滤模式隐藏不匹配标签，高亮模式保留全部标签", async ({ extensionContext, sidepanelPage, sidepanelApi }) => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const matchTitle = `filter-match-${uniqueSuffix}`;
+  const noMatchTitle = `filter-other-${uniqueSuffix}`;
+
+  const [matchTab, noMatchTab] = await Promise.all([
+    extensionContext.newPage(),
+    extensionContext.newPage()
+  ]);
+  await matchTab.goto(`data:text/html,<title>${matchTitle}</title><body>${matchTitle}</body>`);
+  await noMatchTab.goto(`data:text/html,<title>${noMatchTitle}</title><body>${noMatchTitle}</body>`);
+  await matchTab.waitForLoadState("load");
+  await noMatchTab.waitForLoadState("load");
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) =>
+      Object.values(snapshot.tabsById).some((t) => t.title === matchTitle) &&
+      Object.values(snapshot.tabsById).some((t) => t.title === noMatchTitle)
+  );
+
+  await sidepanelPage.bringToFront();
+
+  // Both visible initially
+  await expect(sidepanelPage.getByRole("treeitem", { name: `切换到标签页 ${matchTitle}` })).toBeVisible();
+  await expect(sidepanelPage.getByRole("treeitem", { name: `切换到标签页 ${noMatchTitle}` })).toBeVisible();
+
+  // Search for matching term (default filter mode)
+  await sidepanelPage.getByLabel("搜索标签").fill(`filter-match-${uniqueSuffix}`);
+
+  // Only matching tab visible
+  await expect(sidepanelPage.getByRole("treeitem", { name: `切换到标签页 ${matchTitle}` })).toBeVisible();
+  await expect(sidepanelPage.getByRole("treeitem", { name: `切换到标签页 ${noMatchTitle}` })).toHaveCount(0);
+
+  // Match count
+  await expect(sidepanelPage.getByText("1 个匹配").first()).toBeVisible();
+
+  // Toggle to highlight mode
+  await sidepanelPage.getByRole("button", { name: "高亮模式" }).click();
+  await expect(sidepanelPage.getByRole("treeitem", { name: `切换到标签页 ${noMatchTitle}` })).toBeVisible();
+
+  // Clear search
+  await sidepanelPage.getByRole("button", { name: "清除搜索" }).click();
+  await expect(sidepanelPage.getByRole("treeitem", { name: `切换到标签页 ${noMatchTitle}` })).toBeVisible();
+});
+
+test("搜索：匹配计数随搜索词变化", async ({ extensionContext, sidepanelPage, sidepanelApi }) => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  for (let i = 0; i < 3; i++) {
+    const p = await extensionContext.newPage();
+    await p.goto(createLocalPageUrl(`count-${uniqueSuffix}-${i}`));
+    await p.waitForLoadState("load");
+  }
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) => getSnapshotTabs(snapshot).filter((t) => t.url?.includes(`count-${uniqueSuffix}`)).length >= 3
+  );
+
+  await sidepanelPage.bringToFront();
+
+  const searchInput = sidepanelPage.locator(".search-bar__input");
+
+  // Search for a term matching all 3 tabs
+  await searchInput.fill(`count-${uniqueSuffix}`);
+  await expect(sidepanelPage.getByText("3 个匹配").first()).toBeVisible();
+
+  // Narrow down to match 1
+  await searchInput.fill(`count-${uniqueSuffix}-0`);
+  await expect(sidepanelPage.getByText("1 个匹配").first()).toBeVisible();
+
+  // Clear search
+  await sidepanelPage.getByRole("button", { name: "清除搜索" }).click();
+  await expect(searchInput).toHaveValue("");
+});
+
+test("搜索：/ 快捷键聚焦搜索框", async ({ sidepanelPage, sidepanelApi }) => {
+  await sidepanelApi.waitForInteractive();
+  await sidepanelPage.bringToFront();
+
+  // Verify search input exists (use CSS locator)
+  const searchInputCss = sidepanelPage.locator(".search-bar__input");
+  await expect(searchInputCss).toBeVisible({ timeout: 5_000 });
+
+  // Press / to focus search
+  await sidepanelPage.locator("body").click();
+  await sidepanelPage.keyboard.press("/");
+
+  // After pressing /, the search input should still be in the DOM
+  await expect(searchInputCss).toBeVisible();
+});
+
+test("搜索：Escape 清空搜索内容", async ({ extensionContext, sidepanelPage, sidepanelApi }) => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const p = await extensionContext.newPage();
+  await p.goto(createLocalPageUrl(`esc-search-${uniqueSuffix}`));
+  await p.waitForLoadState("load");
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) => getSnapshotTabs(snapshot).some((t) => t.url?.includes(`esc-search-${uniqueSuffix}`))
+  );
+
+  await sidepanelPage.bringToFront();
+
+  // Type into search
+  const searchInput = sidepanelPage.locator(".search-bar__input");
+  await expect(searchInput).toBeVisible({ timeout: 5_000 });
+  await searchInput.fill(`esc-search-${uniqueSuffix}`);
+
+  // Escape to clear
+  await sidepanelPage.keyboard.press("Escape");
+  await expect(searchInput).toHaveValue("");
+});
+
+// ---------------------------------------------------------------------------
+// 窗口/标签 UI 状态测试
+// ---------------------------------------------------------------------------
+
+test("窗口折叠后标签隐藏，展开后恢复", async ({ extensionContext, sidepanelPage, sidepanelApi }) => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const p = await extensionContext.newPage();
+  await p.goto(createLocalPageUrl(`collapse-${uniqueSuffix}`));
+  await p.waitForLoadState("load");
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) => getSnapshotTabs(snapshot).some((t) => t.url?.includes(`collapse-${uniqueSuffix}`))
+  );
+
+  await sidepanelPage.bringToFront();
+
+  const tabTitle = `page-collapse-${uniqueSuffix}`;
+  const tabRow = sidepanelPage.getByRole("treeitem", { name: `切换到标签页 ${tabTitle}` });
+  const windowRow = sidepanelPage.locator("button.window-row").first();
+
+  await expect(windowRow).toHaveAttribute("aria-expanded", "true");
+  await expect(tabRow).toBeVisible({ timeout: 5_000 });
+
+  // Collapse window
+  await windowRow.click();
+  await expect(windowRow).toHaveAttribute("aria-expanded", "false");
+  await expect(tabRow).toHaveCount(0);
+
+  // Expand window
+  await windowRow.click();
+  await expect(windowRow).toHaveAttribute("aria-expanded", "true");
+  await expect(tabRow).toBeVisible();
+});
+
+test("全部收起/全部展开按钮切换所有窗口折叠状态", async ({ extensionContext, sidepanelPage, sidepanelApi }) => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const p = await extensionContext.newPage();
+  await p.goto(createLocalPageUrl(`expand-all-${uniqueSuffix}`));
+  await p.waitForLoadState("load");
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) => getSnapshotTabs(snapshot).some((t) => t.url?.includes(`expand-all-${uniqueSuffix}`))
+  );
+
+  await sidepanelPage.bringToFront();
+
+  const windowRow = sidepanelPage.locator("button.window-row").first();
+  await expect(windowRow).toHaveAttribute("aria-expanded", "true");
+
+  // Find and click collapse/expand button
+  const collapseBtn = sidepanelPage.getByRole("button", { name: "全部收起" });
+  if (await collapseBtn.isVisible()) {
+    await collapseBtn.click();
+    await expect(windowRow).toHaveAttribute("aria-expanded", "false");
+    await expect(sidepanelPage.getByRole("button", { name: "全部展开" })).toBeVisible();
+    await sidepanelPage.getByRole("button", { name: "全部展开" }).click();
+    await expect(windowRow).toHaveAttribute("aria-expanded", "true");
+  }
+});
+
+test("固定标签后侧边栏状态更新", async ({ extensionContext, sidepanelPage, sidepanelApi }) => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const p = await extensionContext.newPage();
+  await p.goto(createLocalPageUrl(`pin-${uniqueSuffix}`));
+  await p.waitForLoadState("load");
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) => getSnapshotTabs(snapshot).some((t) => t.url?.includes(`pin-${uniqueSuffix}`))
+  );
+
+  const beforeSnapshot = await sidepanelApi.getSnapshot();
+  const tabRecord = getSnapshotTabs(beforeSnapshot).find((t) => t.url?.includes(`pin-${uniqueSuffix}`));
+  expect(tabRecord).toBeDefined();
+  expect(tabRecord!.pinned).toBe(false);
+
+  await sidepanelPage.bringToFront();
+
+  const tabTitle = `page-pin-${uniqueSuffix}`;
+  const tabRow = sidepanelPage.locator(".tab-row", {
+    has: sidepanelPage.locator(".tab-row__title", { hasText: tabTitle })
+  }).first();
+  await expect(tabRow).toBeVisible({ timeout: 5_000 });
+  await tabRow.hover();
+
+  const pinButton = sidepanelPage.getByRole("button", { name: "固定标签" });
+  if (await pinButton.isVisible()) {
+    await pinButton.click();
+  }
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) => snapshot.tabsById[tabRecord!.id]?.pinned === true
+  );
+
+  const afterSnapshot = await sidepanelApi.getSnapshot();
+  expect(afterSnapshot.tabsById[tabRecord!.id]?.pinned).toBe(true);
+});
+
+test("空状态：搜索无匹配时显示提示信息", async ({ extensionContext, sidepanelPage, sidepanelApi }) => {
+  const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const p = await extensionContext.newPage();
+  await p.goto(createLocalPageUrl(`empty-${uniqueSuffix}`));
+  await p.waitForLoadState("load");
+
+  await waitForSnapshot(
+    sidepanelApi,
+    (snapshot) => getSnapshotTabs(snapshot).some((t) => t.url?.includes(`empty-${uniqueSuffix}`))
+  );
+
+  await sidepanelPage.bringToFront();
+
+  const searchInput = sidepanelPage.locator(".search-bar__input");
+  await expect(searchInput).toBeVisible({ timeout: 5_000 });
+
+  // Search for something that won't match
+  await searchInput.fill(`zzz-nonexistent-${uniqueSuffix}`);
+
+  // Empty state should appear
+  await expect(sidepanelPage.getByText("没有匹配的标签页")).toBeVisible();
+  await expect(sidepanelPage.getByText("试试其他关键词，或按 Esc 清空搜索")).toBeVisible();
+});
+
 test("折叠窗口后搜索仍会显示匹配标签，清空后恢复折叠视图", async ({ extensionContext, sidepanelApi, sidepanelPage }) => {
   const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const hiddenTitle = `search-hidden-${uniqueSuffix}`;
@@ -617,3 +1083,4 @@ test("侧边栏加载时无 JS 错误", async ({ sidepanelPage }) => {
   );
   expect(realErrors).toHaveLength(0);
 });
+

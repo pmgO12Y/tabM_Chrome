@@ -56,6 +56,7 @@ export interface CommandExecutorChromeApi {
       id?: number;
       focused?: boolean;
     }>;
+    remove(windowId: number): Promise<void>;
     create(options?: {
       url?: string;
       focused?: boolean;
@@ -271,10 +272,20 @@ export async function executeTabCommand(
         };
       }
 
-      await chromeApi.tabs.move(movePlan.nonPinnedTabIds, {
-        windowId: newWindow.id,
-        index: movePlan.targetIndex
-      });
+      try {
+        await chromeApi.tabs.move(movePlan.nonPinnedTabIds, {
+          windowId: newWindow.id,
+          index: movePlan.targetIndex
+        });
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("No tab with id")) {
+          await chromeApi.windows.remove(newWindow.id).catch(() => {});
+          return {
+            affectedWindowIds: movePlan.sourceWindowIds
+          };
+        }
+        throw error;
+      }
 
       await chromeApi.windows.update(newWindow.id, {
         focused: true

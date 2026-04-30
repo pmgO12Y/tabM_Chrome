@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#11998E"/>
+      <stop offset="100%" stop-color="#38EF7D"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#000000" flood-opacity=".1"/>
+    </filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- 中心标签页（同步对象） -->
+  <g filter="url(#shadow)">
+    <rect x="200" y="170" width="112" height="140" rx="12" fill="#FFFFFF" opacity=".18"/>
+    <rect x="200" y="170" width="112" height="28" rx="12" fill="#FFFFFF" opacity=".12"/>
+    <!-- 标签项 -->
+    <rect x="212" y="210" width="88" height="10" rx="3" fill="#FFFFFF" opacity=".4"/>
+    <rect x="212" y="232" width="72" height="10" rx="3" fill="#FFFFFF" opacity=".25"/>
+    <rect x="212" y="254" width="88" height="10" rx="3" fill="#FFFFFF" opacity=".4"/>
+    <rect x="212" y="276" width="60" height="10" rx="3" fill="#FFFFFF" opacity=".25"/>
+  </g>
+
+  <!-- 循环同步箭头（环绕中心标签） -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" filter="url(#shadow)">
+    <!-- 上弧线（顺时针） -->
+    <path d="M 140 180 A 140 140 0 0 1 372 180" opacity=".7"/>
+    <!-- 下弧线 -->
+    <path d="M 372 320 A 140 140 0 0 1 140 320" opacity=".7"/>
+  </g>
+
+  <!-- 箭头端点 -->
+  <g filter="url(#glow)">
+    <polygon points="372,180 358,163 360,180 358,197" fill="#FFFFFF" opacity=".85"/>
+    <polygon points="140,320 154,337 152,320 154,303" fill="#FFFFFF" opacity=".85"/>
+  </g>
+
+  <!-- 同步脉冲信号 -->
+  <g filter="url(#glow)">
+    <circle cx="256" cy="240" r="6" fill="#FFFFFF" opacity=".9"/>
+    <!-- 脉冲波 -->
+    <circle cx="256" cy="240" r="18" fill="none" stroke="#FFFFFF" stroke-width="2" opacity=".2"/>
+    <circle cx="256" cy="240" r="32" fill="none" stroke="#FFFFFF" stroke-width="1.5" opacity=".1"/>
+  </g>
+
+  <!-- 环绕的同步数据点 -->
+  <g fill="#FFFFFF" opacity=".5">
+    <circle cx="168" cy="136" r="4"/>
+    <circle cx="344" cy="136" r="4"/>
+    <circle cx="168" cy="344" r="4"/>
+    <circle cx="344" cy="344" r="4"/>
+  </g>
+
+  <!-- 数据流浮点 -->
+  <g fill="#FBBF24" opacity=".6" filter="url(#glow)">
+    <circle cx="200" cy="152" r="3"/>
+    <circle cx="312" cy="152" r="3"/>
+    <circle cx="192" cy="336" r="3"/>
+    <circle cx="320" cy="336" r="3"/>
+  </g>
+</svg>

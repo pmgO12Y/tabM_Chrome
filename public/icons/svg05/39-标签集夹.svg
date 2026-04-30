@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F8F9FD"/>
+      <stop offset="100%" stop-color="#EBEDF5"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity=".08"/>
+    </filter>
+    <filter id="metal">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity=".12"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- 底部分类标签组（文件夹式叠放） -->
+  <g filter="url(#shadow)">
+    <!-- 标签页 3（底层） -->
+    <rect x="128" y="170" width="260" height="200" rx="10" fill="#0ABDE3" opacity=".35"/>
+    <path d="M 196 170 L 196 150 L 230 150 L 230 170" fill="#0ABDE3" opacity=".35"/>
+
+    <!-- 标签页 2（中层） -->
+    <rect x="118" y="160" width="260" height="200" rx="10" fill="#6C5CE7" opacity=".5"/>
+    <path d="M 186 160 L 186 140 L 220 140 L 220 160" fill="#6C5CE7" opacity=".5"/>
+
+    <!-- 标签页 1（顶层） -->
+    <rect x="108" y="150" width="280" height="210" rx="10" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+    <path d="M 176 150 L 176 130 L 210 130 L 210 150" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+    <!-- 顶层标签内容 -->
+    <rect x="120" y="170" width="80" height="6" rx="2" fill="#FF6B6B" opacity=".5"/>
+    <rect x="120" y="186" width="200" height="6" rx="2" fill="#A0AEC0" opacity=".4"/>
+    <rect x="120" y="202" width="160" height="6" rx="2" fill="#A0AEC0" opacity=".4"/>
+    <rect x="120" y="226" width="140" height="6" rx="2" fill="#A0AEC0" opacity=".35"/>
+    <rect x="120" y="242" width="180" height="6" rx="2" fill="#A0AEC0" opacity=".4"/>
+    <rect x="120" y="266" width="120" height="6" rx="2" fill="#A0AEC0" opacity=".3"/>
+  </g>
+
+  <!-- 夹子（弹簧夹，夹住标签组顶部） -->
+  <g filter="url(#metal)">
+    <!-- 夹子主体 -->
+    <rect x="180" y="110" width="152" height="40" rx="8" fill="#CBD5E0"/>
+    <rect x="180" y="110" width="152" height="20" rx="8" fill="#E2E8F0"/>
+    <!-- 夹子压柄 -->
+    <rect x="190" y="105" width="24" height="10" rx="4" fill="#A0AEC0"/>
+    <rect x="298" y="105" width="24" height="10" rx="4" fill="#A0AEC0"/>
+    <!-- 弹簧细节 -->
+    <rect x="244" y="115" width="24" height="6" rx="3" fill="#A0AEC0" opacity=".5"/>
+    <!-- 金属反光 -->
+    <rect x="184" y="114" width="144" height="3" rx="1.5" fill="#FFFFFF" opacity=".3"/>
+  </g>
+
+  <!-- 夹口压痕 -->
+  <rect x="190" y="148" width="20" height="4" rx="2" fill="#CBD5E0" opacity=".4"/>
+  <rect x="302" y="148" width="20" height="4" rx="2" fill="#CBD5E0" opacity=".4"/>
+</svg>

@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#667eea"/>
+      <stop offset="100%" stop-color="#764ba2"/>
+    </linearGradient>
+    <filter id="winShadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity=".15"/>
+    </filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- 左窗口 -->
+  <g filter="url(#winShadow)">
+    <rect x="70" y="120" width="166" height="280" rx="14" fill="#FFFFFF" opacity=".15"/>
+    <rect x="70" y="120" width="166" height="280" rx="14" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity=".5"/>
+    <!-- 窗口标题栏 -->
+    <rect x="70" y="120" width="166" height="36" rx="14" fill="#FFFFFF" opacity=".08"/>
+    <rect x="70" y="142" width="166" height="14" fill="#FFFFFF" opacity=".08"/>
+    <!-- 窗口内标签项 -->
+    <rect x="84" y="162" width="138" height="18" rx="4" fill="#FFFFFF" opacity=".3"/>
+    <rect x="84" y="192" width="120" height="18" rx="4" fill="#FFFFFF" opacity=".2"/>
+    <rect x="84" y="222" width="138" height="18" rx="4" fill="#FFFFFF" opacity=".3"/>
+    <rect x="84" y="252" width="100" height="18" rx="4" fill="#FFFFFF" opacity=".2"/>
+    <!-- 关闭/最小化/最大化按钮 -->
+    <circle cx="88" cy="138" r="5" fill="#FFFFFF" opacity=".3"/>
+    <circle cx="106" cy="138" r="5" fill="#FFFFFF" opacity=".2"/>
+    <circle cx="124" cy="138" r="5" fill="#FFFFFF" opacity=".2"/>
+  </g>
+
+  <!-- 右窗口 -->
+  <g filter="url(#winShadow)">
+    <rect x="276" y="120" width="166" height="280" rx="14" fill="#FFFFFF" opacity=".15"/>
+    <rect x="276" y="120" width="166" height="280" rx="14" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity=".5"/>
+    <!-- 窗口标题栏 -->
+    <rect x="276" y="120" width="166" height="36" rx="14" fill="#FFFFFF" opacity=".08"/>
+    <rect x="276" y="142" width="166" height="14" fill="#FFFFFF" opacity=".08"/>
+    <!-- 窗口内标签项 -->
+    <rect x="290" y="162" width="120" height="18" rx="4" fill="#FFFFFF" opacity=".2"/>
+    <rect x="290" y="192" width="138" height="18" rx="4" fill="#FFFFFF" opacity=".3"/>
+    <rect x="290" y="222" width="100" height="18" rx="4" fill="#FFFFFF" opacity=".2"/>
+    <rect x="290" y="252" width="138" height="18" rx="4" fill="#FFFFFF" opacity=".3"/>
+    <!-- 关闭/最小化/最大化按钮 -->
+    <circle cx="294" cy="138" r="5" fill="#FFFFFF" opacity=".3"/>
+    <circle cx="312" cy="138" r="5" fill="#FFFFFF" opacity=".2"/>
+    <circle cx="330" cy="138" r="5" fill="#FFFFFF" opacity=".2"/>
+  </g>
+
+  <!-- 连接箭头 - 代表跨窗口标签流动 -->
+  <g filter="url(#glow)">
+    <path d="M 236 280 Q 256 280 276 280" fill="none" stroke="#FECA57" stroke-width="3" stroke-dasharray="6,4" opacity=".8"/>
+    <polygon points="276,280 268,274 268,286" fill="#FECA57" opacity=".9"/>
+  </g>
+
+  <!-- 连接箭头 - 反向（双向管理） -->
+  <path d="M 276 260 Q 256 260 236 260" fill="none" stroke="#FECA57" stroke-width="2" stroke-dasharray="4,4" opacity=".4"/>
+  <polygon points="236,260 244,254 244,266" fill="#FECA57" opacity=".5"/>
+
+  <!-- 跨窗口高亮点 -->
+  <circle cx="84" cy="192" r="3" fill="#FECA57" opacity=".6"/>
+  <circle cx="290" cy="192" r="3" fill="#FECA57" opacity=".6"/>
+</svg>

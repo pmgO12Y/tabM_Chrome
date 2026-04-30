@@ -10,6 +10,7 @@ function createChromeApiMocks() {
     tabsUpdate: vi.fn(async () => undefined),
     tabsRemove: vi.fn(async () => undefined),
     tabsCreate: vi.fn(async () => ({ id: 99, windowId: 99, index: 0 } as { id?: number; windowId?: number; index?: number })),
+    windowsRemove: vi.fn(async () => undefined),
     windowsUpdate: vi.fn(async () => ({ id: 1 } as { id?: number; focused?: boolean })),
     windowsCreate: vi.fn(async () => ({ id: 99 })),
     tabGroupsGet: vi.fn(async () => ({
@@ -35,6 +36,7 @@ function toChromeApi(mocks: ReturnType<typeof createChromeApiMocks>) {
       create: mocks.tabsCreate
     },
     windows: {
+      remove: mocks.windowsRemove,
       update: mocks.windowsUpdate,
       create: mocks.windowsCreate
     },

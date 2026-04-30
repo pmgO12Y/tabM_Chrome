@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F8F9FD"/>
+      <stop offset="100%" stop-color="#EBEDF5"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity=".1"/>
+    </filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- 底层标签 - 紫色（右侧偏移） -->
+  <g transform="rotate(12, 256, 256)" filter="url(#shadow)">
+    <rect x="122" y="138" width="268" height="280" rx="18" fill="#6C5CE7"/>
+    <!-- 标签页小凸起指示 -->
+    <path d="M 216 138 L 216 112 L 240 112 L 240 138" fill="#6C5CE7"/>
+    <path d="M 272 138 L 272 112 L 296 112 L 296 138" fill="#6C5CE7"/>
+  </g>
+
+  <!-- 中层标签 - 青色（左侧偏移） -->
+  <g transform="rotate(-6, 256, 256)" filter="url(#shadow)">
+    <rect x="122" y="138" width="268" height="280" rx="18" fill="#0ABDE3"/>
+    <path d="M 216 138 L 216 112 L 240 112 L 240 138" fill="#0ABDE3"/>
+    <path d="M 272 138 L 272 112 L 296 112 L 296 138" fill="#0ABDE3"/>
+  </g>
+
+  <!-- 顶层标签 - 珊瑚色（居中高亮） -->
+  <g filter="url(#shadow)">
+    <rect x="122" y="138" width="268" height="280" rx="18" fill="#FF6B6B"/>
+    <path d="M 216 138 L 216 112 L 240 112 L 240 138" fill="#FF6B6B"/>
+    <path d="M 272 138 L 272 112 L 296 112 L 296 138" fill="#FF6B6B"/>
+  </g>
+
+  <!-- 扫描检测线（斜穿，代表重复检测功能） -->
+  <g filter="url(#glow)">
+    <line x1="86" y1="310" x2="426" y2="248" stroke="#4834D4" stroke-width="3.5" opacity=".7" stroke-linecap="round"/>
+    <circle cx="426" cy="248" r="6" fill="#4834D4" opacity=".9"/>
+  </g>
+
+  <!-- 扫描探测到的"重复"标记点 -->
+  <g filter="url(#glow)">
+    <circle cx="220" cy="275" r="5" fill="#FFFFFF" opacity=".9"/>
+    <circle cx="300" cy="258" r="5" fill="#FFFFFF" opacity=".9"/>
+    <circle cx="352" cy="252" r="4" fill="#FFFFFF" opacity=".7"/>
+    <circle cx="168" cy="282" r="4" fill="#FFFFFF" opacity=".7"/>
+  </g>
+
+  <!-- 检测命中高亮光晕 -->
+  <circle cx="300" cy="258" r="14" fill="none" stroke="#4834D4" stroke-width="2" opacity=".15"/>
+</svg>

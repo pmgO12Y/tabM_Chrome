@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F8F9FD"/>
+      <stop offset="100%" stop-color="#EBEDF5"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity=".08"/>
+    </filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- 源窗口（左） -->
+  <g filter="url(#shadow)">
+    <rect x="70" y="150" width="130" height="200" rx="12" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2.5"/>
+    <rect x="70" y="150" width="130" height="30" rx="12" fill="#FF6B6B" opacity=".1"/>
+    <!-- 窗口按钮 -->
+    <circle cx="84" cy="165" r="4" fill="#CBD5E0"/>
+    <circle cx="98" cy="165" r="4" fill="#CBD5E0"/>
+    <circle cx="112" cy="165" r="4" fill="#CBD5E0"/>
+    <!-- 标签列表 -->
+    <rect x="82" y="194" width="106" height="14" rx="3" fill="#FF6B6B" opacity=".5"/>
+    <rect x="82" y="216" width="90" height="14" rx="3" fill="#CBD5E0" opacity=".5"/>
+    <rect x="82" y="238" width="106" height="14" rx="3" fill="#CBD5E0" opacity=".5"/>
+    <rect x="82" y="260" width="75" height="14" rx="3" fill="#CBD5E0" opacity=".3"/>
+  </g>
+
+  <!-- 目标窗口（右） -->
+  <g filter="url(#shadow)">
+    <rect x="312" y="150" width="130" height="200" rx="12" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2.5"/>
+    <rect x="312" y="150" width="130" height="30" rx="12" fill="#4834D4" opacity=".1"/>
+    <circle cx="326" cy="165" r="4" fill="#CBD5E0"/>
+    <circle cx="340" cy="165" r="4" fill="#CBD5E0"/>
+    <circle cx="354" cy="165" r="4" fill="#CBD5E0"/>
+    <!-- 目标标签列表 -->
+    <rect x="324" y="194" width="80" height="14" rx="3" fill="#CBD5E0" opacity=".4"/>
+    <rect x="324" y="216" width="106" height="14" rx="3" fill="#CBD5E0" opacity=".5"/>
+    <rect x="324" y="238" width="90" height="14" rx="3" fill="#CBD5E0" opacity=".4"/>
+  </g>
+
+  <!-- 被搬运的标签页（正在移动） -->
+  <g filter="url(#shadow)">
+    <g transform="rotate(-8, 256, 210)">
+      <rect x="210" y="180" width="92" height="60" rx="6" fill="#FF6B6B"/>
+      <rect x="220" y="188" width="40" height="6" rx="2" fill="#FFFFFF" opacity=".4"/>
+      <rect x="220" y="202" width="64" height="4" rx="2" fill="#FFFFFF" opacity=".2"/>
+      <rect x="220" y="212" width="52" height="4" rx="2" fill="#FFFFFF" opacity=".2"/>
+    </g>
+  </g>
+
+  <!-- 移动轨迹（拖尾效果） -->
+  <g fill="none" stroke="#FF6B6B" stroke-width="2" stroke-linecap="round" opacity=".3">
+    <path d="M 210 210 Q 160 220 130 240" stroke-dasharray="4,4"/>
+    <circle cx="170" cy="224" r="2" fill="#FF6B6B" stroke="none"/>
+    <circle cx="148" cy="232" r="3" fill="#FF6B6B" stroke="none" opacity=".5"/>
+  </g>
+
+  <!-- 穿梭方向指示 -->
+  <path d="M 200 210 L 215 200" fill="none" stroke="#FF6B6B" stroke-width="3" stroke-linecap="round" filter="url(#glow)" opacity=".7"/>
+</svg>

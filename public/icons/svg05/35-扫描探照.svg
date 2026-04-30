@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0A1628"/>
+      <stop offset="100%" stop-color="#1A1A3E"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- 扫描光束（三角形，从左上角扫出） -->
+  <g opacity=".12">
+    <polygon points="80,80 420,160 420,400" fill="#22D3EE"/>
+  </g>
+  <g opacity=".06">
+    <polygon points="80,80 380,140 380,420" fill="#22D3EE"/>
+  </g>
+
+  <!-- 扫描线前沿（发光边缘） -->
+  <g filter="url(#glow)">
+    <line x1="80" y1="80" x2="420" y2="160" stroke="#22D3EE" stroke-width="3" opacity=".6"/>
+  </g>
+
+  <!-- 被扫描的标签元素（排列在扫描路径上） -->
+  <!-- 已扫描 / 匹配到的 -->
+  <g filter="url(#softGlow)">
+    <circle cx="160" cy="120" r="10" fill="#FFFFFF" opacity=".15"/>
+    <circle cx="200" cy="132" r="12" fill="#FFFFFF" opacity=".2"/>
+    <circle cx="250" cy="148" r="10" fill="#FFFFFF" opacity=".15"/>
+    <!-- 扫描到的 "命中" -->
+    <circle cx="300" cy="165" r="14" fill="#FBBF24" opacity=".6"/>
+    <circle cx="200" cy="132" r="5" fill="#FBBF24" opacity=".8"/>
+    <circle cx="350" cy="182" r="12" fill="#FBBF24" opacity=".4"/>
+  </g>
+
+  <!-- 待扫描元素（在扫描路径前方） -->
+  <g fill="#FFFFFF" opacity=".08">
+    <circle cx="380" cy="230" r="13"/>
+    <circle cx="400" cy="280" r="11"/>
+    <circle cx="390" cy="330" r="14"/>
+    <circle cx="370" cy="370" r="10"/>
+  </g>
+
+  <!-- 扫描路径上的标签小卡片 -->
+  <g filter="url(#softGlow)">
+    <rect x="170" y="186" width="60" height="24" rx="4" fill="#22D3EE" opacity=".12"/>
+    <rect x="260" y="216" width="64" height="28" rx="5" fill="#FBBF24" opacity=".15"/>
+    <rect x="340" y="250" width="52" height="22" rx="4" fill="#FFFFFF" opacity=".06"/>
+  </g>
+
+  <!-- 扫描探照源点 -->
+  <g filter="url(#glow)">
+    <circle cx="80" cy="80" r="16" fill="#22D3EE" opacity=".4"/>
+    <circle cx="80" cy="80" r="8" fill="#FFFFFF" opacity=".6"/>
+  </g>
+
+  <!-- 底部搜索/查找输入框示意 -->
+  <g filter="url(#softGlow)">
+    <rect x="160" y="398" width="192" height="28" rx="14" fill="#FFFFFF" opacity=".06"/>
+    <rect x="160" y="398" width="192" height="28" rx="14" fill="none" stroke="#FFFFFF" stroke-width="1.5" opacity=".15"/>
+    <circle cx="178" cy="412" r="5" fill="#FFFFFF" opacity=".2"/>
+    <text x="192" y="416" fill="#FFFFFF" font-size="9" font-family="monospace" opacity=".2">搜索标签...</text>
+  </g>
+</svg>

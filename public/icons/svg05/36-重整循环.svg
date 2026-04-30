@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F8F9FD"/>
+      <stop offset="100%" stop-color="#EBEDF5"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity=".06"/>
+    </filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- 2x2 标签组块 -->
+  <g filter="url(#shadow)">
+    <!-- 块 1（左上） -->
+    <rect x="120" y="130" width="110" height="80" rx="10" fill="#FF6B6B" opacity=".85"/>
+    <rect x="132" y="142" width="50" height="6" rx="2" fill="#FFFFFF" opacity=".3"/>
+    <rect x="132" y="156" width="86" height="4" rx="2" fill="#FFFFFF" opacity=".15"/>
+    <rect x="132" y="166" width="60" height="4" rx="2" fill="#FFFFFF" opacity=".15"/>
+
+    <!-- 块 2（右上） -->
+    <rect x="282" y="130" width="110" height="80" rx="10" fill="#6C5CE7" opacity=".85"/>
+    <rect x="294" y="142" width="50" height="6" rx="2" fill="#FFFFFF" opacity=".3"/>
+    <rect x="294" y="156" width="86" height="4" rx="2" fill="#FFFFFF" opacity=".15"/>
+    <rect x="294" y="166" width="60" height="4" rx="2" fill="#FFFFFF" opacity=".15"/>
+
+    <!-- 块 3（左下） -->
+    <rect x="120" y="250" width="110" height="80" rx="10" fill="#0ABDE3" opacity=".85"/>
+    <rect x="132" y="262" width="50" height="6" rx="2" fill="#FFFFFF" opacity=".3"/>
+    <rect x="132" y="276" width="86" height="4" rx="2" fill="#FFFFFF" opacity=".15"/>
+
+    <!-- 块 4（右下） -->
+    <rect x="282" y="250" width="110" height="80" rx="10" fill="#FECA57" opacity=".85"/>
+    <rect x="294" y="262" width="50" height="6" rx="2" fill="#FFFFFF" opacity=".3"/>
+    <rect x="294" y="276" width="86" height="4" rx="2" fill="#FFFFFF" opacity=".15"/>
+  </g>
+
+  <!-- 中心交叉箭头（重组方向指示） -->
+  <g filter="url(#glow)">
+    <!-- 左上 ↔ 右下 -->
+    <line x1="206" y1="176" x2="306" y2="304" stroke="#FFFFFF" stroke-width="2.5" opacity=".4" stroke-dasharray="5,3"/>
+    <polygon points="306,304 290,298 298,312" fill="#FFFFFF" opacity=".5"/>
+    <!-- 右上 ↔ 左下 -->
+    <line x1="306" y1="176" x2="206" y2="304" stroke="#FFFFFF" stroke-width="2.5" opacity=".4" stroke-dasharray="5,3"/>
+    <polygon points="206,304 222,298 214,312" fill="#FFFFFF" opacity=".5"/>
+  </g>
+
+  <!-- 切换标记 "交换" 箭头 -->
+  <g filter="url(#glow)">
+    <path d="M 140 370 Q 140 400 256 400 Q 372 400 372 370" fill="none" stroke="#FF6B6B" stroke-width="2.5" opacity=".5"/>
+    <polygon points="372,370 360,362 360,378" fill="#FF6B6B" opacity=".6"/>
+  </g>
+</svg>

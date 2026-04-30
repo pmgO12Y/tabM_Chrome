@@ -520,6 +520,7 @@ export default function App() {
     });
 
     commandActions.moveTabsToNewWindow(effectiveSelectedTabIds);
+    clearSelection();
     setSearchTerm("");
   }
 
