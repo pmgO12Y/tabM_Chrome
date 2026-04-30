@@ -10,7 +10,7 @@ import {
   getRowShellClassName,
   getTabRowClassName,
   getWindowRowClassName
-} from "./VirtualizedWindowList";
+} from "./listUtils";
 
 export interface HoveredTabPreview {
   title: string;
@@ -73,8 +73,8 @@ function RowShellInner({
   onDragOver,
   onDrop,
   extraClassName = "",
-  groupedTabColor,
-  visuallyExpanded = false,
+  groupedTabColor: _groupedTabColor,
+  visuallyExpanded: _visuallyExpanded = false,
   isDragging = false,
   dropIndicator = null,
   onElementRefChange,

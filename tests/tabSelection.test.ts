@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import type { PanelRow } from "../src/shared/types";
 import {
   buildVisibleTabIndex,
-  getVisibleTabIds,
   reconcileVisibleTabSelection,
   resolveTabPrimaryAction,
   resolveTabSelection

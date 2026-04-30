@@ -343,8 +343,8 @@ button:focus-visible {
 }
 
 .search-bar__button svg {
-  width: 14px !important;
-  height: 14px !important;
+  width: 14px;
+  height: 14px;
 }
 
 .search-bar__button:hover:not(:disabled) {
@@ -1086,7 +1086,7 @@ button:focus-visible {
 }
 
 .tab-row--unmatched::before {
-  content: none !important;
+  content: none;
 }
 
 .tab-row--unmatched .tab-row__actions {

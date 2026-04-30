@@ -11,6 +11,7 @@ export default defineConfig({
     target: "chrome114",
     outDir: "dist",
     emptyOutDir: true,
+    sourcemap: process.env.ANALYZE === "true" ? true : "hidden",
     rollupOptions: {
       input: {
         sidepanel: resolve(rootDir, "sidepanel.html"),

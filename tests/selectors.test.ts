@@ -1,7 +1,6 @@
 import {
   buildWindowRenderSections,
   createSearchResult,
-  expandFocusedWindow,
   filterPanelRowsBySearch,
   flattenWindowSections,
   getSearchMatchingTabIds,
@@ -9,7 +8,6 @@ import {
   resolveActiveGroupAutoExpand,
   resolveCollapsedWindowIdsForTarget,
   selectCurrentActiveGroupId,
-  selectCurrentActiveTabId,
   selectWindowSections
 } from "../src/shared/domain/selectors";
 import { NO_TAB_GROUP_ID } from "../src/shared/defaults";

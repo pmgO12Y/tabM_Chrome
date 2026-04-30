@@ -79,6 +79,7 @@ export function createWindowSyncCoordinator(params: {
   let commandPhase: CommandPhaseState | null = null;
   const pendingWindowSyncs = new Map<number, Promise<void>>();
   const pendingCrossWindowSyncs = new Map<string, Promise<void>>();
+  const pendingCommandSyncs = new Map<string, Promise<void>>();
   const debouncedWindowSyncs = new Map<number, DebouncedWindowSyncRequest>();
   const debouncedCrossWindowSyncs = new Map<string, DebouncedCrossWindowSyncRequest>();
 
@@ -365,9 +366,20 @@ export function createWindowSyncCoordinator(params: {
     preferredOrder?: number[];
     cause: string;
   }): Promise<void> {
-    return runExclusive(async () => {
+    const ordered = orderWindowIds(params.affectedWindowIds, params.preferredOrder ?? []);
+    const commandKey = ordered.join(",");
+
+    const existing = pendingCommandSyncs.get(commandKey);
+    if (existing) {
+      traceBackgroundEvent("coordinator/command-sync-coalesced", {
+        cause: params.cause,
+        order: ordered
+      });
+      return existing;
+    }
+
+    const scheduled = runExclusive(async () => {
       const cycleId = ++cycleSequence;
-      const ordered = orderWindowIds(params.affectedWindowIds, params.preferredOrder ?? []);
 
       traceBackgroundEvent("coordinator/cycle-start", {
         cycleId,
@@ -393,7 +405,12 @@ export function createWindowSyncCoordinator(params: {
         preferredOrder: params.preferredOrder ?? [],
         order: ordered
       });
+    }).finally(() => {
+      pendingCommandSyncs.delete(commandKey);
     });
+
+    pendingCommandSyncs.set(commandKey, scheduled);
+    return scheduled;
   }
 
   async function flushDebouncedEventSyncs(): Promise<void> {

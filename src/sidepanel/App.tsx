@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useAutoDismiss } from "./hooks/useAutoDismiss";
 import {
   applyDocumentLocale,
   getUiLanguage,
@@ -251,7 +252,9 @@ export default function App() {
       },
       closeSidepanel: () => window.close()
     };
-    window.__playwrightApi = api;
+    if (!import.meta.env.PROD || import.meta.env.VITE_E2E_TEST === "true") {
+      window.__playwrightApi = api;
+    }
   }, [dispatchCommand, panelController.isInteractive, snapshot]);
 
   const liveActiveTab = useMemo<TabRecord | null>(
@@ -520,33 +523,8 @@ export default function App() {
     setSearchTerm("");
   }
 
-  useEffect(() => {
-    if (duplicateToast === null) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setDuplicateToast(null);
-    }, 2000);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [duplicateToast]);
-
-  useEffect(() => {
-    if (copyTraceState === "idle") {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setCopyTraceState("idle");
-    }, 2000);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [copyTraceState]);
+  useAutoDismiss(duplicateToast, setDuplicateToast, null);
+  useAutoDismiss(copyTraceState, setCopyTraceState, "idle");
 
   return (
     <div ref={appShellRef} className="app-shell">

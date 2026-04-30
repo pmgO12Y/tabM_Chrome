@@ -5,9 +5,12 @@ import { resolve } from "node:path";
 
 const execFileAsync = promisify(execFile);
 const rootDir = resolve(fileURLToPath(new URL("../..", import.meta.url)));
-const env = Object.fromEntries(
-  Object.entries(process.env).filter((entry): entry is [string, string] => typeof entry[1] === "string")
-);
+const env = {
+  ...Object.fromEntries(
+    Object.entries(process.env).filter((entry): entry is [string, string] => typeof entry[1] === "string")
+  ),
+  VITE_E2E_TEST: "true"
+};
 
 function resolveBuildCommand(): { command: string; args: string[] } {
   return process.platform === "win32"

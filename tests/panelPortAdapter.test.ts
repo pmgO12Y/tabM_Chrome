@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createPanelPortAdapter, type TraceBundlePayload } from "../src/sidepanel/panelPortAdapter";
+import { createPanelPortAdapter } from "../src/sidepanel/panelPortAdapter";
 
 function createPort() {
   const messageListeners = new Set<(message: unknown) => void>();

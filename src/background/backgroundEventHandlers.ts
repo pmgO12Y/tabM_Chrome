@@ -163,6 +163,7 @@ export function createTabEventHandlers(deps: Pick<
   };
 
   const applyPatchFirstTabRemove = async (tabId: number, removeInfo: chrome.tabs.TabRemoveInfo): Promise<void> => {
+    deps.detachedTabWindowIds.delete(tabId);
     await deps.ensureInitialized();
 
     if (!deps.store.hasTab(tabId)) {

@@ -9,17 +9,12 @@ import {
   calculateStickyHeaderObstruction,
   calculateTargetRowScrollAdjustment,
   canReleaseBottomSpacer,
-  getGroupRowClassName,
-  getRowShellClassName,
-  getStickyScrollStyle,
   getTabRowClassName,
-  getVirtualListClassName,
-  getWindowRowClassName,
   resolveActiveRowAutoScroll,
   shouldHandleLocateRequest,
   shouldPulseLocateRow,
   shouldScrollToActiveRow
-} from "../src/sidepanel/components/VirtualizedWindowList";
+} from "../src/sidepanel/components/listUtils";
 import {
   buildDragCommand,
   createDragSource,

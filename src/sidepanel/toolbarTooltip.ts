@@ -45,8 +45,6 @@ export function calculateToolbarTooltipPlacement({
   const preferredBottomTop = anchorTop + anchorRect.height + gap;
   const fitsBelow = preferredBottomTop + tooltipSize.height <= containerRect.height - safeMargin;
   const preferredTopTop = anchorTop - gap - tooltipSize.height;
-  const fitsAbove = preferredTopTop >= safeMargin;
-
   let top: number;
   let placement: "bottom" | "top";
 

@@ -1,12 +1,9 @@
 import { createLocalizedText, getRuntimeLocale, resolveLocale, setRuntimeLocale, translateText } from "../shared/i18n";
 import { NO_TAB_GROUP_ID, PANEL_PORT_NAME } from "../shared/defaults";
-import { normalizeChromeTab } from "../shared/domain/normalizeTab";
-import type { BackgroundToPanelMessage, PanelToBackgroundMessage } from "../shared/messages";
+import type { PanelToBackgroundMessage } from "../shared/messages";
 import { DEFAULT_EXTENSION_SETTINGS, EXTENSION_SETTINGS_STORAGE_KEY, loadExtensionSettings, mergeExtensionSettings } from "../shared/settings";
-import type { ExtensionSettingsRecord, StorePatch, TabCommand, TabGroupRecord, TabRecord } from "../shared/types";
+import type { ExtensionSettingsRecord, StorePatch, TabGroupRecord, TabRecord } from "../shared/types";
 import {
-  getLastFocusedWindowId,
-  queryAllTabGroupsForTabs,
   queryGroups,
   queryNormalizedGroup,
   queryNormalizedTabsInGroup,
@@ -20,7 +17,7 @@ import { executeTabCommand } from "./commandExecutor";
 import { syncGroupSnapshot } from "./groupSync";
 import { createPanelPortHub } from "./panelPortHub";
 import { createTaskQueue } from "./taskQueue";
-import { BackgroundTabStore } from "./tabStore";
+import { createBackgroundTabStore } from "./tabStore";
 import {
   buildTraceExportBundle,
   clearPersistedTrace,
@@ -33,7 +30,7 @@ import {
   tracePanelEvent
 } from "./trace";
 
-const store = new BackgroundTabStore();
+const store = createBackgroundTabStore();
 const panelPortHub = createPanelPortHub();
 const detachedTabWindowIds = new Map<number, number>();
 
@@ -145,12 +142,10 @@ const windowSyncCoordinator = createWindowSyncCoordinator({
   syncWindow: syncWindowFromChrome
 });
 
+const KEEPALIVE_ALARM_NAME = "sw-keepalive";
+const KEEPALIVE_INTERVAL_MINUTES = 0.33; // ~20 seconds
+
 type RegisterListener = () => void;
-type TabEventHandler<TArgs extends unknown[]> = (...args: TArgs) => void;
-type PortMessageHandler<T extends PanelToBackgroundMessage = PanelToBackgroundMessage> = (
-  port: chrome.runtime.Port,
-  message: T
-) => Promise<void>;
 
 void boot();
 registerBackgroundListeners();
@@ -171,11 +166,27 @@ function createBackgroundListenerRegistrations(): RegisterListener[] {
         void ensureInitialized();
         void configureSidePanel();
       }),
+    registerKeepaliveAlarm,
     registerPanelPortListener,
     registerTabListeners,
     registerTabGroupListeners,
     registerWindowListeners
   ];
+}
+
+function registerKeepaliveAlarm(): void {
+  chrome.alarms.create(KEEPALIVE_ALARM_NAME, {
+    periodInMinutes: KEEPALIVE_INTERVAL_MINUTES
+  });
+  chrome.alarms.onAlarm.addListener(onKeepaliveAlarm);
+}
+
+function onKeepaliveAlarm(alarm: chrome.alarms.Alarm): void {
+  if (alarm.name !== KEEPALIVE_ALARM_NAME) {
+    return;
+  }
+
+  scheduleActionBadgeUpdate();
 }
 
 function registerPanelPortListener(): void {
@@ -312,21 +323,23 @@ async function handlePortMessage(
   }
 }
 
+const portMessageHandlers = createPortMessageHandlers({
+  buildTraceExportBundle,
+  formatPersistedTraceTimeline,
+  traceBackgroundEvent,
+  tracePanelEvent,
+  setVerboseLoggingEnabled,
+  panelPortHub,
+  getTraceState,
+  clearPersistedTrace,
+  windowSyncCoordinator,
+  executeTabCommand
+});
+
 function resolvePortMessageHandler(
   type: PanelToBackgroundMessage["type"]
 ): ReturnType<typeof createPortMessageHandlers>[PanelToBackgroundMessage["type"]] {
-  return createPortMessageHandlers({
-    buildTraceExportBundle,
-    formatPersistedTraceTimeline,
-    traceBackgroundEvent,
-    tracePanelEvent,
-    setVerboseLoggingEnabled,
-    panelPortHub,
-    getTraceState,
-    clearPersistedTrace,
-    windowSyncCoordinator,
-    executeTabCommand
-  })[type];
+  return portMessageHandlers[type];
 }
 
 
@@ -349,16 +362,6 @@ async function handleActivated(activeInfo: chrome.tabs.TabActiveInfo): Promise<v
   if (focusPatch) {
     panelPortHub.broadcastPatch(focusPatch);
   }
-}
-
-async function syncWindowAfterRemoval(windowId: number): Promise<void> {
-  await ensureInitialized();
-
-  if (windowId === chrome.windows.WINDOW_ID_NONE) {
-    return;
-  }
-
-  await syncWindowFromChrome(windowId);
 }
 
 async function syncWindowFromChrome(

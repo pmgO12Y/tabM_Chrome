@@ -4,7 +4,6 @@ import {
   clearPersistedTrace,
   formatPersistedTraceTimeline,
   getTraceSettings,
-  getTraceState,
   setVerboseLoggingEnabled,
   summarizeSnapshot,
   traceBackgroundEvent,

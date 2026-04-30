@@ -1,6 +1,6 @@
 import { getLastFocusedWindowId, queryAllTabGroupsForTabs } from "./chromeQueries";
 import { normalizeChromeTab } from "../shared/domain/normalizeTab";
-import type { ExtensionSettingsRecord, TabGroupRecord, TabRecord } from "../shared/types";
+import type { TabGroupRecord, TabRecord } from "../shared/types";
 
 export interface BackgroundInitializationCoordinator {
   boot(): Promise<void>;

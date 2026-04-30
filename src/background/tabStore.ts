@@ -1,124 +1,148 @@
 import { createSnapshot, createStateFromTabs, createEmptyState, applyPatch } from "../shared/domain/tabState";
 import type { StorePatch, TabGroupRecord, TabRecord, TabStoreSnapshot, TabStoreState } from "../shared/types";
 
-export class BackgroundTabStore {
-  private state: TabStoreState = createEmptyState();
-  private version = 0;
+export interface BackgroundTabStore {
+  initialize(tabs: TabRecord[], focusedWindowId: number | null, groups?: TabGroupRecord[]): void;
+  getSnapshot(): TabStoreSnapshot;
+  hasTab(tabId: number): boolean;
+  getTab(tabId: number): TabRecord | undefined;
+  getWindowTabIds(windowId: number): number[];
+  getGroup(groupId: number): TabGroupRecord | undefined;
+  upsertTab(tab: TabRecord): StorePatch | null;
+  removeTab(tabId: number, windowId: number): StorePatch | null;
+  upsertGroup(group: TabGroupRecord): StorePatch | null;
+  removeGroup(groupId: number): StorePatch | null;
+  focusWindow(windowId: number | null): StorePatch | null;
+  removeWindow(windowId: number): StorePatch | null;
+  setActiveTab(windowId: number, tabId: number): StorePatch[];
+}
 
-  initialize(tabs: TabRecord[], focusedWindowId: number | null, groups: TabGroupRecord[] = []): void {
-    this.state = createStateFromTabs(tabs, focusedWindowId, groups);
-    this.version += 1;
-  }
+export function createBackgroundTabStore(): BackgroundTabStore {
+  let state: TabStoreState = createEmptyState();
+  let version = 0;
 
-  getSnapshot(): TabStoreSnapshot {
-    return createSnapshot(this.state, this.version);
-  }
-
-  hasTab(tabId: number): boolean {
-    return Boolean(this.state.tabsById[tabId]);
-  }
-
-  getTab(tabId: number): TabRecord | undefined {
-    return this.state.tabsById[tabId];
-  }
-
-  getWindowTabIds(windowId: number): number[] {
-    return [...(this.state.windowTabIds[windowId] ?? [])];
-  }
-
-  getGroup(groupId: number): TabGroupRecord | undefined {
-    return this.state.groupsById[groupId];
-  }
-
-  upsertTab(tab: TabRecord): StorePatch | null {
-    return this.commitPatch({
-      type: "tab/upsert",
-      tab
-    });
-  }
-
-  removeTab(tabId: number, windowId: number): StorePatch | null {
-    return this.commitPatch({
-      type: "tab/remove",
-      tabId,
-      windowId
-    });
-  }
-
-  upsertGroup(group: TabGroupRecord): StorePatch | null {
-    return this.commitPatch({
-      type: "group/upsert",
-      group
-    });
-  }
-
-  removeGroup(groupId: number): StorePatch | null {
-    return this.commitPatch({
-      type: "group/remove",
-      groupId
-    });
-  }
-
-  focusWindow(windowId: number | null): StorePatch | null {
-    if (windowId == null) {
+  function commitPatch(patch: StorePatch): StorePatch | null {
+    const nextState = applyPatch(state, patch);
+    if (nextState === state) {
       return null;
     }
 
-    return this.commitPatch({
-      type: "window/focus",
-      windowId
-    });
-  }
-
-  removeWindow(windowId: number): StorePatch | null {
-    return this.commitPatch({
-      type: "window/remove",
-      windowId
-    });
-  }
-
-  setActiveTab(windowId: number, tabId: number): StorePatch[] {
-    const patches: StorePatch[] = [];
-    const currentIds = this.state.windowTabIds[windowId] ?? [];
-    const currentActiveId = currentIds.find((candidateId) => this.state.tabsById[candidateId]?.active);
-
-    if (currentActiveId === tabId) {
-      return patches;
-    }
-
-    if (currentActiveId != null) {
-      const previous = this.state.tabsById[currentActiveId];
-      const patch = this.upsertTab({
-        ...previous,
-        active: false
-      });
-      if (patch) {
-        patches.push(patch);
-      }
-    }
-
-    const next = this.state.tabsById[tabId];
-    if (next) {
-      const patch = this.upsertTab({
-        ...next,
-        active: true
-      });
-      if (patch) {
-        patches.push(patch);
-      }
-    }
-
-    return patches;
-  }
-
-  private commitPatch(patch: StorePatch): StorePatch | null {
-    const nextState = applyPatch(this.state, patch);
-    if (nextState === this.state) {
-      return null;
-    }
-
-    this.state = nextState;
-    this.version += 1;
+    state = nextState;
+    version += 1;
     return patch;
   }
+
+  return {
+    initialize(tabs, focusedWindowId, groups = []) {
+      state = createStateFromTabs(tabs, focusedWindowId, groups);
+      version += 1;
+    },
+
+    getSnapshot() {
+      return createSnapshot(state, version);
+    },
+
+    hasTab(tabId) {
+      return Boolean(state.tabsById[tabId]);
+    },
+
+    getTab(tabId) {
+      return state.tabsById[tabId];
+    },
+
+    getWindowTabIds(windowId) {
+      return [...(state.windowTabIds[windowId] ?? [])];
+    },
+
+    getGroup(groupId) {
+      return state.groupsById[groupId];
+    },
+
+    upsertTab(tab) {
+      return commitPatch({
+        type: "tab/upsert",
+        tab
+      });
+    },
+
+    removeTab(tabId, windowId) {
+      return commitPatch({
+        type: "tab/remove",
+        tabId,
+        windowId
+      });
+    },
+
+    upsertGroup(group) {
+      return commitPatch({
+        type: "group/upsert",
+        group
+      });
+    },
+
+    removeGroup(groupId) {
+      return commitPatch({
+        type: "group/remove",
+        groupId
+      });
+    },
+
+    focusWindow(windowId) {
+      if (windowId == null) {
+        return null;
+      }
+
+      return commitPatch({
+        type: "window/focus",
+        windowId
+      });
+    },
+
+    removeWindow(windowId) {
+      return commitPatch({
+        type: "window/remove",
+        windowId
+      });
+    },
+
+    setActiveTab(windowId, tabId) {
+      const patches: StorePatch[] = [];
+      const currentIds = state.windowTabIds[windowId] ?? [];
+      const currentActiveId = currentIds.find((candidateId) => state.tabsById[candidateId]?.active);
+
+      if (currentActiveId === tabId) {
+        return patches;
+      }
+
+      if (currentActiveId != null) {
+        const previous = state.tabsById[currentActiveId];
+        const patch = commitPatch({
+          type: "tab/upsert",
+          tab: {
+            ...previous,
+            active: false
+          }
+        });
+        if (patch) {
+          patches.push(patch);
+        }
+      }
+
+      const next = state.tabsById[tabId];
+      if (next) {
+        const patch = commitPatch({
+          type: "tab/upsert",
+          tab: {
+            ...next,
+            active: true
+          }
+        });
+        if (patch) {
+          patches.push(patch);
+        }
+      }
+
+      return patches;
+    }
+  };
 }

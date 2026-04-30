@@ -3,8 +3,7 @@ import { translate, type SupportedLocale } from "../shared/i18n";
 import type { PanelToBackgroundMessage } from "../shared/messages";
 import type {
   PanelTraceEventPayload,
-  TabCommand,
-  TraceSettingsRecord
+  TabCommand
 } from "../shared/types";
 import { createPanelBootstrapAdapter } from "./panelBootstrapAdapter";
 import { createPanelPortAdapter, type PanelPortAdapter, type TraceBundlePayload } from "./panelPortAdapter";
